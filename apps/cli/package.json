@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@site-rescue/adapter-weebly": "workspace:*",
+    "@site-rescue/content-schema": "workspace:*",
     "@site-rescue/crawler": "workspace:*"
   }
 }
-

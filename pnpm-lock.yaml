@@ -35,15 +35,24 @@ importers:
       '@site-rescue/adapter-weebly':
         specifier: workspace:*
         version: link:../../packages/adapters/weebly
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../../packages/content-schema
       '@site-rescue/crawler':
         specifier: workspace:*
         version: link:../../packages/crawler
 
   packages/adapters/weebly:
     dependencies:
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../../content-schema
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
+      domhandler:
+        specifier: ^5.0.3
+        version: 5.0.3
 
   packages/content-schema:
     dependencies:

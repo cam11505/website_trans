@@ -6,9 +6,9 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "references": [
+    { "path": "../../packages/content-schema" },
     { "path": "../../packages/crawler" },
     { "path": "../../packages/adapters/weebly" }
   ],
   "include": ["src/**/*.ts"]
 }
-

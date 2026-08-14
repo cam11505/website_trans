@@ -1,5 +1,7 @@
 {
   "platform": "weebly",
-  "paths": ["/", "/about.html", "/contact"]
+  "paths": ["/", "/about.html", "/contact"],
+  "pageCount": 3,
+  "assetCount": 1,
+  "warningCodes": ["unsupported-html-preserved"]
 }
-
