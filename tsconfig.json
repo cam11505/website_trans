@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/content-schema" },
+    { "path": "./packages/crawler" },
+    { "path": "./packages/adapters/weebly" },
+    { "path": "./apps/cli" }
+  ]
+}
+

@@ -1,0 +1,15 @@
+# Architecture Decision Records
+
+ADRs record decisions that shape Site Rescue. Accepted decisions are changed by a new superseding ADR, not by silently rewriting history.
+
+| ADR | Decision | Status |
+| --- | --- | --- |
+| [ADR-001](./ADR-001-platform-neutral-core.md) | Platform-neutral core | Accepted |
+| [ADR-002](./ADR-002-typescript-monorepo.md) | TypeScript pnpm monorepo | Accepted |
+| [ADR-003](./ADR-003-cli-first-local-first.md) | CLI-first and local-first | Accepted |
+| [ADR-004](./ADR-004-versioned-content-schema.md) | Versioned normalized content schema | Accepted |
+| [ADR-005](./ADR-005-conservative-crawling.md) | Conservative same-origin crawler | Accepted |
+| [ADR-006](./ADR-006-source-adapters.md) | Source adapter boundary | Accepted |
+| [ADR-007](./ADR-007-exporter-boundary.md) | Exporter boundary | Accepted |
+| [ADR-008](./ADR-008-fixture-driven-testing.md) | Fixture-driven testing | Accepted |
+
