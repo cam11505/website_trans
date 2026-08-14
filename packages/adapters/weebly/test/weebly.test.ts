@@ -50,16 +50,16 @@ describe('Weebly adapter detection', () => {
       'image',
       'list',
       'button',
-      'rawHtml',
+      'video',
+      'columns',
     ]);
-    expect(site.assets).toEqual([
-      {
-        id: 'asset-0001',
-        sourceUrl: 'https://fixture.weebly.com/uploads/hero.jpg',
-        mediaType: 'image/jpeg',
-      },
+    expect(site.assets.map((asset) => [asset.sourceUrl, asset.mediaType])).toEqual([
+      ['https://fixture.weebly.com/media/intro.mp4', 'video/mp4'],
+      ['https://fixture.weebly.com/uploads/hero.jpg', 'image/jpeg'],
+      ['https://fixture.weebly.com/uploads/poster.jpg', 'image/jpeg'],
     ]);
-    expect(site.navigation.map((item) => item.label)).toEqual(['Home', 'About', 'Contact', 'External']);
+    expect(site.navigation.map((item) => item.label)).toEqual(['Home', 'About', 'External']);
+    expect(site.navigation[1]?.children.map((item) => item.label)).toEqual(['Contact']);
     expect(site.warnings.map((warning) => warning.code)).toContain('unsupported-html-preserved');
   });
 });

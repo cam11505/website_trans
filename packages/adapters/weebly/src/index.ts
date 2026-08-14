@@ -129,9 +129,25 @@ function resolveHttpUrl(value: string | undefined, baseUrl: string): string | un
   }
 }
 
+function resolveFirstHttpUrl(
+  values: Array<string | undefined>,
+  baseUrl: string,
+): string | undefined {
+  for (const value of values) {
+    const resolved = resolveHttpUrl(value, baseUrl);
+    if (resolved !== undefined) {
+      return resolved;
+    }
+  }
+  return undefined;
+}
+
 function toImageBlock($: CheerioAPI, node: AnyNode, pageUrl: string): ImageBlock | undefined {
   const element = $(node);
-  const src = resolveHttpUrl(element.attr('src') ?? element.attr('data-src'), pageUrl);
+  const src = resolveFirstHttpUrl(
+    [element.attr('data-src'), element.attr('data-original'), element.attr('src')],
+    pageUrl,
+  );
   if (src === undefined) {
     return undefined;
   }
@@ -222,7 +238,10 @@ function parseElement($: CheerioAPI, node: AnyNode, pageUrl: string): ContentBlo
   }
 
   if (tagName === 'video') {
-    const src = resolveHttpUrl(element.attr('src') ?? element.find('source').first().attr('src'), pageUrl);
+    const src = resolveFirstHttpUrl(
+      [element.attr('src'), element.find('source').first().attr('src')],
+      pageUrl,
+    );
     if (src === undefined) {
       return [];
     }
@@ -267,8 +286,10 @@ function parseNavigation($: CheerioAPI, pageUrl: string): NavigationItem[] {
     if (href === undefined || label === '') {
       return undefined;
     }
-    const children = item
-      .children('ul')
+    const directChildList = item.children('ul').first();
+    const wrappedChildList = item.children('.wsite-menu-wrap').children('ul').first();
+    const childList = directChildList.length === 0 ? wrappedChildList : directChildList;
+    const children = childList
       .children('li')
       .toArray()
       .map(parseListItem)
@@ -276,7 +297,8 @@ function parseNavigation($: CheerioAPI, pageUrl: string): NavigationItem[] {
     return { label, href, children };
   };
 
-  const listItems = root.children('ul').children('li').toArray();
+  const rootList = root.is('ul') ? root : root.children('ul').first();
+  const listItems = rootList.children('li').toArray();
   if (listItems.length > 0) {
     return listItems
       .map(parseListItem)
@@ -330,6 +352,9 @@ function inferMediaType(sourceUrl: string): string | undefined {
     png: 'image/png',
     svg: 'image/svg+xml',
     webp: 'image/webp',
+    mp4: 'video/mp4',
+    ogg: 'video/ogg',
+    webm: 'video/webm',
   };
   return extension === undefined ? undefined : types[extension];
 }
@@ -343,8 +368,11 @@ function collectAssets(pages: Page[]): Asset[] {
       block.images.forEach((image) => urls.add(image.src));
     } else if (block.type === 'columns') {
       block.columns.flat().forEach(visit);
-    } else if (block.type === 'video' && block.poster !== undefined) {
-      urls.add(block.poster);
+    } else if (block.type === 'video') {
+      urls.add(block.src);
+      if (block.poster !== undefined) {
+        urls.add(block.poster);
+      }
     }
   };
   pages.flatMap((page) => page.blocks).forEach(visit);
@@ -359,6 +387,16 @@ function collectAssets(pages: Page[]): Asset[] {
   });
 }
 
+function countRawHtml(block: ContentBlock): number {
+  if (block.type === 'rawHtml') {
+    return 1;
+  }
+  if (block.type === 'columns') {
+    return block.columns.flat().reduce((total, child) => total + countRawHtml(child), 0);
+  }
+  return 0;
+}
+
 export function normalizeWeeblySite(input: NormalizeWeeblySiteInput): Site {
   if (input.pages.length === 0) {
     throw new Error('At least one captured page is required.');
@@ -368,7 +406,7 @@ export function normalizeWeeblySite(input: NormalizeWeeblySiteInput): Site {
   const pages = input.pages.map(parsePage);
   const rawHtmlCount = pages
     .flatMap((page) => page.blocks)
-    .filter((block) => block.type === 'rawHtml').length;
+    .reduce((total, block) => total + countRawHtml(block), 0);
   const warnings: MigrationWarning[] = (input.warnings ?? []).map((warning) => ({
     code: 'crawl-fetch-failed',
     message: warning.message,
