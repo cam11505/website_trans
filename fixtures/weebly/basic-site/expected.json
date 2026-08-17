@@ -2,6 +2,6 @@
   "platform": "weebly",
   "paths": ["/", "/about.html", "/contact"],
   "pageCount": 3,
-  "assetCount": 3,
+  "assetCount": 4,
   "warningCodes": ["unsupported-html-preserved"]
 }

@@ -350,6 +350,7 @@ function inferMediaType(sourceUrl: string): string | undefined {
     jpeg: 'image/jpeg',
     jpg: 'image/jpeg',
     png: 'image/png',
+    css: 'text/css',
     svg: 'image/svg+xml',
     webp: 'image/webp',
     mp4: 'video/mp4',
@@ -359,32 +360,51 @@ function inferMediaType(sourceUrl: string): string | undefined {
   return extension === undefined ? undefined : types[extension];
 }
 
-function collectAssets(pages: Page[]): Asset[] {
-  const urls = new Set<string>();
+function collectAssets(pages: Page[], capturedPages: CapturedPageInput[]): Asset[] {
+  const urls = new Map<string, string | undefined>();
+  const add = (sourceUrl: string, mediaType?: string): void => {
+    const existing = urls.get(sourceUrl);
+    if (!urls.has(sourceUrl) || (existing === undefined && mediaType !== undefined)) {
+      urls.set(sourceUrl, mediaType);
+    }
+  };
   const visit = (block: ContentBlock): void => {
     if (block.type === 'image') {
-      urls.add(block.src);
+      add(block.src, inferMediaType(block.src));
     } else if (block.type === 'gallery') {
-      block.images.forEach((image) => urls.add(image.src));
+      block.images.forEach((image) => add(image.src, inferMediaType(image.src)));
     } else if (block.type === 'columns') {
       block.columns.flat().forEach(visit);
     } else if (block.type === 'video') {
-      urls.add(block.src);
+      add(block.src, inferMediaType(block.src));
       if (block.poster !== undefined) {
-        urls.add(block.poster);
+        add(block.poster, inferMediaType(block.poster));
       }
     }
   };
   pages.flatMap((page) => page.blocks).forEach(visit);
 
-  return [...urls].sort().map((sourceUrl, index) => {
-    const mediaType = inferMediaType(sourceUrl);
-    return {
+  for (const capturedPage of capturedPages) {
+    const $ = load(capturedPage.html);
+    $('link[href]').each((_index, node) => {
+      const relationship = ($(node).attr('rel') ?? '').toLowerCase().split(/\s+/u);
+      if (!relationship.includes('stylesheet')) {
+        return;
+      }
+      const sourceUrl = resolveHttpUrl($(node).attr('href'), capturedPage.url);
+      if (sourceUrl !== undefined) {
+        add(sourceUrl, 'text/css');
+      }
+    });
+  }
+
+  return [...urls.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([sourceUrl, mediaType], index) => ({
       id: `asset-${String(index + 1).padStart(4, '0')}`,
       sourceUrl,
       ...(mediaType === undefined ? {} : { mediaType }),
-    };
-  });
+    }));
 }
 
 function countRawHtml(block: ContentBlock): number {
@@ -436,7 +456,7 @@ export function normalizeWeeblySite(input: NormalizeWeeblySiteInput): Site {
     },
     navigation: parseNavigation($, home.url),
     pages,
-    assets: collectAssets(pages),
+    assets: collectAssets(pages, input.pages),
     redirects: [],
     warnings,
   });

@@ -3,6 +3,10 @@ import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { detectWeebly, normalizeWeeblySite } from '@site-rescue/adapter-weebly';
 import {
+  downloadSiteAssets,
+  type AssetFetcher,
+} from '@site-rescue/asset-pipeline';
+import {
   crawlSameOrigin,
   DEFAULT_MAX_PAGES,
   fetchHtmlDocument,
@@ -14,6 +18,9 @@ export interface CaptureOptions {
   outputDirectory: string;
   maxPages?: number;
   fetcher?: Fetcher;
+  assetFetcher?: AssetFetcher;
+  downloadAssets?: boolean;
+  maxAssetBytes?: number;
   capturedAt?: string;
   writeLine?: (line: string) => void;
 }
@@ -22,6 +29,10 @@ export interface CaptureResult {
   outputFile: string;
   pageCount: number;
   assetCount: number;
+  downloadedAssetCount: number;
+  storedFileCount: number;
+  deduplicatedAssetCount: number;
+  failedAssetCount: number;
   warningCount: number;
 }
 
@@ -55,7 +66,7 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     initialDocument,
     maxPages: options.maxPages ?? DEFAULT_MAX_PAGES,
   });
-  const site = normalizeWeeblySite({
+  let site = normalizeWeeblySite({
     baseUrl: crawl.startUrl,
     capturedAt: options.capturedAt,
     pages: crawl.pages.map((page) => ({
@@ -65,12 +76,31 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     })),
     warnings: crawl.warnings,
   });
+  let downloadedAssetCount = 0;
+  let storedFileCount = 0;
+  let deduplicatedAssetCount = 0;
+  let failedAssetCount = 0;
+  if (options.downloadAssets !== false) {
+    const assetResult = await downloadSiteAssets(site, {
+      fetcher: options.assetFetcher ?? options.fetcher,
+      maxAssetBytes: options.maxAssetBytes,
+      outputDirectory: options.outputDirectory,
+    });
+    site = assetResult.site;
+    downloadedAssetCount = assetResult.downloadedAssetCount;
+    storedFileCount = assetResult.storedFileCount;
+    deduplicatedAssetCount = assetResult.deduplicatedAssetCount;
+    failedAssetCount = assetResult.failedAssetCount;
+  }
   const outputFile = await writeJsonAtomically(options.outputDirectory, site);
 
   writeLine('Site Rescue capture complete');
   writeLine(`Platform: Weebly (${Math.round(detection.confidence * 100)}% confidence)`);
   writeLine(`Pages: ${site.pages.length}`);
   writeLine(`Assets in manifest: ${site.assets.length}`);
+  writeLine(`Assets downloaded: ${downloadedAssetCount}`);
+  writeLine(`Asset files stored: ${storedFileCount}`);
+  writeLine(`Asset downloads failed: ${failedAssetCount}`);
   writeLine(`Warnings: ${site.warnings.length}`);
   writeLine(`Output: ${outputFile}`);
 
@@ -78,6 +108,10 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     outputFile,
     pageCount: site.pages.length,
     assetCount: site.assets.length,
+    downloadedAssetCount,
+    storedFileCount,
+    deduplicatedAssetCount,
+    failedAssetCount,
     warningCount: site.warnings.length,
   };
 }

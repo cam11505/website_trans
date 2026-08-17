@@ -2,7 +2,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 2 captures a Weebly site into a validated, platform-neutral `site.json`. It does not yet download assets or export a replacement website.
+> Phase 3 captures a Weebly site into a validated, platform-neutral `site.json` and downloads its discovered assets locally. It does not yet export a replacement website.
 
 ## Current capabilities
 
@@ -11,6 +11,8 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Weebly detection with confidence and human-readable evidence
 - `site-rescue diagnose <url>` CLI command
 - `site-rescue capture <url>` normalized JSON capture command
+- Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
+- Local path rewriting for normalized image, gallery, and video blocks
 - Offline fixture tests for schema, crawling, adapter detection, and CLI orchestration
 
 ## Requirements
@@ -24,6 +26,12 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 pnpm install
 pnpm site-rescue diagnose https://example.weebly.com
 pnpm site-rescue capture https://example.weebly.com --output ./capture
+```
+
+Skip binary asset downloads when only a normalized manifest is needed:
+
+```bash
+pnpm site-rescue capture https://example.weebly.com --output ./capture --skip-assets
 ```
 
 Limit discovery when testing a large site:
@@ -40,7 +48,7 @@ node apps/cli/dist/index.js diagnose https://example.weebly.com
 node apps/cli/dist/index.js capture https://example.weebly.com --output ./capture
 ```
 
-`capture/site.json` contains site metadata, navigation, normalized pages and blocks, an asset manifest, redirects, and warnings. Asset URLs are recorded but are not downloaded in this phase.
+`capture/site.json` contains site metadata, navigation, normalized pages and blocks, an asset manifest, redirects, and warnings. Successfully downloaded files are stored under `capture/assets/`; each manifest entry retains its original `sourceUrl` and adds `localPath`, `mediaType`, and a SHA-256 `checksum`. Failed downloads remain as source URLs and produce `asset-download-failed` warnings without aborting the rest of the capture.
 
 Example output:
 
@@ -65,6 +73,7 @@ site-rescue/
 ├─ packages/
 │  ├─ content-schema/         # Platform-neutral normalized site model
 │  ├─ crawler/                # Bounded same-origin page discovery
+│  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
 │  └─ adapters/
 │     └─ weebly/              # Weebly-only detection rules
 ├─ fixtures/
@@ -100,13 +109,21 @@ Default tests do not access live websites. Live compatibility checks should rema
 
 Only crawl and migrate websites you own or are authorized to process. Review the source site's terms and applicable policies before running the tool.
 
-## Explicitly out of scope for phase 2
+## Asset behavior and limitations
+
+- Downloads HTTP(S) assets already discovered by the source adapter, including images, video sources, posters, and linked stylesheets.
+- Stores assets using content-derived filenames and reuses one file when multiple URLs return identical bytes.
+- Limits each asset to 50 MiB by default and records individual failures as warnings.
+- Does not execute downloaded content.
+- Does not yet recursively download resources referenced from inside CSS files.
+
+## Explicitly out of scope for phase 3
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
 - Payments, CMS, page builder, membership, or e-commerce
 - Pixel-perfect cloning or AI redesign
-- Production exporters, asset downloading, and replacement-site generation
+- Production exporters and replacement-site generation
 
 ## Decisions
 
