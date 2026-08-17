@@ -3,17 +3,32 @@
   <head>
     <meta charset="utf-8">
     <meta name="generator" content="Weebly">
+    <meta name="description" content="A deterministic Weebly fixture">
     <title>Fixture Home</title>
     <script src="https://cdn2.editmysite.com/js/site/main.js"></script>
   </head>
   <body class="wsite-theme-light">
     <nav>
-      <a href="/">Home</a>
-      <a href="/about.html">About</a>
-      <a href="/contact">Contact</a>
-      <a href="https://external.example/news">External</a>
+      <ul class="wsite-menu-default">
+        <li><a href="/">Home</a></li>
+        <li>
+          <a href="/about.html">About</a>
+          <div class="wsite-menu-wrap"><ul><li><a href="/contact">Contact</a></li></ul></div>
+        </li>
+        <li><a href="https://external.example/news">External</a></li>
+      </ul>
     </nav>
-    <main><h1>Fixture Site</h1></main>
+    <main id="wsite-content">
+      <h1>Fixture Site</h1>
+      <p>A small site used for offline tests.</p>
+      <img src="" data-src="/uploads/hero.jpg" alt="Fixture hero">
+      <ul><li>First item</li><li>Second item</li></ul>
+      <a class="wsite-button" href="/contact">Contact us</a>
+      <video src="/media/intro.mp4" poster="/uploads/poster.jpg"></video>
+      <div class="wsite-multicol">
+        <div class="wsite-multicol-col"><p>Left column</p></div>
+        <div class="wsite-multicol-col"><form action="/submit"><input name="email"></form></div>
+      </div>
+    </main>
   </body>
 </html>
-
