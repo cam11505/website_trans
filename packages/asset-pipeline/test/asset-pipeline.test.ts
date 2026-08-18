@@ -65,7 +65,7 @@ const fetcher: AssetFetcher = async (input) => {
     });
   }
   if (input === 'https://cdn.test/main.css') {
-    return new Response('body { color: navy; }', {
+    return new Response(new Uint8Array([1, 2, 3, 4]), {
       headers: { 'content-type': 'text/css; charset=utf-8' },
     });
   }
@@ -89,6 +89,8 @@ describe('asset pipeline', () => {
       expect(copy?.localPath).toBe(image?.localPath);
       expect(video?.localPath).toMatch(/^assets\/[a-f0-9]{64}\.mp4$/u);
       expect(stylesheet?.localPath).toMatch(/^assets\/[a-f0-9]{64}\.css$/u);
+      expect(stylesheet?.checksum).toBe(image?.checksum);
+      expect(stylesheet?.localPath).not.toBe(image?.localPath);
       expect(missing?.localPath).toBeUndefined();
 
       const [imageBlock, galleryBlock, videoBlock, columnsBlock] = result.site.pages[0]!.blocks;
@@ -127,6 +129,38 @@ describe('asset pipeline', () => {
       expect(result.failedAssetCount).toBe(1);
       expect(result.site.assets[0]?.localPath).toBeUndefined();
       expect(result.site.warnings[0]?.message).toContain('2-byte limit');
+    } finally {
+      await rm(outputDirectory, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects non-HTTP asset URLs before calling the fetcher', async () => {
+    const site = createSite();
+    const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-assets-protocol-'));
+    let fetchCalled = false;
+    try {
+      const result = await downloadSiteAssets(
+        {
+          ...site,
+          assets: [
+            {
+              id: 'asset-data',
+              sourceUrl: 'data:text/plain,not-a-network-asset',
+              mediaType: 'text/plain',
+            },
+          ],
+        },
+        {
+          fetcher: async () => {
+            fetchCalled = true;
+            return new Response('unexpected');
+          },
+          outputDirectory,
+        },
+      );
+      expect(fetchCalled).toBe(false);
+      expect(result.failedAssetCount).toBe(1);
+      expect(result.site.warnings[0]?.message).toContain('unsupported URL protocol');
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });
     }

@@ -80,6 +80,10 @@ async function fetchAsset(
   maxAssetBytes: number,
   timeoutMs: number,
 ): Promise<{ bytes: Uint8Array; mediaType?: string }> {
+  const url = new URL(asset.sourceUrl);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`unsupported URL protocol: ${url.protocol}`);
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -98,10 +102,7 @@ async function fetchAsset(
     if (Number.isFinite(declaredLength) && declaredLength > maxAssetBytes) {
       throw new Error(`asset exceeds the ${maxAssetBytes}-byte limit`);
     }
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength > maxAssetBytes) {
-      throw new Error(`asset exceeds the ${maxAssetBytes}-byte limit`);
-    }
+    const bytes = await readResponseBody(response, maxAssetBytes);
     return {
       bytes,
       mediaType: normalizeMediaType(response.headers.get('content-type')) ?? asset.mediaType,
@@ -109,6 +110,39 @@ async function fetchAsset(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function readResponseBody(response: Response, maxAssetBytes: number): Promise<Uint8Array> {
+  if (response.body === null) {
+    return new Uint8Array();
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let byteLength = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      byteLength += value.byteLength;
+      if (byteLength > maxAssetBytes) {
+        await reader.cancel();
+        throw new Error(`asset exceeds the ${maxAssetBytes}-byte limit`);
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(byteLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
 }
 
 function resolveAssetTarget(outputDirectory: string, localPath: string): string {
@@ -208,7 +242,7 @@ export async function downloadSiteAssets(
   }
 
   const localPaths = new Map<string, string>();
-  const pathsByChecksum = new Map<string, string>();
+  const pathsByContentKey = new Map<string, string>();
   const updatedAssets: Asset[] = [];
   const warnings = [...site.warnings];
   let downloadedAssetCount = 0;
@@ -220,10 +254,11 @@ export async function downloadSiteAssets(
     try {
       const fetched = await fetchAsset(asset, fetcher, maxAssetBytes, timeoutMs);
       const assetChecksum = checksum(fetched.bytes);
-      const existingPath = pathsByChecksum.get(assetChecksum);
+      const extension = extensionFor(asset, fetched.mediaType);
+      const contentKey = `${assetChecksum}:${extension}`;
+      const existingPath = pathsByContentKey.get(contentKey);
       const localPath =
-        existingPath ??
-        posix.join('assets', `${assetChecksum}${extensionFor(asset, fetched.mediaType)}`);
+        existingPath ?? posix.join('assets', `${assetChecksum}${extension}`);
 
       if (existingPath === undefined) {
         await writeAssetAtomically(
@@ -232,7 +267,7 @@ export async function downloadSiteAssets(
           fetched.bytes,
           assetChecksum,
         );
-        pathsByChecksum.set(assetChecksum, localPath);
+        pathsByContentKey.set(contentKey, localPath);
         storedFileCount += 1;
       } else {
         deduplicatedAssetCount += 1;
