@@ -1,8 +1,10 @@
 # Site Rescue
 
+[![CI](https://github.com/cam11505/website_trans/actions/workflows/ci.yml/badge.svg)](https://github.com/cam11505/website_trans/actions/workflows/ci.yml)
+
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 7 verifies generated static websites locally so missing pages, assets, fragments, or unsafe paths do not pass silently.
+> Phase 8 adds a least-privilege GitHub Actions baseline so every pull request validates the same lint, typecheck, test, build, and CLI checks used locally.
 
 ## Current capabilities
 
@@ -22,8 +24,8 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 ## Requirements
 
-- Node.js 20 or newer
-- pnpm 10 or newer
+- Node.js 20.19 or newer (the CI baseline is recorded in `.node-version`)
+- pnpm 11.19.0 (recorded in `packageManager`)
 
 ## Quick start
 
@@ -130,6 +132,8 @@ pnpm test
 pnpm build
 ```
 
+GitHub Actions runs these checks plus a built-CLI smoke test on every pull request and every push to `main`. The workflow uses a frozen lockfile, pinned action commits, read-only repository permissions, and a 10-minute job timeout.
+
 Default tests do not access live websites. Live compatibility checks should remain separate and explicit.
 
 ## Crawl behavior and limitations
@@ -175,7 +179,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Returns exit code `2` when broken local references are found, making the command suitable for CI.
 - A successful verification proves local file integrity, not migration completeness or external-link availability.
 
-## Explicitly out of scope for phase 7
+## Explicitly out of scope for phase 8
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
