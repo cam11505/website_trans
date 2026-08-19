@@ -6,6 +6,7 @@
     { "path": "./packages/asset-pipeline" },
     { "path": "./packages/exporters/static-html" },
     { "path": "./packages/report" },
+    { "path": "./packages/static-verifier" },
     { "path": "./packages/adapters/weebly" },
     { "path": "./apps/cli" }
   ]

@@ -65,6 +65,7 @@ describe('rescue command', () => {
         failedAssetCount: 0,
       });
       expect(result.export).toMatchObject({ pageCount: 2, copiedAssetCount: 2 });
+      expect(result.verification).toMatchObject({ valid: true, issueCount: 0 });
       expect(site.source.adapter).toBe('weebly');
       expect(home).toContain('<h1>Home</h1>');
       expect(home).toContain('href="about.html"');
@@ -76,6 +77,7 @@ describe('rescue command', () => {
       expect(lines).toContain('Pages exported: 2');
       expect(lines).toContain('Assets copied: 2');
       expect(lines).toContain('Readiness: ready');
+      expect(lines).toContain('Verification: valid');
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });
     }
@@ -96,6 +98,7 @@ describe('rescue command', () => {
       expect(result.capture.downloadedAssetCount).toBe(0);
       expect(result.export.copiedAssetCount).toBe(0);
       expect(result.report.readiness).toBe('review-required');
+      expect(result.verification.valid).toBe(true);
       expect(home).toContain('src="https://fixture.weebly.com/hero.png"');
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });

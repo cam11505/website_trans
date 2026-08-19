@@ -2,7 +2,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 6 adds platform-neutral JSON and Markdown migration reports so users can see what was captured, what remains remote, and what requires manual review.
+> Phase 7 verifies generated static websites locally so missing pages, assets, fragments, or unsafe paths do not pass silently.
 
 ## Current capabilities
 
@@ -13,7 +13,8 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue capture <url>` normalized JSON capture command
 - `site-rescue export <site.json>` platform-neutral static HTML export command
 - `site-rescue report <site.json>` migration readiness and manual-review report command
-- `site-rescue rescue <url>` end-to-end local capture, static export, and report command
+- `site-rescue verify <site-directory>` offline static link and asset verification command
+- `site-rescue rescue <url>` end-to-end local capture, static export, report, and verification command
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
 - Local path rewriting for normalized image, gallery, and video blocks
 - Static pages with local navigation, responsive baseline CSS, and verified asset copies
@@ -33,6 +34,7 @@ pnpm site-rescue rescue https://example.weebly.com --output ./rescued-site
 pnpm site-rescue capture https://example.weebly.com --output ./capture
 pnpm site-rescue export ./capture/site.json --output ./site
 pnpm site-rescue report ./capture/site.json --output ./report
+pnpm site-rescue verify ./site
 ```
 
 The one-step command keeps reusable capture data separate from the generated website:
@@ -72,6 +74,7 @@ node apps/cli/dist/index.js rescue https://example.weebly.com --output ./rescued
 node apps/cli/dist/index.js capture https://example.weebly.com --output ./capture
 node apps/cli/dist/index.js export ./capture/site.json --output ./site
 node apps/cli/dist/index.js report ./capture/site.json --output ./report
+node apps/cli/dist/index.js verify ./site
 ```
 
 `capture/site.json` contains site metadata, navigation, normalized pages and blocks, an asset manifest, redirects, and warnings. Successfully downloaded files are stored under `capture/assets/`; each manifest entry retains its original `sourceUrl` and adds `localPath`, `mediaType`, and a SHA-256 `checksum`. Failed downloads remain as source URLs and produce `asset-download-failed` warnings without aborting the rest of the capture.
@@ -101,6 +104,7 @@ site-rescue/
 │  ├─ crawler/                # Bounded same-origin page discovery
 │  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
 │  ├─ report/                  # Platform-neutral migration analysis and reports
+│  ├─ static-verifier/         # Offline generated-site integrity checks
 │  ├─ exporters/
 │  │  └─ static-html/          # Platform-neutral static website generation
 │  └─ adapters/
@@ -162,7 +166,16 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Marks a capture as `review-required` when warnings, remote assets, preserved embeds, or raw HTML remain.
 - The report is guidance for migration review; it does not claim visual or functional parity with the source site.
 
-## Explicitly out of scope for phase 6
+## Static verification behavior
+
+- Scans generated HTML files and validates local `href`, `src`, and `poster` references.
+- Checks page fragments against HTML `id` and legacy anchor `name` values.
+- Rejects unsafe URL schemes, invalid encodings, paths outside the site root, and unverified symbolic-link targets.
+- Counts external references but never requests them over the network.
+- Returns exit code `2` when broken local references are found, making the command suitable for CI.
+- A successful verification proves local file integrity, not migration completeness or external-link availability.
+
+## Explicitly out of scope for phase 7
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
