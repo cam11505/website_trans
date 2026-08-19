@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 9 removes the remaining Weebly dependency from CLI orchestration by selecting source platforms through a platform-neutral adapter registry.
+> Phase 10 adds a conservative Generic HTML fallback adapter, proving the platform extension boundary with a second production implementation.
 
 ## Current capabilities
 
@@ -12,6 +12,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Platform-neutral source-adapter contract and deterministic registry selection
 - Bounded, deterministic, same-origin HTML crawler
 - Weebly detection with confidence and human-readable evidence
+- Generic HTML fallback detection and standards-based content normalization
 - `site-rescue diagnose <url>` CLI command
 - `site-rescue capture <url>` normalized JSON capture command
 - `site-rescue export <site.json>` platform-neutral static HTML export command
@@ -33,6 +34,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 ```bash
 pnpm install
 pnpm site-rescue diagnose https://example.weebly.com
+pnpm site-rescue diagnose https://example.com
 pnpm site-rescue rescue https://example.weebly.com --output ./rescued-site
 pnpm site-rescue capture https://example.weebly.com --output ./capture
 pnpm site-rescue export ./capture/site.json --output ./site
@@ -112,6 +114,7 @@ site-rescue/
 │  ├─ exporters/
 │  │  └─ static-html/          # Platform-neutral static website generation
 │  └─ adapters/
+│     ├─ generic-html/        # Conservative standards-based fallback adapter
 │     └─ weebly/              # Weebly-only detection rules
 ├─ fixtures/
 │  └─ weebly/                 # Sanitized, deterministic test pages
@@ -148,6 +151,14 @@ Default tests do not access live websites. Live compatibility checks should rema
 
 Only crawl and migrate websites you own or are authorized to process. Review the source site's terms and applicable policies before running the tool.
 
+## Generic HTML fallback behavior
+
+- Runs after platform-specific adapters with intentionally low detection confidence.
+- Extracts server-rendered metadata, navigation, common content blocks, and referenced assets.
+- Preserves forms, tables, and objects as inert source for manual review.
+- Adds a `generic-html-fallback` warning to every capture, so reports never claim automatic readiness.
+- Does not execute JavaScript or recover client-rendered state, application behavior, or platform-specific features.
+
 ## Asset behavior and limitations
 
 - Downloads HTTP(S) assets already discovered by the source adapter, including images, video sources, posters, and linked stylesheets.
@@ -181,7 +192,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Returns exit code `2` when broken local references are found, making the command suitable for CI.
 - A successful verification proves local file integrity, not migration completeness or external-link availability.
 
-## Explicitly out of scope for phase 9
+## Explicitly out of scope for phase 10
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -189,11 +200,11 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Pixel-perfect cloning or AI redesign
 - Astro or framework-specific exporters
 - Automatic deployment or hosting
-- A second production source adapter; Phase 9 establishes and tests the extension boundary
+- JavaScript rendering, browser automation, authenticated crawling, or form behavior recreation
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-009.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-010.
 
 ## License
 

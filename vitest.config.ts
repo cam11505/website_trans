@@ -20,6 +20,10 @@ export default defineConfig({
         process.cwd(),
         'packages/static-verifier/src/index.ts',
       ),
+      '@site-rescue/adapter-generic-html': resolve(
+        process.cwd(),
+        'packages/adapters/generic-html/src/index.ts',
+      ),
       '@site-rescue/adapter-weebly': resolve(
         process.cwd(),
         'packages/adapters/weebly/src/index.ts',

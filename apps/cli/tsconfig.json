@@ -13,6 +13,7 @@
     { "path": "../../packages/exporters/static-html" },
     { "path": "../../packages/report" },
     { "path": "../../packages/static-verifier" },
+    { "path": "../../packages/adapters/generic-html" },
     { "path": "../../packages/adapters/weebly" }
   ],
   "include": ["src/**/*.ts"]

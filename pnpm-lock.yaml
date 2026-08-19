@@ -32,6 +32,9 @@ importers:
 
   apps/cli:
     dependencies:
+      '@site-rescue/adapter-generic-html':
+        specifier: workspace:*
+        version: link:../../packages/adapters/generic-html
       '@site-rescue/adapter-weebly':
         specifier: workspace:*
         version: link:../../packages/adapters/weebly
@@ -56,6 +59,21 @@ importers:
       '@site-rescue/static-verifier':
         specifier: workspace:*
         version: link:../../packages/static-verifier
+
+  packages/adapters/generic-html:
+    dependencies:
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../../content-schema
+      '@site-rescue/core':
+        specifier: workspace:*
+        version: link:../../core
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.2.0
+      domhandler:
+        specifier: ^5.0.3
+        version: 5.0.3
 
   packages/adapters/weebly:
     dependencies:
