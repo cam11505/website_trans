@@ -25,7 +25,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 ## Requirements
 
 - Node.js 20.19 or newer (the CI baseline is recorded in `.node-version`)
-- pnpm 11.19.0 (recorded in `packageManager`)
+- pnpm 10.34.5 (recorded in `packageManager`)
 
 ## Quick start
 
