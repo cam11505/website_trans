@@ -1,7 +1,8 @@
 import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { detectWeebly, normalizeWeeblySite } from '@site-rescue/adapter-weebly';
+import { parseSite } from '@site-rescue/content-schema';
+import { selectSourceAdapter, type SourceAdapter } from '@site-rescue/core';
 import {
   downloadSiteAssets,
   type AssetFetcher,
@@ -13,12 +14,14 @@ import {
   normalizeStartUrl,
   type Fetcher,
 } from '@site-rescue/crawler';
+import { DEFAULT_SOURCE_ADAPTERS } from './adapters.js';
 
 export interface CaptureOptions {
   outputDirectory: string;
   maxPages?: number;
   fetcher?: Fetcher;
   assetFetcher?: AssetFetcher;
+  adapters?: readonly SourceAdapter[];
   downloadAssets?: boolean;
   maxAssetBytes?: number;
   capturedAt?: string;
@@ -56,9 +59,12 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
   const writeLine = options.writeLine ?? console.log;
   const url = normalizeStartUrl(inputUrl);
   const initialDocument = await fetchHtmlDocument(url, { fetcher: options.fetcher });
-  const detection = detectWeebly({ url: initialDocument.url, html: initialDocument.html });
-  if (!detection.detected) {
-    throw new Error('Capture currently supports Weebly sites only.');
+  const selection = selectSourceAdapter(
+    { url: initialDocument.url, html: initialDocument.html },
+    options.adapters ?? DEFAULT_SOURCE_ADAPTERS,
+  );
+  if (selection === undefined) {
+    throw new Error('No supported source adapter detected this website.');
   }
 
   const crawl = await crawlSameOrigin(initialDocument.url, {
@@ -66,16 +72,18 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     initialDocument,
     maxPages: options.maxPages ?? DEFAULT_MAX_PAGES,
   });
-  let site = normalizeWeeblySite({
-    baseUrl: crawl.startUrl,
-    capturedAt: options.capturedAt,
-    pages: crawl.pages.map((page) => ({
-      url: page.url,
-      html: page.html,
-      title: page.title,
-    })),
-    warnings: crawl.warnings,
-  });
+  let site = parseSite(
+    selection.adapter.normalize({
+      baseUrl: crawl.startUrl,
+      capturedAt: options.capturedAt,
+      pages: crawl.pages.map((page) => ({
+        url: page.url,
+        html: page.html,
+        title: page.title,
+      })),
+      warnings: crawl.warnings,
+    }),
+  );
   let downloadedAssetCount = 0;
   let storedFileCount = 0;
   let deduplicatedAssetCount = 0;
@@ -95,7 +103,9 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
   const outputFile = await writeJsonAtomically(options.outputDirectory, site);
 
   writeLine('Site Rescue capture complete');
-  writeLine(`Platform: Weebly (${Math.round(detection.confidence * 100)}% confidence)`);
+  writeLine(
+    `Platform: ${selection.adapter.displayName} (${Math.round(selection.detection.confidence * 100)}% confidence)`,
+  );
   writeLine(`Pages: ${site.pages.length}`);
   writeLine(`Assets in manifest: ${site.assets.length}`);
   writeLine(`Assets downloaded: ${downloadedAssetCount}`);

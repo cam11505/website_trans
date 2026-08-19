@@ -1,6 +1,14 @@
 import { load } from 'cheerio';
 import type { CheerioAPI } from 'cheerio';
 import type { AnyNode, Element } from 'domhandler';
+import type {
+  CapturedPageInput,
+  DetectionEvidence,
+  DetectionInput,
+  DetectionResult,
+  NormalizeSiteInput,
+  SourceAdapter,
+} from '@site-rescue/core';
 import {
   CURRENT_SCHEMA_VERSION,
   parseSite,
@@ -13,46 +21,15 @@ import {
   type Site,
 } from '@site-rescue/content-schema';
 
-export interface DetectionInput {
-  url: string;
-  html: string;
-}
-
-export interface DetectionEvidence {
-  signal: string;
-  weight: number;
-}
-
-export interface DetectionResult {
-  platform: 'weebly';
-  detected: boolean;
-  confidence: number;
-  evidence: DetectionEvidence[];
-}
-
-export interface SourceAdapter {
-  readonly id: string;
-  readonly displayName: string;
-  detect(input: DetectionInput): DetectionResult;
-}
-
-export interface CapturedPageInput {
-  url: string;
-  html: string;
-  title: string;
-}
-
-export interface CaptureWarningInput {
-  url: string;
-  message: string;
-}
-
-export interface NormalizeWeeblySiteInput {
-  baseUrl: string;
-  pages: CapturedPageInput[];
-  capturedAt?: string;
-  warnings?: CaptureWarningInput[];
-}
+export type NormalizeWeeblySiteInput = NormalizeSiteInput;
+export type {
+  CapturedPageInput,
+  CaptureWarningInput,
+  DetectionEvidence,
+  DetectionInput,
+  DetectionResult,
+  SourceAdapter,
+} from '@site-rescue/core';
 
 function addEvidence(
   evidence: DetectionEvidence[],
@@ -111,6 +88,7 @@ export const weeblyAdapter: SourceAdapter = {
   id: 'weebly',
   displayName: 'Weebly',
   detect: detectWeebly,
+  normalize: normalizeWeeblySite,
 };
 
 function normalizeText(value: string): string {

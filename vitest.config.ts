@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@site-rescue/content-schema': resolve(process.cwd(), 'packages/content-schema/src/index.ts'),
+      '@site-rescue/core': resolve(process.cwd(), 'packages/core/src/index.ts'),
       '@site-rescue/crawler': resolve(process.cwd(), 'packages/crawler/src/index.ts'),
       '@site-rescue/asset-pipeline': resolve(
         process.cwd(),

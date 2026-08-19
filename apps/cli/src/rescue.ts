@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import type { AssetFetcher } from '@site-rescue/asset-pipeline';
+import type { SourceAdapter } from '@site-rescue/core';
 import type { Fetcher } from '@site-rescue/crawler';
 import { runCapture, type CaptureResult } from './capture.js';
 import { runExport, type ExportResult } from './export.js';
@@ -12,6 +13,7 @@ export interface RescueOptions {
   maxPages?: number;
   fetcher?: Fetcher;
   assetFetcher?: AssetFetcher;
+  adapters?: readonly SourceAdapter[];
   downloadAssets?: boolean;
   maxAssetBytes?: number;
   capturedAt?: string;
@@ -40,6 +42,7 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
     maxPages: options.maxPages,
     fetcher: options.fetcher,
     assetFetcher: options.assetFetcher,
+    adapters: options.adapters,
     downloadAssets: options.downloadAssets,
     maxAssetBytes: options.maxAssetBytes,
     capturedAt: options.capturedAt,

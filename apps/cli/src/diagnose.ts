@@ -1,4 +1,4 @@
-import { detectWeebly } from '@site-rescue/adapter-weebly';
+import { selectSourceAdapter, type SourceAdapter } from '@site-rescue/core';
 import {
   crawlSameOrigin,
   DEFAULT_MAX_PAGES,
@@ -6,10 +6,12 @@ import {
   normalizeStartUrl,
   type Fetcher,
 } from '@site-rescue/crawler';
+import { DEFAULT_SOURCE_ADAPTERS } from './adapters.js';
 
 export interface DiagnoseOptions {
   maxPages?: number;
   fetcher?: Fetcher;
+  adapters?: readonly SourceAdapter[];
   writeLine?: (line: string) => void;
 }
 
@@ -22,7 +24,10 @@ export async function runDiagnose(inputUrl: string, options: DiagnoseOptions = {
   const writeLine = options.writeLine ?? console.log;
   const url = normalizeStartUrl(inputUrl);
   const initialDocument = await fetchHtmlDocument(url, { fetcher: options.fetcher });
-  const detection = detectWeebly({ url: initialDocument.url, html: initialDocument.html });
+  const selection = selectSourceAdapter(
+    { url: initialDocument.url, html: initialDocument.html },
+    options.adapters ?? DEFAULT_SOURCE_ADAPTERS,
+  );
   const crawl = await crawlSameOrigin(initialDocument.url, {
     fetcher: options.fetcher,
     initialDocument,
@@ -32,12 +37,12 @@ export async function runDiagnose(inputUrl: string, options: DiagnoseOptions = {
   writeLine('Site Rescue diagnosis');
   writeLine(`URL: ${crawl.startUrl}`);
   writeLine(
-    detection.detected
-      ? `Platform: Weebly (${Math.round(detection.confidence * 100)}% confidence)`
-      : 'Platform: Unknown',
+    selection === undefined
+      ? 'Platform: Unknown'
+      : `Platform: ${selection.adapter.displayName} (${Math.round(selection.detection.confidence * 100)}% confidence)`,
   );
 
-  for (const item of detection.evidence) {
+  for (const item of selection?.detection.evidence ?? []) {
     writeLine(`  evidence: ${item.signal}`);
   }
 
@@ -56,4 +61,3 @@ export async function runDiagnose(inputUrl: string, options: DiagnoseOptions = {
     writeLine('Warning: crawl stopped at the page limit; more pages remain queued.');
   }
 }
-
