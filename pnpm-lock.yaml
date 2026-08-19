@@ -44,6 +44,9 @@ importers:
       '@site-rescue/crawler':
         specifier: workspace:*
         version: link:../../packages/crawler
+      '@site-rescue/exporter-static-html':
+        specifier: workspace:*
+        version: link:../../packages/exporters/static-html
 
   packages/adapters/weebly:
     dependencies:
@@ -74,6 +77,12 @@ importers:
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
+
+  packages/exporters/static-html:
+    dependencies:
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../../content-schema
 
 packages:
 

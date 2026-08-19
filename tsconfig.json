@@ -4,6 +4,7 @@
     { "path": "./packages/content-schema" },
     { "path": "./packages/crawler" },
     { "path": "./packages/asset-pipeline" },
+    { "path": "./packages/exporters/static-html" },
     { "path": "./packages/adapters/weebly" },
     { "path": "./apps/cli" }
   ]

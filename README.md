@@ -2,7 +2,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 3 captures a Weebly site into a validated, platform-neutral `site.json` and downloads its discovered assets locally. It does not yet export a replacement website.
+> Phase 4 captures a Weebly site into a validated, platform-neutral `site.json`, downloads its discovered assets locally, and exports a safe static HTML website.
 
 ## Current capabilities
 
@@ -11,8 +11,10 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Weebly detection with confidence and human-readable evidence
 - `site-rescue diagnose <url>` CLI command
 - `site-rescue capture <url>` normalized JSON capture command
+- `site-rescue export <site.json>` platform-neutral static HTML export command
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
 - Local path rewriting for normalized image, gallery, and video blocks
+- Static pages with local navigation, responsive baseline CSS, and verified asset copies
 - Offline fixture tests for schema, crawling, adapter detection, and CLI orchestration
 
 ## Requirements
@@ -26,6 +28,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 pnpm install
 pnpm site-rescue diagnose https://example.weebly.com
 pnpm site-rescue capture https://example.weebly.com --output ./capture
+pnpm site-rescue export ./capture/site.json --output ./site
 ```
 
 Skip binary asset downloads when only a normalized manifest is needed:
@@ -46,6 +49,7 @@ After building, the CLI entry point can also be run directly:
 pnpm build
 node apps/cli/dist/index.js diagnose https://example.weebly.com
 node apps/cli/dist/index.js capture https://example.weebly.com --output ./capture
+node apps/cli/dist/index.js export ./capture/site.json --output ./site
 ```
 
 `capture/site.json` contains site metadata, navigation, normalized pages and blocks, an asset manifest, redirects, and warnings. Successfully downloaded files are stored under `capture/assets/`; each manifest entry retains its original `sourceUrl` and adds `localPath`, `mediaType`, and a SHA-256 `checksum`. Failed downloads remain as source URLs and produce `asset-download-failed` warnings without aborting the rest of the capture.
@@ -74,6 +78,8 @@ site-rescue/
 │  ├─ content-schema/         # Platform-neutral normalized site model
 │  ├─ crawler/                # Bounded same-origin page discovery
 │  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
+│  ├─ exporters/
+│  │  └─ static-html/          # Platform-neutral static website generation
 │  └─ adapters/
 │     └─ weebly/              # Weebly-only detection rules
 ├─ fixtures/
@@ -117,13 +123,22 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Does not execute downloaded content.
 - Does not yet recursively download resources referenced from inside CSS files.
 
-## Explicitly out of scope for phase 3
+## Static export behavior and limitations
+
+- Consumes only a validated `site.json` and its local assets; it does not call the crawler or Weebly adapter.
+- Writes one HTML file per normalized page and rewrites known internal page and asset references as relative links.
+- Copies local assets only after validating their recorded SHA-256 checksums.
+- Escapes text content and displays preserved embed or raw HTML as inert source instead of executing it.
+- Adds a small responsive baseline stylesheet; it does not reproduce the original platform theme pixel-for-pixel.
+
+## Explicitly out of scope for phase 4
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
 - Payments, CMS, page builder, membership, or e-commerce
 - Pixel-perfect cloning or AI redesign
-- Production exporters and replacement-site generation
+- Astro or framework-specific exporters
+- Automatic deployment or hosting
 
 ## Decisions
 

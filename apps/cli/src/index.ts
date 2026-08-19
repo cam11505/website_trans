@@ -2,14 +2,17 @@
 import { pathToFileURL } from 'node:url';
 import { runCapture } from './capture.js';
 import { runDiagnose } from './diagnose.js';
+import { runExport } from './export.js';
 
 const USAGE = `Usage:
   site-rescue diagnose <url> [--max-pages <number>]
   site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
+  site-rescue export <site.json> [--output <directory>]
 
 Commands:
   diagnose  Detect the source platform and discover same-origin HTML pages
-  capture   Normalize a Weebly site, download assets, and write a validated site.json file`;
+  capture   Normalize a Weebly site, download assets, and write a validated site.json file
+  export    Render a validated site.json capture as a static HTML website`;
 
 function parseStringOption(args: string[], name: string): string | undefined {
   const optionIndex = args.indexOf(name);
@@ -42,20 +45,27 @@ export async function main(args: string[]): Promise<number> {
     return 0;
   }
 
-  const [command, url] = args;
-  if ((command !== 'diagnose' && command !== 'capture') || url === undefined) {
+  const [command, input] = args;
+  if (
+    (command !== 'diagnose' && command !== 'capture' && command !== 'export') ||
+    input === undefined
+  ) {
     console.error(USAGE);
     return 1;
   }
 
   try {
     if (command === 'diagnose') {
-      await runDiagnose(url, { maxPages: parseMaxPages(args) });
-    } else {
-      await runCapture(url, {
+      await runDiagnose(input, { maxPages: parseMaxPages(args) });
+    } else if (command === 'capture') {
+      await runCapture(input, {
         maxPages: parseMaxPages(args),
         downloadAssets: !args.includes('--skip-assets'),
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-output',
+      });
+    } else {
+      await runExport(input, {
+        outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-site',
       });
     }
     return 0;
@@ -73,4 +83,5 @@ if (isEntryPoint) {
 
 export { runDiagnose } from './diagnose.js';
 export { runCapture } from './capture.js';
+export { runExport } from './export.js';
 
