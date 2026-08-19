@@ -5,12 +5,14 @@ import { runDiagnose } from './diagnose.js';
 import { runExport } from './export.js';
 import { runReport } from './report.js';
 import { runRescue } from './rescue.js';
+import { runVerify } from './verify.js';
 
 const USAGE = `Usage:
   site-rescue diagnose <url> [--max-pages <number>]
   site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
   site-rescue export <site.json> [--output <directory>]
   site-rescue report <site.json> [--output <directory>]
+  site-rescue verify <site-directory>
   site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
 
 Commands:
@@ -18,7 +20,8 @@ Commands:
   capture   Normalize a Weebly site, download assets, and write a validated site.json file
   export    Render a validated site.json capture as a static HTML website
   report    Create JSON and Markdown migration reports from a validated capture
-  rescue    Capture, export, and report a source website in one local operation`;
+  verify    Check generated HTML links and local assets without network access
+  rescue    Capture, export, report, and verify a source website locally`;
 
 function parseStringOption(args: string[], name: string): string | undefined {
   const optionIndex = args.indexOf(name);
@@ -57,6 +60,7 @@ export async function main(args: string[]): Promise<number> {
       command !== 'capture' &&
       command !== 'export' &&
       command !== 'report' &&
+      command !== 'verify' &&
       command !== 'rescue') ||
     input === undefined
   ) {
@@ -81,12 +85,16 @@ export async function main(args: string[]): Promise<number> {
       await runReport(input, {
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-report',
       });
+    } else if (command === 'verify') {
+      const result = await runVerify(input);
+      return result.valid ? 0 : 2;
     } else {
-      await runRescue(input, {
+      const result = await runRescue(input, {
         maxPages: parseMaxPages(args),
         downloadAssets: !args.includes('--skip-assets'),
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-output',
       });
+      return result.verification.valid ? 0 : 2;
     }
     return 0;
   } catch (error) {
@@ -106,4 +114,5 @@ export { runCapture } from './capture.js';
 export { runExport } from './export.js';
 export { runReport } from './report.js';
 export { runRescue } from './rescue.js';
+export { runVerify } from './verify.js';
 

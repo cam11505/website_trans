@@ -50,6 +50,9 @@ importers:
       '@site-rescue/report':
         specifier: workspace:*
         version: link:../../packages/report
+      '@site-rescue/static-verifier':
+        specifier: workspace:*
+        version: link:../../packages/static-verifier
 
   packages/adapters/weebly:
     dependencies:
@@ -92,6 +95,12 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../content-schema
+
+  packages/static-verifier:
+    dependencies:
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.2.0
 
 packages:
 
