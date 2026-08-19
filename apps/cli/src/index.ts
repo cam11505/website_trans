@@ -5,11 +5,11 @@ import { runDiagnose } from './diagnose.js';
 
 const USAGE = `Usage:
   site-rescue diagnose <url> [--max-pages <number>]
-  site-rescue capture <url> [--output <directory>] [--max-pages <number>]
+  site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
 
 Commands:
   diagnose  Detect the source platform and discover same-origin HTML pages
-  capture   Normalize a Weebly site and write a validated site.json file`;
+  capture   Normalize a Weebly site, download assets, and write a validated site.json file`;
 
 function parseStringOption(args: string[], name: string): string | undefined {
   const optionIndex = args.indexOf(name);
@@ -54,6 +54,7 @@ export async function main(args: string[]): Promise<number> {
     } else {
       await runCapture(url, {
         maxPages: parseMaxPages(args),
+        downloadAssets: !args.includes('--skip-assets'),
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-output',
       });
     }

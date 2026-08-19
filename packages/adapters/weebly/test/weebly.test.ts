@@ -55,6 +55,7 @@ describe('Weebly adapter detection', () => {
     ]);
     expect(site.assets.map((asset) => [asset.sourceUrl, asset.mediaType])).toEqual([
       ['https://fixture.weebly.com/media/intro.mp4', 'video/mp4'],
+      ['https://fixture.weebly.com/theme/main.css', 'text/css'],
       ['https://fixture.weebly.com/uploads/hero.jpg', 'image/jpeg'],
       ['https://fixture.weebly.com/uploads/poster.jpg', 'image/jpeg'],
     ]);

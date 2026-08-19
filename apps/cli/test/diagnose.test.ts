@@ -10,12 +10,24 @@ import { runDiagnose } from '../src/diagnose.js';
 const fixturePages = new Map<string, string>([
   [
     'https://fixture.weebly.com/',
-    '<meta name="generator" content="Weebly"><title>Home</title><nav><a href="/">Home</a><a href="/about.html">About</a></nav><main id="wsite-content"><h1>Home</h1><p>Hello</p><img src="/hero.png" alt="Hero"></main><a href="https://outside.test/">Outside</a>',
+    '<meta name="generator" content="Weebly"><title>Home</title><link rel="stylesheet" href="/theme.css"><nav><a href="/">Home</a><a href="/about.html">About</a></nav><main id="wsite-content"><h1>Home</h1><p>Hello</p><img src="/hero.png" alt="Hero"></main><a href="https://outside.test/">Outside</a>',
   ],
   ['https://fixture.weebly.com/about.html', '<title>About</title><a href="/">Home</a>'],
 ]);
 
 const fetcher: Fetcher = async (input) => {
+  if (input === 'https://fixture.weebly.com/hero.png') {
+    return new Response(new Uint8Array([1, 2, 3]), {
+      status: 200,
+      headers: { 'content-type': 'image/png' },
+    });
+  }
+  if (input === 'https://fixture.weebly.com/theme.css') {
+    return new Response('body { color: navy; }', {
+      status: 200,
+      headers: { 'content-type': 'text/css' },
+    });
+  }
   const html = fixturePages.get(input);
   return html === undefined
     ? new Response('Not found', { status: 404 })
@@ -51,11 +63,23 @@ describe('diagnose command', () => {
       });
       const site = parseSite(JSON.parse(await readFile(result.outputFile, 'utf8')) as unknown);
       expect(result.pageCount).toBe(2);
+      expect(result.downloadedAssetCount).toBe(2);
+      expect(result.storedFileCount).toBe(2);
+      expect(result.failedAssetCount).toBe(0);
       expect(site.pages.map((page) => page.title)).toEqual(['Home', 'About']);
       expect(site.assets.map((asset) => asset.sourceUrl)).toEqual([
         'https://fixture.weebly.com/hero.png',
+        'https://fixture.weebly.com/theme.css',
       ]);
+      expect(site.assets.every((asset) => asset.localPath !== undefined)).toBe(true);
+      const hero = site.assets.find((asset) => asset.sourceUrl.endsWith('/hero.png'))!;
+      const image = site.pages[0]?.blocks.find((block) => block.type === 'image');
+      expect(image?.type === 'image' ? image.src : undefined).toBe(hero.localPath);
+      expect(await readFile(join(outputDirectory, hero.localPath!))).toEqual(
+        Buffer.from([1, 2, 3]),
+      );
       expect(lines).toContain('Site Rescue capture complete');
+      expect(lines).toContain('Assets downloaded: 2');
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });
     }

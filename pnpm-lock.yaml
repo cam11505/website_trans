@@ -35,6 +35,9 @@ importers:
       '@site-rescue/adapter-weebly':
         specifier: workspace:*
         version: link:../../packages/adapters/weebly
+      '@site-rescue/asset-pipeline':
+        specifier: workspace:*
+        version: link:../../packages/asset-pipeline
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../../packages/content-schema
@@ -53,6 +56,12 @@ importers:
       domhandler:
         specifier: ^5.0.3
         version: 5.0.3
+
+  packages/asset-pipeline:
+    dependencies:
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../content-schema
 
   packages/content-schema:
     dependencies:

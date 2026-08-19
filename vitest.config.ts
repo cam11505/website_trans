@@ -6,6 +6,10 @@ export default defineConfig({
     alias: {
       '@site-rescue/content-schema': resolve(process.cwd(), 'packages/content-schema/src/index.ts'),
       '@site-rescue/crawler': resolve(process.cwd(), 'packages/crawler/src/index.ts'),
+      '@site-rescue/asset-pipeline': resolve(
+        process.cwd(),
+        'packages/asset-pipeline/src/index.ts',
+      ),
       '@site-rescue/adapter-weebly': resolve(
         process.cwd(),
         'packages/adapters/weebly/src/index.ts',
