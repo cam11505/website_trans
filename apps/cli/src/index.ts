@@ -3,19 +3,22 @@ import { pathToFileURL } from 'node:url';
 import { runCapture } from './capture.js';
 import { runDiagnose } from './diagnose.js';
 import { runExport } from './export.js';
+import { runReport } from './report.js';
 import { runRescue } from './rescue.js';
 
 const USAGE = `Usage:
   site-rescue diagnose <url> [--max-pages <number>]
   site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
   site-rescue export <site.json> [--output <directory>]
+  site-rescue report <site.json> [--output <directory>]
   site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
 
 Commands:
   diagnose  Detect the source platform and discover same-origin HTML pages
   capture   Normalize a Weebly site, download assets, and write a validated site.json file
   export    Render a validated site.json capture as a static HTML website
-  rescue    Capture and export a source website in one local operation`;
+  report    Create JSON and Markdown migration reports from a validated capture
+  rescue    Capture, export, and report a source website in one local operation`;
 
 function parseStringOption(args: string[], name: string): string | undefined {
   const optionIndex = args.indexOf(name);
@@ -53,6 +56,7 @@ export async function main(args: string[]): Promise<number> {
     (command !== 'diagnose' &&
       command !== 'capture' &&
       command !== 'export' &&
+      command !== 'report' &&
       command !== 'rescue') ||
     input === undefined
   ) {
@@ -72,6 +76,10 @@ export async function main(args: string[]): Promise<number> {
     } else if (command === 'export') {
       await runExport(input, {
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-site',
+      });
+    } else if (command === 'report') {
+      await runReport(input, {
+        outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-report',
       });
     } else {
       await runRescue(input, {
@@ -96,5 +104,6 @@ if (isEntryPoint) {
 export { runDiagnose } from './diagnose.js';
 export { runCapture } from './capture.js';
 export { runExport } from './export.js';
+export { runReport } from './report.js';
 export { runRescue } from './rescue.js';
 

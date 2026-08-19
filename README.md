@@ -2,7 +2,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 5 adds a single local rescue operation that captures a Weebly site into a validated, platform-neutral `site.json`, downloads its discovered assets, and exports a safe static HTML website.
+> Phase 6 adds platform-neutral JSON and Markdown migration reports so users can see what was captured, what remains remote, and what requires manual review.
 
 ## Current capabilities
 
@@ -12,7 +12,8 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue diagnose <url>` CLI command
 - `site-rescue capture <url>` normalized JSON capture command
 - `site-rescue export <site.json>` platform-neutral static HTML export command
-- `site-rescue rescue <url>` end-to-end local capture and static export command
+- `site-rescue report <site.json>` migration readiness and manual-review report command
+- `site-rescue rescue <url>` end-to-end local capture, static export, and report command
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
 - Local path rewriting for normalized image, gallery, and video blocks
 - Static pages with local navigation, responsive baseline CSS, and verified asset copies
@@ -31,6 +32,7 @@ pnpm site-rescue diagnose https://example.weebly.com
 pnpm site-rescue rescue https://example.weebly.com --output ./rescued-site
 pnpm site-rescue capture https://example.weebly.com --output ./capture
 pnpm site-rescue export ./capture/site.json --output ./site
+pnpm site-rescue report ./capture/site.json --output ./report
 ```
 
 The one-step command keeps reusable capture data separate from the generated website:
@@ -40,10 +42,13 @@ rescued-site/
 ├─ capture/
 │  ├─ site.json
 │  └─ assets/
-└─ site/
-   ├─ index.html
-   ├─ assets/
-   └─ ...
+├─ site/
+│  ├─ index.html
+│  ├─ assets/
+│  └─ ...
+└─ report/
+   ├─ migration-report.json
+   └─ migration-report.md
 ```
 
 Skip binary asset downloads when only a normalized manifest is needed:
@@ -66,6 +71,7 @@ node apps/cli/dist/index.js diagnose https://example.weebly.com
 node apps/cli/dist/index.js rescue https://example.weebly.com --output ./rescued-site
 node apps/cli/dist/index.js capture https://example.weebly.com --output ./capture
 node apps/cli/dist/index.js export ./capture/site.json --output ./site
+node apps/cli/dist/index.js report ./capture/site.json --output ./report
 ```
 
 `capture/site.json` contains site metadata, navigation, normalized pages and blocks, an asset manifest, redirects, and warnings. Successfully downloaded files are stored under `capture/assets/`; each manifest entry retains its original `sourceUrl` and adds `localPath`, `mediaType`, and a SHA-256 `checksum`. Failed downloads remain as source URLs and produce `asset-download-failed` warnings without aborting the rest of the capture.
@@ -94,6 +100,7 @@ site-rescue/
 │  ├─ content-schema/         # Platform-neutral normalized site model
 │  ├─ crawler/                # Bounded same-origin page discovery
 │  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
+│  ├─ report/                  # Platform-neutral migration analysis and reports
 │  ├─ exporters/
 │  │  └─ static-html/          # Platform-neutral static website generation
 │  └─ adapters/
@@ -147,7 +154,15 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Escapes text content and displays preserved embed or raw HTML as inert source instead of executing it.
 - Adds a small responsive baseline stylesheet; it does not reproduce the original platform theme pixel-for-pixel.
 
-## Explicitly out of scope for phase 5
+## Migration report behavior
+
+- Consumes only a validated `site.json`; it does not call the crawler or a source adapter.
+- Writes deterministic `migration-report.json` and `migration-report.md` artifacts.
+- Summarizes pages, nested content blocks, verified, unverified, and remote assets, warnings, and manual-review items.
+- Marks a capture as `review-required` when warnings, remote assets, preserved embeds, or raw HTML remain.
+- The report is guidance for migration review; it does not claim visual or functional parity with the source site.
+
+## Explicitly out of scope for phase 6
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation

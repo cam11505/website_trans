@@ -10,6 +10,7 @@
     { "path": "../../packages/crawler" },
     { "path": "../../packages/asset-pipeline" },
     { "path": "../../packages/exporters/static-html" },
+    { "path": "../../packages/report" },
     { "path": "../../packages/adapters/weebly" }
   ],
   "include": ["src/**/*.ts"]

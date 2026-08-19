@@ -14,6 +14,7 @@ export default defineConfig({
         process.cwd(),
         'packages/exporters/static-html/src/index.ts',
       ),
+      '@site-rescue/report': resolve(process.cwd(), 'packages/report/src/index.ts'),
       '@site-rescue/adapter-weebly': resolve(
         process.cwd(),
         'packages/adapters/weebly/src/index.ts',
