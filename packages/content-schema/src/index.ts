@@ -151,6 +151,7 @@ export const navigationItemSchema: z.ZodType<NavigationItem> = z.lazy(() =>
 export const assetSchema = z.object({
   id: z.string().min(1),
   sourceUrl: z.string().url(),
+  role: z.enum(['content', 'stylesheet', 'dependency']).optional(),
   localPath: z.string().min(1).optional(),
   mediaType: z.string().min(1).optional(),
   checksum: z.string().min(1).optional(),

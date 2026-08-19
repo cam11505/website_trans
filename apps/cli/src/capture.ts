@@ -24,6 +24,8 @@ export interface CaptureOptions {
   adapters?: readonly SourceAdapter[];
   downloadAssets?: boolean;
   maxAssetBytes?: number;
+  maxCssDepth?: number;
+  maxCssDependencies?: number;
   capturedAt?: string;
   writeLine?: (line: string) => void;
 }
@@ -36,6 +38,9 @@ export interface CaptureResult {
   storedFileCount: number;
   deduplicatedAssetCount: number;
   failedAssetCount: number;
+  cssFileCount: number;
+  discoveredCssDependencyCount: number;
+  rewrittenCssReferenceCount: number;
   warningCount: number;
 }
 
@@ -88,10 +93,15 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
   let storedFileCount = 0;
   let deduplicatedAssetCount = 0;
   let failedAssetCount = 0;
+  let cssFileCount = 0;
+  let discoveredCssDependencyCount = 0;
+  let rewrittenCssReferenceCount = 0;
   if (options.downloadAssets !== false) {
     const assetResult = await downloadSiteAssets(site, {
       fetcher: options.assetFetcher ?? options.fetcher,
       maxAssetBytes: options.maxAssetBytes,
+      maxCssDepth: options.maxCssDepth,
+      maxCssDependencies: options.maxCssDependencies,
       outputDirectory: options.outputDirectory,
     });
     site = assetResult.site;
@@ -99,6 +109,9 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     storedFileCount = assetResult.storedFileCount;
     deduplicatedAssetCount = assetResult.deduplicatedAssetCount;
     failedAssetCount = assetResult.failedAssetCount;
+    cssFileCount = assetResult.cssFileCount;
+    discoveredCssDependencyCount = assetResult.discoveredCssDependencyCount;
+    rewrittenCssReferenceCount = assetResult.rewrittenCssReferenceCount;
   }
   const outputFile = await writeJsonAtomically(options.outputDirectory, site);
 
@@ -111,6 +124,9 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
   writeLine(`Assets downloaded: ${downloadedAssetCount}`);
   writeLine(`Asset files stored: ${storedFileCount}`);
   writeLine(`Asset downloads failed: ${failedAssetCount}`);
+  writeLine(`CSS files processed: ${cssFileCount}`);
+  writeLine(`CSS dependencies discovered: ${discoveredCssDependencyCount}`);
+  writeLine(`CSS references rewritten: ${rewrittenCssReferenceCount}`);
   writeLine(`Warnings: ${site.warnings.length}`);
   writeLine(`Output: ${outputFile}`);
 
@@ -122,6 +138,9 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     storedFileCount,
     deduplicatedAssetCount,
     failedAssetCount,
+    cssFileCount,
+    discoveredCssDependencyCount,
+    rewrittenCssReferenceCount,
     warningCount: site.warnings.length,
   };
 }

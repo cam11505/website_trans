@@ -22,6 +22,7 @@ describe('verify command', () => {
       expect(result.valid).toBe(false);
       expect(lines).toContain('Site Rescue static verification complete');
       expect(lines).toContain('Status: invalid');
+      expect(lines).toContain('CSS files: 0');
       expect(lines).toContain('Issues: 1');
       expect(lines.some((line) => line.includes('[missing-file]'))).toBe(true);
     } finally {

@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 11 adds a verified, loopback-only HTTP preview for reviewing generated sites locally before deployment.
+> Phase 12 recursively rescues and verifies stylesheet dependencies, including imported CSS, fonts, and background images.
 
 ## Current capabilities
 
@@ -21,6 +21,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue preview <site-directory>` verified local HTTP preview command
 - `site-rescue rescue <url>` end-to-end local capture, static export, report, and verification command
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
+- Bounded CSS `@import` and `url()` dependency discovery with local reference rewriting
 - Local path rewriting for normalized image, gallery, and video blocks
 - Static pages with local navigation, responsive baseline CSS, and verified asset copies
 - Offline fixture tests for schema, crawling, adapter detection, and CLI orchestration
@@ -111,6 +112,7 @@ site-rescue/
 │  ├─ content-schema/         # Platform-neutral normalized site model
 │  ├─ core/                   # Source-adapter contracts and registry selection
 │  ├─ crawler/                # Bounded same-origin page discovery
+│  ├─ css-references/         # Shared CSS AST parsing and reference rewriting
 │  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
 │  ├─ report/                  # Platform-neutral migration analysis and reports
 │  ├─ static-verifier/         # Offline generated-site integrity checks
@@ -123,7 +125,7 @@ site-rescue/
 ├─ fixtures/
 │  └─ weebly/                 # Sanitized, deterministic test pages
 └─ docs/
-   └─ adr/                    # ADR-001 through ADR-011
+   └─ adr/                    # ADR-001 through ADR-012
 ```
 
 The intended long-term boundary is:
@@ -166,10 +168,14 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 ## Asset behavior and limitations
 
 - Downloads HTTP(S) assets already discovered by the source adapter, including images, video sources, posters, and linked stylesheets.
-- Stores assets using content-derived filenames and reuses one file when multiple URLs return identical bytes.
+- Recursively discovers CSS `@import` and `url()` dependencies, including fonts and background images.
+- Rewrites successfully downloaded CSS references to local relative paths; failed references remain absolute and produce warnings.
+- Stores binary assets using content-derived filenames and reuses one file when multiple URLs return identical bytes.
+- Stores rewritten stylesheets under stable source-URL hash paths so circular imports can be resolved safely.
 - Limits each asset to 50 MiB by default and records individual failures as warnings.
+- Limits stylesheet import depth to 5 and CSS-discovered assets to 500 by default.
 - Does not execute downloaded content.
-- Does not yet recursively download resources referenced from inside CSS files.
+- Preserves source stylesheets as migration assets but does not automatically apply them to normalized exported pages.
 
 ## Static export behavior and limitations
 
@@ -189,7 +195,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Static verification behavior
 
-- Scans generated HTML files and validates local `href`, `src`, and `poster` references.
+- Scans generated HTML and CSS files and validates local HTML attributes, `@import`, and `url()` references.
 - Checks page fragments against HTML `id` and legacy anchor `name` values.
 - Rejects unsafe URL schemes, invalid encodings, paths outside the site root, and unverified symbolic-link targets.
 - Counts external references but never requests them over the network.
@@ -205,7 +211,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Uses no-cache response headers so repeated manual reviews read current local files.
 - Stops cleanly with `Ctrl+C`; it does not open a browser automatically.
 
-## Explicitly out of scope for phase 11
+## Explicitly out of scope for phase 12
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -214,11 +220,13 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Astro or framework-specific exporters
 - Automatic deployment or hosting
 - LAN or public-network serving, HTTPS, authentication, or live reload
+- Automatically applying source stylesheets, CSS optimization, or visual parity analysis
+- Inline styles and JavaScript-loaded CSS
 - JavaScript rendering, browser automation, authenticated crawling, or form behavior recreation
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-011.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-012.
 
 ## License
 

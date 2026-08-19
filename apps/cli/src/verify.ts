@@ -14,6 +14,7 @@ export async function runVerify(
   writeLine('Site Rescue static verification complete');
   writeLine(`Status: ${result.valid ? 'valid' : 'invalid'}`);
   writeLine(`HTML files: ${result.htmlFileCount}`);
+  writeLine(`CSS files: ${result.cssFileCount}`);
   writeLine(`References checked: ${result.checkedReferenceCount}`);
   writeLine(`Internal references: ${result.internalReferenceCount}`);
   writeLine(`External references skipped: ${result.externalReferenceCount}`);

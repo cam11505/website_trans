@@ -98,6 +98,9 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../content-schema
+      '@site-rescue/css-references':
+        specifier: workspace:*
+        version: link:../css-references
 
   packages/content-schema:
     dependencies:
@@ -117,6 +120,15 @@ importers:
         specifier: ^1.1.2
         version: 1.2.0
 
+  packages/css-references:
+    dependencies:
+      postcss:
+        specifier: ^8.5.26
+        version: 8.5.26
+      postcss-value-parser:
+        specifier: ^4.2.0
+        version: 4.2.0
+
   packages/exporters/static-html:
     dependencies:
       '@site-rescue/content-schema':
@@ -133,6 +145,9 @@ importers:
 
   packages/static-verifier:
     dependencies:
+      '@site-rescue/css-references':
+        specifier: workspace:*
+        version: link:../css-references
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
@@ -989,6 +1004,9 @@ packages:
   picomatch@4.0.5:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
+
+  postcss-value-parser@4.2.0:
+    resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
 
   postcss@8.5.26:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
@@ -1992,6 +2010,8 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@4.0.5: {}
+
+  postcss-value-parser@4.2.0: {}
 
   postcss@8.5.26:
     dependencies:
