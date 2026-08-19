@@ -17,6 +17,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@site-rescue/core": "workspace:*",
     "@site-rescue/content-schema": "workspace:*",
     "cheerio": "^1.1.2",
     "domhandler": "^5.0.3"

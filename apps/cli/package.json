@@ -17,6 +17,7 @@
     "@site-rescue/adapter-weebly": "workspace:*",
     "@site-rescue/asset-pipeline": "workspace:*",
     "@site-rescue/content-schema": "workspace:*",
+    "@site-rescue/core": "workspace:*",
     "@site-rescue/crawler": "workspace:*",
     "@site-rescue/exporter-static-html": "workspace:*",
     "@site-rescue/report": "workspace:*",

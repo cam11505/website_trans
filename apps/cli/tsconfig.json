@@ -7,6 +7,7 @@
   },
   "references": [
     { "path": "../../packages/content-schema" },
+    { "path": "../../packages/core" },
     { "path": "../../packages/crawler" },
     { "path": "../../packages/asset-pipeline" },
     { "path": "../../packages/exporters/static-html" },

@@ -17,7 +17,7 @@ const USAGE = `Usage:
 
 Commands:
   diagnose  Detect the source platform and discover same-origin HTML pages
-  capture   Normalize a Weebly site, download assets, and write a validated site.json file
+  capture   Normalize a detected supported site and write a validated local capture
   export    Render a validated site.json capture as a static HTML website
   report    Create JSON and Markdown migration reports from a validated capture
   verify    Check generated HTML links and local assets without network access

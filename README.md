@@ -4,11 +4,12 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 8 adds a least-privilege GitHub Actions baseline so every pull request validates the same lint, typecheck, test, build, and CLI checks used locally.
+> Phase 9 removes the remaining Weebly dependency from CLI orchestration by selecting source platforms through a platform-neutral adapter registry.
 
 ## Current capabilities
 
 - Versioned normalized content schema with runtime validation
+- Platform-neutral source-adapter contract and deterministic registry selection
 - Bounded, deterministic, same-origin HTML crawler
 - Weebly detection with confidence and human-readable evidence
 - `site-rescue diagnose <url>` CLI command
@@ -103,6 +104,7 @@ site-rescue/
 │  └─ cli/                    # Thin command-line application
 ├─ packages/
 │  ├─ content-schema/         # Platform-neutral normalized site model
+│  ├─ core/                   # Source-adapter contracts and registry selection
 │  ├─ crawler/                # Bounded same-origin page discovery
 │  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
 │  ├─ report/                  # Platform-neutral migration analysis and reports
@@ -179,7 +181,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Returns exit code `2` when broken local references are found, making the command suitable for CI.
 - A successful verification proves local file integrity, not migration completeness or external-link availability.
 
-## Explicitly out of scope for phase 8
+## Explicitly out of scope for phase 9
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -187,10 +189,11 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Pixel-perfect cloning or AI redesign
 - Astro or framework-specific exporters
 - Automatic deployment or hosting
+- A second production source adapter; Phase 9 establishes and tests the extension boundary
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-008.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-009.
 
 ## License
 
