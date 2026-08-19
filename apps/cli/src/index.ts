@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { runCapture } from './capture.js';
 import { runDiagnose } from './diagnose.js';
 import { runExport } from './export.js';
+import { runPreview } from './preview.js';
 import { runReport } from './report.js';
 import { runRescue } from './rescue.js';
 import { runVerify } from './verify.js';
@@ -13,6 +14,7 @@ const USAGE = `Usage:
   site-rescue export <site.json> [--output <directory>]
   site-rescue report <site.json> [--output <directory>]
   site-rescue verify <site-directory>
+  site-rescue preview <site-directory> [--port <number>]
   site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
 
 Commands:
@@ -21,6 +23,7 @@ Commands:
   export    Render a validated site.json capture as a static HTML website
   report    Create JSON and Markdown migration reports from a validated capture
   verify    Check generated HTML links and local assets without network access
+  preview   Verify and serve a generated site on 127.0.0.1 for local review
   rescue    Capture, export, report, and verify a source website locally`;
 
 function parseStringOption(args: string[], name: string): string | undefined {
@@ -48,6 +51,17 @@ function parseMaxPages(args: string[]): number | undefined {
   return value;
 }
 
+function parsePort(args: string[]): number | undefined {
+  if (!args.includes('--port')) {
+    return undefined;
+  }
+  const value = Number(parseStringOption(args, '--port'));
+  if (!Number.isInteger(value) || value < 1 || value > 65_535) {
+    throw new Error('--port must be an integer between 1 and 65535.');
+  }
+  return value;
+}
+
 export async function main(args: string[]): Promise<number> {
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     console.log(USAGE);
@@ -61,6 +75,7 @@ export async function main(args: string[]): Promise<number> {
       command !== 'export' &&
       command !== 'report' &&
       command !== 'verify' &&
+      command !== 'preview' &&
       command !== 'rescue') ||
     input === undefined
   ) {
@@ -88,6 +103,8 @@ export async function main(args: string[]): Promise<number> {
     } else if (command === 'verify') {
       const result = await runVerify(input);
       return result.valid ? 0 : 2;
+    } else if (command === 'preview') {
+      await runPreview(input, { port: parsePort(args) });
     } else {
       const result = await runRescue(input, {
         maxPages: parseMaxPages(args),
@@ -112,6 +129,7 @@ if (isEntryPoint) {
 export { runDiagnose } from './diagnose.js';
 export { runCapture } from './capture.js';
 export { runExport } from './export.js';
+export { runPreview } from './preview.js';
 export { runReport } from './report.js';
 export { runRescue } from './rescue.js';
 export { runVerify } from './verify.js';

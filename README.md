@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 10 adds a conservative Generic HTML fallback adapter, proving the platform extension boundary with a second production implementation.
+> Phase 11 adds a verified, loopback-only HTTP preview for reviewing generated sites locally before deployment.
 
 ## Current capabilities
 
@@ -18,6 +18,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue export <site.json>` platform-neutral static HTML export command
 - `site-rescue report <site.json>` migration readiness and manual-review report command
 - `site-rescue verify <site-directory>` offline static link and asset verification command
+- `site-rescue preview <site-directory>` verified local HTTP preview command
 - `site-rescue rescue <url>` end-to-end local capture, static export, report, and verification command
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
 - Local path rewriting for normalized image, gallery, and video blocks
@@ -40,6 +41,7 @@ pnpm site-rescue capture https://example.weebly.com --output ./capture
 pnpm site-rescue export ./capture/site.json --output ./site
 pnpm site-rescue report ./capture/site.json --output ./report
 pnpm site-rescue verify ./site
+pnpm site-rescue preview ./site
 ```
 
 The one-step command keeps reusable capture data separate from the generated website:
@@ -80,6 +82,7 @@ node apps/cli/dist/index.js capture https://example.weebly.com --output ./captur
 node apps/cli/dist/index.js export ./capture/site.json --output ./site
 node apps/cli/dist/index.js report ./capture/site.json --output ./report
 node apps/cli/dist/index.js verify ./site
+node apps/cli/dist/index.js preview ./site
 ```
 
 `capture/site.json` contains site metadata, navigation, normalized pages and blocks, an asset manifest, redirects, and warnings. Successfully downloaded files are stored under `capture/assets/`; each manifest entry retains its original `sourceUrl` and adds `localPath`, `mediaType`, and a SHA-256 `checksum`. Failed downloads remain as source URLs and produce `asset-download-failed` warnings without aborting the rest of the capture.
@@ -111,6 +114,7 @@ site-rescue/
 │  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
 │  ├─ report/                  # Platform-neutral migration analysis and reports
 │  ├─ static-verifier/         # Offline generated-site integrity checks
+│  ├─ preview-server/          # Loopback-only static site preview
 │  ├─ exporters/
 │  │  └─ static-html/          # Platform-neutral static website generation
 │  └─ adapters/
@@ -119,7 +123,7 @@ site-rescue/
 ├─ fixtures/
 │  └─ weebly/                 # Sanitized, deterministic test pages
 └─ docs/
-   └─ adr/                    # ADR-001 through ADR-008
+   └─ adr/                    # ADR-001 through ADR-011
 ```
 
 The intended long-term boundary is:
@@ -192,7 +196,16 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Returns exit code `2` when broken local references are found, making the command suitable for CI.
 - A successful verification proves local file integrity, not migration completeness or external-link availability.
 
-## Explicitly out of scope for phase 10
+## Local preview behavior
+
+- Runs static verification first and refuses to serve a site with broken local references.
+- Serves only on `127.0.0.1`, using port `4173` unless `--port` is supplied.
+- Supports normal nested `index.html` routes and common static asset content types.
+- Prevents path traversal and symbolic-link escapes outside the selected site directory.
+- Uses no-cache response headers so repeated manual reviews read current local files.
+- Stops cleanly with `Ctrl+C`; it does not open a browser automatically.
+
+## Explicitly out of scope for phase 11
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -200,11 +213,12 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Pixel-perfect cloning or AI redesign
 - Astro or framework-specific exporters
 - Automatic deployment or hosting
+- LAN or public-network serving, HTTPS, authentication, or live reload
 - JavaScript rendering, browser automation, authenticated crawling, or form behavior recreation
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-010.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-011.
 
 ## License
 

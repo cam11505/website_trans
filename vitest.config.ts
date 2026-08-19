@@ -20,6 +20,10 @@ export default defineConfig({
         process.cwd(),
         'packages/static-verifier/src/index.ts',
       ),
+      '@site-rescue/preview-server': resolve(
+        process.cwd(),
+        'packages/preview-server/src/index.ts',
+      ),
       '@site-rescue/adapter-generic-html': resolve(
         process.cwd(),
         'packages/adapters/generic-html/src/index.ts',
