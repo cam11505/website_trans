@@ -10,6 +10,10 @@ export default defineConfig({
         process.cwd(),
         'packages/asset-pipeline/src/index.ts',
       ),
+      '@site-rescue/exporter-static-html': resolve(
+        process.cwd(),
+        'packages/exporters/static-html/src/index.ts',
+      ),
       '@site-rescue/adapter-weebly': resolve(
         process.cwd(),
         'packages/adapters/weebly/src/index.ts',
