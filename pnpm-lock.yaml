@@ -47,6 +47,9 @@ importers:
       '@site-rescue/exporter-static-html':
         specifier: workspace:*
         version: link:../../packages/exporters/static-html
+      '@site-rescue/report':
+        specifier: workspace:*
+        version: link:../../packages/report
 
   packages/adapters/weebly:
     dependencies:
@@ -83,6 +86,12 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../../content-schema
+
+  packages/report:
+    dependencies:
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../content-schema
 
 packages:
 

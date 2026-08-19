@@ -55,6 +55,9 @@ describe('rescue command', () => {
       );
       const home = await readFile(join(result.siteDirectory, 'index.html'), 'utf8');
       const about = await readFile(join(result.siteDirectory, 'about.html'), 'utf8');
+      const report = JSON.parse(
+        await readFile(join(result.reportDirectory, 'migration-report.json'), 'utf8'),
+      ) as { readiness: string; summary: { pageCount: number } };
 
       expect(result.capture).toMatchObject({
         pageCount: 2,
@@ -67,10 +70,12 @@ describe('rescue command', () => {
       expect(home).toContain('href="about.html"');
       expect(home).toMatch(/src="assets\/[a-f0-9]{64}\.png"/u);
       expect(about).toContain('<h1>About</h1>');
+      expect(report).toMatchObject({ readiness: 'ready', summary: { pageCount: 2 } });
       expect(lines).toContain('Site Rescue complete');
       expect(lines).toContain('Pages captured: 2');
       expect(lines).toContain('Pages exported: 2');
       expect(lines).toContain('Assets copied: 2');
+      expect(lines).toContain('Readiness: ready');
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });
     }
@@ -90,6 +95,7 @@ describe('rescue command', () => {
 
       expect(result.capture.downloadedAssetCount).toBe(0);
       expect(result.export.copiedAssetCount).toBe(0);
+      expect(result.report.readiness).toBe('review-required');
       expect(home).toContain('src="https://fixture.weebly.com/hero.png"');
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });
