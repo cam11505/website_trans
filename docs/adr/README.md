@@ -14,3 +14,4 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-008](./ADR-008-fixture-driven-testing.md) | Fixture-driven testing | Accepted |
 | [ADR-009](./ADR-009-source-adapter-registry.md) | Core source-adapter registry | Accepted |
 | [ADR-010](./ADR-010-generic-html-fallback-adapter.md) | Generic HTML fallback adapter | Accepted |
+| [ADR-011](./ADR-011-loopback-local-preview.md) | Loopback-only local preview server | Accepted |

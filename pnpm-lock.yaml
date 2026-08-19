@@ -53,6 +53,9 @@ importers:
       '@site-rescue/exporter-static-html':
         specifier: workspace:*
         version: link:../../packages/exporters/static-html
+      '@site-rescue/preview-server':
+        specifier: workspace:*
+        version: link:../../packages/preview-server
       '@site-rescue/report':
         specifier: workspace:*
         version: link:../../packages/report
@@ -119,6 +122,8 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../../content-schema
+
+  packages/preview-server: {}
 
   packages/report:
     dependencies:
