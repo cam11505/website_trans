@@ -2,7 +2,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 4 captures a Weebly site into a validated, platform-neutral `site.json`, downloads its discovered assets locally, and exports a safe static HTML website.
+> Phase 5 adds a single local rescue operation that captures a Weebly site into a validated, platform-neutral `site.json`, downloads its discovered assets, and exports a safe static HTML website.
 
 ## Current capabilities
 
@@ -12,6 +12,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue diagnose <url>` CLI command
 - `site-rescue capture <url>` normalized JSON capture command
 - `site-rescue export <site.json>` platform-neutral static HTML export command
+- `site-rescue rescue <url>` end-to-end local capture and static export command
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
 - Local path rewriting for normalized image, gallery, and video blocks
 - Static pages with local navigation, responsive baseline CSS, and verified asset copies
@@ -27,8 +28,22 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 ```bash
 pnpm install
 pnpm site-rescue diagnose https://example.weebly.com
+pnpm site-rescue rescue https://example.weebly.com --output ./rescued-site
 pnpm site-rescue capture https://example.weebly.com --output ./capture
 pnpm site-rescue export ./capture/site.json --output ./site
+```
+
+The one-step command keeps reusable capture data separate from the generated website:
+
+```text
+rescued-site/
+├─ capture/
+│  ├─ site.json
+│  └─ assets/
+└─ site/
+   ├─ index.html
+   ├─ assets/
+   └─ ...
 ```
 
 Skip binary asset downloads when only a normalized manifest is needed:
@@ -48,6 +63,7 @@ After building, the CLI entry point can also be run directly:
 ```bash
 pnpm build
 node apps/cli/dist/index.js diagnose https://example.weebly.com
+node apps/cli/dist/index.js rescue https://example.weebly.com --output ./rescued-site
 node apps/cli/dist/index.js capture https://example.weebly.com --output ./capture
 node apps/cli/dist/index.js export ./capture/site.json --output ./site
 ```
@@ -131,7 +147,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Escapes text content and displays preserved embed or raw HTML as inert source instead of executing it.
 - Adds a small responsive baseline stylesheet; it does not reproduce the original platform theme pixel-for-pixel.
 
-## Explicitly out of scope for phase 4
+## Explicitly out of scope for phase 5
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
