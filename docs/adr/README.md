@@ -13,3 +13,4 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-007](./ADR-007-exporter-boundary.md) | Exporter boundary | Accepted |
 | [ADR-008](./ADR-008-fixture-driven-testing.md) | Fixture-driven testing | Accepted |
 | [ADR-009](./ADR-009-source-adapter-registry.md) | Core source-adapter registry | Accepted |
+| [ADR-010](./ADR-010-generic-html-fallback-adapter.md) | Generic HTML fallback adapter | Accepted |

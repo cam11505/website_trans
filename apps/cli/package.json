@@ -14,6 +14,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@site-rescue/adapter-generic-html": "workspace:*",
     "@site-rescue/adapter-weebly": "workspace:*",
     "@site-rescue/asset-pipeline": "workspace:*",
     "@site-rescue/content-schema": "workspace:*",
