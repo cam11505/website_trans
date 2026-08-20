@@ -2,9 +2,10 @@ import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { parseSite } from '@site-rescue/content-schema';
 import { runExport } from '../src/export.js';
+import { main } from '../src/index.js';
 
 describe('export command', () => {
   it('reads a validated capture and writes a browsable static site', async () => {
@@ -55,15 +56,33 @@ describe('export command', () => {
         writeLine: (line) => lines.push(line),
       });
 
-      expect(result).toMatchObject({ pageCount: 1, copiedAssetCount: 1 });
+      expect(result).toMatchObject({
+        pageCount: 1,
+        copiedAssetCount: 1,
+        appliedSourceStylesheetCount: 0,
+      });
       expect(await readFile(join(outputDirectory, 'index.html'), 'utf8')).toContain(
         'src="assets/fixture.png"',
       );
       expect(lines).toContain('Site Rescue static export complete');
       expect(lines).toContain('Pages written: 1');
       expect(lines).toContain('Assets copied: 1');
+      expect(lines).toContain('Source stylesheets applied: 0');
     } finally {
       await rm(workspace, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects an unsupported style mode before exporting', async () => {
+    const lines: string[] = [];
+    const error = vi.spyOn(console, 'error').mockImplementation((line?: unknown) => {
+      lines.push(String(line));
+    });
+    try {
+      await expect(main(['export', 'site.json', '--style-mode', 'unknown'])).resolves.toBe(1);
+      expect(lines).toContain('Error: --style-mode must be either baseline or source.');
+    } finally {
+      error.mockRestore();
     }
   });
 });

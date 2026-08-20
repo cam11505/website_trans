@@ -7,15 +7,16 @@ import { runPreview } from './preview.js';
 import { runReport } from './report.js';
 import { runRescue } from './rescue.js';
 import { runVerify } from './verify.js';
+import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 
 const USAGE = `Usage:
   site-rescue diagnose <url> [--max-pages <number>]
   site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
-  site-rescue export <site.json> [--output <directory>]
+  site-rescue export <site.json> [--output <directory>] [--style-mode <baseline|source>]
   site-rescue report <site.json> [--output <directory>]
   site-rescue verify <site-directory>
   site-rescue preview <site-directory> [--port <number>]
-  site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
+  site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--skip-assets] [--style-mode <baseline|source>]
 
 Commands:
   diagnose  Detect the source platform and discover same-origin HTML pages
@@ -62,6 +63,17 @@ function parsePort(args: string[]): number | undefined {
   return value;
 }
 
+function parseStyleMode(args: string[]): StaticHtmlStyleMode | undefined {
+  if (!args.includes('--style-mode')) {
+    return undefined;
+  }
+  const value = parseStringOption(args, '--style-mode');
+  if (value !== 'baseline' && value !== 'source') {
+    throw new Error('--style-mode must be either baseline or source.');
+  }
+  return value;
+}
+
 export async function main(args: string[]): Promise<number> {
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     console.log(USAGE);
@@ -95,6 +107,7 @@ export async function main(args: string[]): Promise<number> {
     } else if (command === 'export') {
       await runExport(input, {
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-site',
+        styleMode: parseStyleMode(args),
       });
     } else if (command === 'report') {
       await runReport(input, {
@@ -110,6 +123,7 @@ export async function main(args: string[]): Promise<number> {
         maxPages: parseMaxPages(args),
         downloadAssets: !args.includes('--skip-assets'),
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-output',
+        styleMode: parseStyleMode(args),
       });
       return result.verification.valid ? 0 : 2;
     }

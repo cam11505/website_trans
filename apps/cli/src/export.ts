@@ -1,10 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { parseSite } from '@site-rescue/content-schema';
-import { exportStaticHtml } from '@site-rescue/exporter-static-html';
+import {
+  exportStaticHtml,
+  type StaticHtmlStyleMode,
+} from '@site-rescue/exporter-static-html';
 
 export interface ExportOptions {
   outputDirectory: string;
+  styleMode?: StaticHtmlStyleMode;
   writeLine?: (line: string) => void;
 }
 
@@ -12,6 +16,7 @@ export interface ExportResult {
   outputDirectory: string;
   pageCount: number;
   copiedAssetCount: number;
+  appliedSourceStylesheetCount: number;
 }
 
 export async function runExport(inputFile: string, options: ExportOptions): Promise<ExportResult> {
@@ -21,11 +26,13 @@ export async function runExport(inputFile: string, options: ExportOptions): Prom
   const result = await exportStaticHtml(site, {
     captureDirectory: dirname(absoluteInput),
     outputDirectory: options.outputDirectory,
+    styleMode: options.styleMode,
   });
 
   writeLine('Site Rescue static export complete');
   writeLine(`Pages written: ${result.pageCount}`);
   writeLine(`Assets copied: ${result.copiedAssetCount}`);
+  writeLine(`Source stylesheets applied: ${result.appliedSourceStylesheetCount}`);
   writeLine(`Output: ${result.outputDirectory}`);
   return result;
 }
