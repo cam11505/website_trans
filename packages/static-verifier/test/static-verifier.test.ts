@@ -32,6 +32,7 @@ describe('static site verifier', () => {
 
       expect(result).toMatchObject({
         htmlFileCount: 3,
+        cssFileCount: 1,
         checkedReferenceCount: 7,
         internalReferenceCount: 6,
         externalReferenceCount: 1,
@@ -80,6 +81,51 @@ describe('static site verifier', () => {
     const directory = await mkdtemp(join(tmpdir(), 'site-rescue-verify-empty-'));
     try {
       await expect(verifyStaticSite(directory)).rejects.toThrow('No HTML files found');
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
+  it('checks local, external, unsafe, and malformed CSS references offline', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'site-rescue-verify-css-'));
+    try {
+      await mkdir(join(directory, 'assets', 'css'), { recursive: true });
+      await writeFile(join(directory, 'index.html'), '<h1>CSS fixture</h1>', 'utf8');
+      await writeFile(
+        join(directory, 'assets', 'css', 'site.css'),
+        '@import "theme.css"; .a { background: url(../missing.png) } .b { background: url(https://cdn.test/image.png) } .c { background: url(javascript:alert(1)) } .d { background: url(../../../outside.png) }',
+        'utf8',
+      );
+      await writeFile(
+        join(directory, 'assets', 'css', 'theme.css'),
+        '.theme { color: navy }',
+        'utf8',
+      );
+      await writeFile(
+        join(directory, 'assets', 'css', 'broken.css'),
+        '.broken { color: red;',
+        'utf8',
+      );
+
+      const result = await verifyStaticSite(directory);
+
+      expect(result).toMatchObject({
+        htmlFileCount: 1,
+        cssFileCount: 3,
+        checkedReferenceCount: 5,
+        internalReferenceCount: 3,
+        externalReferenceCount: 1,
+        issueCount: 4,
+        valid: false,
+      });
+      expect(result.issues.map((issue) => issue.code)).toEqual(
+        expect.arrayContaining([
+          'invalid-css',
+          'invalid-reference',
+          'missing-file',
+          'outside-root',
+        ]),
+      );
     } finally {
       await rm(directory, { force: true, recursive: true });
     }

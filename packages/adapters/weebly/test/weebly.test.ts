@@ -59,6 +59,9 @@ describe('Weebly adapter detection', () => {
       ['https://fixture.weebly.com/uploads/hero.jpg', 'image/jpeg'],
       ['https://fixture.weebly.com/uploads/poster.jpg', 'image/jpeg'],
     ]);
+    expect(
+      site.assets.find((asset) => asset.sourceUrl.endsWith('/theme/main.css'))?.role,
+    ).toBe('stylesheet');
     expect(site.navigation.map((item) => item.label)).toEqual(['Home', 'About', 'External']);
     expect(site.navigation[1]?.children.map((item) => item.label)).toEqual(['Contact']);
     expect(site.warnings.map((warning) => warning.code)).toContain('unsupported-html-preserved');

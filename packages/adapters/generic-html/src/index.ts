@@ -292,12 +292,16 @@ function inferMediaType(sourceUrl: string): string | undefined {
 }
 
 function collectAssets(pages: Page[], capturedPages: CapturedPageInput[]): Asset[] {
-  const urls = new Map<string, string | undefined>();
-  const add = (sourceUrl: string, mediaType?: string): void => {
+  const urls = new Map<
+    string,
+    { mediaType: string | undefined; role: Asset['role'] | undefined }
+  >();
+  const add = (sourceUrl: string, mediaType?: string, role?: Asset['role']): void => {
     const existing = urls.get(sourceUrl);
-    if (!urls.has(sourceUrl) || (existing === undefined && mediaType !== undefined)) {
-      urls.set(sourceUrl, mediaType);
-    }
+    urls.set(sourceUrl, {
+      mediaType: existing?.mediaType ?? mediaType,
+      role: existing?.role ?? role,
+    });
   };
   const visit = (block: ContentBlock): void => {
     if (block.type === 'image') {
@@ -324,17 +328,18 @@ function collectAssets(pages: Page[], capturedPages: CapturedPageInput[]): Asset
       }
       const sourceUrl = resolveHttpUrl($(node).attr('href'), capturedPage.url);
       if (sourceUrl !== undefined) {
-        add(sourceUrl, 'text/css');
+        add(sourceUrl, 'text/css', 'stylesheet');
       }
     });
   }
 
   return [...urls.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([sourceUrl, mediaType], index) => ({
+    .map(([sourceUrl, details], index) => ({
       id: `asset-${String(index + 1).padStart(4, '0')}`,
       sourceUrl,
-      ...(mediaType === undefined ? {} : { mediaType }),
+      ...(details.mediaType === undefined ? {} : { mediaType: details.mediaType }),
+      ...(details.role === undefined ? {} : { role: details.role }),
     }));
 }
 

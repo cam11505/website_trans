@@ -1,10 +1,12 @@
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import { dirname, extname, relative, resolve, sep } from 'node:path';
+import { collectCssReferences, type CssReference } from '@site-rescue/css-references';
 import { load } from 'cheerio';
 
 export interface VerificationIssue {
   code:
     | 'invalid-reference'
+    | 'invalid-css'
     | 'missing-file'
     | 'missing-fragment'
     | 'outside-root'
@@ -19,6 +21,7 @@ export interface VerificationIssue {
 export interface VerifyStaticSiteResult {
   directory: string;
   htmlFileCount: number;
+  cssFileCount: number;
   checkedReferenceCount: number;
   internalReferenceCount: number;
   externalReferenceCount: number;
@@ -47,7 +50,7 @@ function toPosixPath(root: string, file: string): string {
   return relative(root, file).split(sep).join('/');
 }
 
-async function collectHtmlFiles(directory: string): Promise<string[]> {
+async function collectFiles(directory: string, extension: string): Promise<string[]> {
   const files: string[] = [];
   const visit = async (current: string): Promise<void> => {
     const entries = await readdir(current, { withFileTypes: true });
@@ -56,7 +59,7 @@ async function collectHtmlFiles(directory: string): Promise<string[]> {
       const target = resolve(current, entry.name);
       if (entry.isDirectory()) {
         await visit(target);
-      } else if (entry.isFile() && extname(entry.name).toLowerCase() === '.html') {
+      } else if (entry.isFile() && extname(entry.name).toLowerCase() === extension) {
         files.push(target);
       }
     }
@@ -179,7 +182,8 @@ export async function verifyStaticSite(directory: string): Promise<VerifyStaticS
   if (!rootInformation.isDirectory()) {
     throw new Error(`Static site directory is not a directory: ${root}`);
   }
-  const htmlFiles = await collectHtmlFiles(root);
+  const htmlFiles = await collectFiles(root, '.html');
+  const cssFiles = await collectFiles(root, '.css');
   if (htmlFiles.length === 0) {
     throw new Error(`No HTML files found in static site directory: ${root}`);
   }
@@ -189,90 +193,118 @@ export async function verifyStaticSite(directory: string): Promise<VerifyStaticS
   let internalReferenceCount = 0;
   let externalReferenceCount = 0;
 
-  for (const sourceFile of htmlFiles) {
+  const checkReference = async (sourceFile: string, reference: Reference): Promise<void> => {
     const sourceRelative = toPosixPath(root, sourceFile);
+    checkedReferenceCount += 1;
+    const classification = classifyReference(reference.value);
+    if (classification === 'external') {
+      externalReferenceCount += 1;
+      return;
+    }
+    if (classification === 'invalid') {
+      issues.push({
+        code: 'invalid-reference',
+        sourceFile: sourceRelative,
+        element: reference.element,
+        attribute: reference.attribute,
+        reference: reference.value,
+      });
+      return;
+    }
+    internalReferenceCount += 1;
+    const parts = splitReference(reference.value);
+    let target: string;
+    try {
+      target = resolveReferenceTarget(root, sourceFile, parts.path);
+    } catch {
+      issues.push({
+        code: 'invalid-reference',
+        sourceFile: sourceRelative,
+        element: reference.element,
+        attribute: reference.attribute,
+        reference: reference.value,
+      });
+      return;
+    }
+    if (!isWithinRoot(root, target)) {
+      issues.push({
+        code: 'outside-root',
+        sourceFile: sourceRelative,
+        element: reference.element,
+        attribute: reference.attribute,
+        reference: reference.value,
+      });
+      return;
+    }
+    const existing = await resolveExistingTarget(target);
+    const targetRelative = toPosixPath(root, existing.file ?? target);
+    if (existing.symbolicLink) {
+      issues.push({
+        code: 'symbolic-link-not-verified',
+        sourceFile: sourceRelative,
+        element: reference.element,
+        attribute: reference.attribute,
+        reference: reference.value,
+        targetFile: targetRelative,
+      });
+    } else if (existing.file === undefined) {
+      issues.push({
+        code: 'missing-file',
+        sourceFile: sourceRelative,
+        element: reference.element,
+        attribute: reference.attribute,
+        reference: reference.value,
+        targetFile: targetRelative,
+      });
+    } else if (
+      parts.fragment !== undefined &&
+      !(await hasFragment(existing.file, parts.fragment))
+    ) {
+      issues.push({
+        code: 'missing-fragment',
+        sourceFile: sourceRelative,
+        element: reference.element,
+        attribute: reference.attribute,
+        reference: reference.value,
+        targetFile: toPosixPath(root, existing.file),
+      });
+    }
+  };
+
+  for (const sourceFile of htmlFiles) {
     const references = collectReferences(await readFile(sourceFile, 'utf8'));
     for (const reference of references) {
-      checkedReferenceCount += 1;
-      const classification = classifyReference(reference.value);
-      if (classification === 'external') {
-        externalReferenceCount += 1;
-        continue;
-      }
-      if (classification === 'invalid') {
-        issues.push({
-          code: 'invalid-reference',
-          sourceFile: sourceRelative,
-          element: reference.element,
-          attribute: reference.attribute,
-          reference: reference.value,
-        });
-        continue;
-      }
-      internalReferenceCount += 1;
-      const parts = splitReference(reference.value);
-      let target: string;
-      try {
-        target = resolveReferenceTarget(root, sourceFile, parts.path);
-      } catch {
-        issues.push({
-          code: 'invalid-reference',
-          sourceFile: sourceRelative,
-          element: reference.element,
-          attribute: reference.attribute,
-          reference: reference.value,
-        });
-        continue;
-      }
-      if (!isWithinRoot(root, target)) {
-        issues.push({
-          code: 'outside-root',
-          sourceFile: sourceRelative,
-          element: reference.element,
-          attribute: reference.attribute,
-          reference: reference.value,
-        });
-        continue;
-      }
-      const existing = await resolveExistingTarget(target);
-      const targetRelative = toPosixPath(root, existing.file ?? target);
-      if (existing.symbolicLink) {
-        issues.push({
-          code: 'symbolic-link-not-verified',
-          sourceFile: sourceRelative,
-          element: reference.element,
-          attribute: reference.attribute,
-          reference: reference.value,
-          targetFile: targetRelative,
-        });
-      } else if (existing.file === undefined) {
-        issues.push({
-          code: 'missing-file',
-          sourceFile: sourceRelative,
-          element: reference.element,
-          attribute: reference.attribute,
-          reference: reference.value,
-          targetFile: targetRelative,
-        });
-      } else if (
-        parts.fragment !== undefined &&
-        !(await hasFragment(existing.file, parts.fragment))
-      ) {
-        issues.push({
-          code: 'missing-fragment',
-          sourceFile: sourceRelative,
-          element: reference.element,
-          attribute: reference.attribute,
-          reference: reference.value,
-          targetFile: toPosixPath(root, existing.file),
-        });
-      }
+      await checkReference(sourceFile, reference);
+    }
+  }
+
+  for (const sourceFile of cssFiles) {
+    let references: CssReference[];
+    try {
+      references = collectCssReferences(await readFile(sourceFile, 'utf8'));
+    } catch {
+      issues.push({
+        code: 'invalid-css',
+        sourceFile: toPosixPath(root, sourceFile),
+        element: 'stylesheet',
+        attribute: 'syntax',
+        reference: '',
+      });
+      continue;
+    }
+    for (const reference of references) {
+      await checkReference(sourceFile, {
+        element: reference.kind === 'import' ? '@import' : 'css',
+        attribute: reference.kind,
+        value: reference.value,
+      });
     }
   }
 
   return {
     directory: root,
     htmlFileCount: htmlFiles.length,
+    cssFileCount: cssFiles.length,
     checkedReferenceCount,
     internalReferenceCount,
     externalReferenceCount,

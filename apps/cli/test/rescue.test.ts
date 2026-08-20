@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseSite } from '@site-rescue/content-schema';
 import type { Fetcher } from '@site-rescue/crawler';
+import { startPreviewServer } from '@site-rescue/preview-server';
 import { runRescue } from '../src/rescue.js';
 
 const fixturePages = new Map<string, string>([
@@ -25,9 +26,24 @@ const fetcher: Fetcher = async (input) => {
     });
   }
   if (input === 'https://fixture.weebly.com/theme.css') {
-    return new Response('body { color: navy; }', {
+    return new Response(
+      '@font-face { src: url("/theme.woff2") } body { color: navy; background: url("/background.png") }',
+      {
+        status: 200,
+        headers: { 'content-type': 'text/css' },
+      },
+    );
+  }
+  if (input === 'https://fixture.weebly.com/theme.woff2') {
+    return new Response(new Uint8Array([4, 5, 6]), {
       status: 200,
-      headers: { 'content-type': 'text/css' },
+      headers: { 'content-type': 'font/woff2' },
+    });
+  }
+  if (input === 'https://fixture.weebly.com/background.png') {
+    return new Response(new Uint8Array([7, 8, 9]), {
+      status: 200,
+      headers: { 'content-type': 'image/png' },
     });
   }
   const html = fixturePages.get(input);
@@ -55,27 +71,54 @@ describe('rescue command', () => {
       );
       const home = await readFile(join(result.siteDirectory, 'index.html'), 'utf8');
       const about = await readFile(join(result.siteDirectory, 'about.html'), 'utf8');
+      const sourceStylesheet = site.assets.find(
+        (asset) => asset.sourceUrl === 'https://fixture.weebly.com/theme.css',
+      )!;
+      const exportedStylesheet = await readFile(
+        join(result.siteDirectory, sourceStylesheet.localPath!),
+        'utf8',
+      );
       const report = JSON.parse(
         await readFile(join(result.reportDirectory, 'migration-report.json'), 'utf8'),
       ) as { readiness: string; summary: { pageCount: number } };
 
       expect(result.capture).toMatchObject({
         pageCount: 2,
-        downloadedAssetCount: 2,
+        downloadedAssetCount: 4,
+        discoveredCssDependencyCount: 2,
+        rewrittenCssReferenceCount: 2,
         failedAssetCount: 0,
       });
-      expect(result.export).toMatchObject({ pageCount: 2, copiedAssetCount: 2 });
-      expect(result.verification).toMatchObject({ valid: true, issueCount: 0 });
+      expect(result.export).toMatchObject({ pageCount: 2, copiedAssetCount: 4 });
+      expect(result.verification).toMatchObject({
+        valid: true,
+        issueCount: 0,
+        cssFileCount: 2,
+      });
       expect(site.source.adapter).toBe('weebly');
       expect(home).toContain('<h1>Home</h1>');
       expect(home).toContain('href="about.html"');
       expect(home).toMatch(/src="assets\/[a-f0-9]{64}\.png"/u);
+      expect(exportedStylesheet).not.toContain('https://');
+      expect(exportedStylesheet).toMatch(/url\("\.\.\/[a-f0-9]{64}\.woff2"\)/u);
+      expect(exportedStylesheet).toMatch(/url\("\.\.\/[a-f0-9]{64}\.png"\)/u);
+      const preview = await startPreviewServer(result.siteDirectory, { port: 0 });
+      try {
+        const response = await fetch(`${preview.origin}/${sourceStylesheet.localPath}`);
+        expect(response.status).toBe(200);
+        expect(response.headers.get('content-type')).toBe('text/css; charset=utf-8');
+        expect(await response.text()).toBe(exportedStylesheet);
+      } finally {
+        await preview.close();
+      }
       expect(about).toContain('<h1>About</h1>');
       expect(report).toMatchObject({ readiness: 'ready', summary: { pageCount: 2 } });
       expect(lines).toContain('Site Rescue complete');
       expect(lines).toContain('Pages captured: 2');
       expect(lines).toContain('Pages exported: 2');
-      expect(lines).toContain('Assets copied: 2');
+      expect(lines).toContain('Assets copied: 4');
+      expect(lines).toContain('CSS dependencies discovered: 2');
+      expect(lines).toContain('CSS references rewritten: 2');
       expect(lines).toContain('Readiness: ready');
       expect(lines).toContain('Verification: valid');
     } finally {

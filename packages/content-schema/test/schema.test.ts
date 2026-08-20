@@ -39,5 +39,20 @@ describe('site schema', () => {
   it('rejects an unsupported schema version', () => {
     expect(() => parseSite({ ...minimalSite, schemaVersion: '2.0.0' })).toThrow();
   });
-});
 
+  it('accepts optional platform-neutral asset roles without breaking old captures', () => {
+    const parsed = parseSite({
+      ...minimalSite,
+      assets: [
+        {
+          id: 'asset-css',
+          sourceUrl: 'https://example.test/site.css',
+          role: 'stylesheet',
+        },
+      ],
+    });
+
+    expect(parsed.assets[0]?.role).toBe('stylesheet');
+    expect(parseSite(minimalSite).assets).toEqual([]);
+  });
+});

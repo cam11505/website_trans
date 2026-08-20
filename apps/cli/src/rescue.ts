@@ -16,6 +16,8 @@ export interface RescueOptions {
   adapters?: readonly SourceAdapter[];
   downloadAssets?: boolean;
   maxAssetBytes?: number;
+  maxCssDepth?: number;
+  maxCssDependencies?: number;
   capturedAt?: string;
   writeLine?: (line: string) => void;
 }
@@ -45,6 +47,8 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
     adapters: options.adapters,
     downloadAssets: options.downloadAssets,
     maxAssetBytes: options.maxAssetBytes,
+    maxCssDepth: options.maxCssDepth,
+    maxCssDependencies: options.maxCssDependencies,
     capturedAt: options.capturedAt,
     writeLine: () => undefined,
   });
@@ -64,6 +68,8 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
   writeLine(`Pages captured: ${capture.pageCount}`);
   writeLine(`Assets downloaded: ${capture.downloadedAssetCount}`);
   writeLine(`Asset downloads failed: ${capture.failedAssetCount}`);
+  writeLine(`CSS dependencies discovered: ${capture.discoveredCssDependencyCount}`);
+  writeLine(`CSS references rewritten: ${capture.rewrittenCssReferenceCount}`);
   writeLine(`Pages exported: ${exported.pageCount}`);
   writeLine(`Assets copied: ${exported.copiedAssetCount}`);
   writeLine(`Readiness: ${report.readiness}`);

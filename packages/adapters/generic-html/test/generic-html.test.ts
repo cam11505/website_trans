@@ -73,6 +73,9 @@ describe('Generic HTML adapter', () => {
       ['https://generic.example/media/intro.mp4', 'video/mp4'],
       ['https://generic.example/styles/site.css', 'text/css'],
     ]);
+    expect(
+      site.assets.find((asset) => asset.sourceUrl.endsWith('/styles/site.css'))?.role,
+    ).toBe('stylesheet');
     expect(site.warnings.map((warning) => warning.code)).toEqual([
       'generic-html-fallback',
       'unsupported-html-preserved',
