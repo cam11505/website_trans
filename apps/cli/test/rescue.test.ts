@@ -64,6 +64,7 @@ describe('rescue command', () => {
         capturedAt: '2026-08-19T00:00:00.000Z',
         fetcher,
         outputDirectory,
+        styleMode: 'source',
         writeLine: (line) => lines.push(line),
       });
       const site = parseSite(
@@ -89,7 +90,11 @@ describe('rescue command', () => {
         rewrittenCssReferenceCount: 2,
         failedAssetCount: 0,
       });
-      expect(result.export).toMatchObject({ pageCount: 2, copiedAssetCount: 4 });
+      expect(result.export).toMatchObject({
+        pageCount: 2,
+        copiedAssetCount: 4,
+        appliedSourceStylesheetCount: 1,
+      });
       expect(result.verification).toMatchObject({
         valid: true,
         issueCount: 0,
@@ -99,6 +104,9 @@ describe('rescue command', () => {
       expect(home).toContain('<h1>Home</h1>');
       expect(home).toContain('href="about.html"');
       expect(home).toMatch(/src="assets\/[a-f0-9]{64}\.png"/u);
+      expect(home).toContain(
+        `href="${sourceStylesheet.localPath}" data-site-rescue-style="source"`,
+      );
       expect(exportedStylesheet).not.toContain('https://');
       expect(exportedStylesheet).toMatch(/url\("\.\.\/[a-f0-9]{64}\.woff2"\)/u);
       expect(exportedStylesheet).toMatch(/url\("\.\.\/[a-f0-9]{64}\.png"\)/u);
@@ -119,6 +127,7 @@ describe('rescue command', () => {
       expect(lines).toContain('Assets copied: 4');
       expect(lines).toContain('CSS dependencies discovered: 2');
       expect(lines).toContain('CSS references rewritten: 2');
+      expect(lines).toContain('Source stylesheets applied: 1');
       expect(lines).toContain('Readiness: ready');
       expect(lines).toContain('Verification: valid');
     } finally {

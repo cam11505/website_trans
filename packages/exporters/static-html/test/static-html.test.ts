@@ -100,6 +100,7 @@ describe('static HTML exporter', () => {
       expect(home).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
       expect(home).toContain('src="assets/hero.png"');
       expect(home).toContain('href="company/about/index.html"');
+      expect(home).not.toContain('data-site-rescue-style="source"');
       expect(home).not.toContain('<script>window.bad');
       expect(about).toContain('href="../../index.html"');
       expect(about).toContain('href="../../assets/site-rescue.css"');
@@ -107,6 +108,106 @@ describe('static HTML exporter', () => {
       expect(await readFile(join(outputDirectory, 'assets', 'site-rescue.css'), 'utf8')).toContain(
         '.sr-columns',
       );
+    } finally {
+      await rm(workspace, { force: true, recursive: true });
+    }
+  });
+
+  it('applies verified top-level source stylesheets after the baseline when requested', async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-export-source-styles-'));
+    const captureDirectory = join(workspace, 'capture');
+    const outputDirectory = join(workspace, 'site');
+    const heroBytes = Buffer.from([1, 2, 3, 4]);
+    const themeBytes = Buffer.from('@import "./dependency.css"; body { color: navy; }');
+    const dependencyBytes = Buffer.from('body { background: white; }');
+    const site = createFixtureSite(createHash('sha256').update(heroBytes).digest('hex'));
+    site.assets.push(
+      {
+        id: 'theme',
+        sourceUrl: 'https://fixture.test/theme.css',
+        role: 'stylesheet',
+        localPath: 'assets/css/theme.css',
+        mediaType: 'text/css',
+        checksum: createHash('sha256').update(themeBytes).digest('hex'),
+      },
+      {
+        id: 'theme-dependency',
+        sourceUrl: 'https://fixture.test/dependency.css',
+        role: 'dependency',
+        localPath: 'assets/css/dependency.css',
+        mediaType: 'text/css',
+        checksum: createHash('sha256').update(dependencyBytes).digest('hex'),
+      },
+    );
+    try {
+      await mkdir(join(captureDirectory, 'assets', 'css'), { recursive: true });
+      await writeFile(join(captureDirectory, 'assets', 'hero.png'), heroBytes);
+      await writeFile(join(captureDirectory, 'assets', 'css', 'theme.css'), themeBytes);
+      await writeFile(
+        join(captureDirectory, 'assets', 'css', 'dependency.css'),
+        dependencyBytes,
+      );
+
+      const result = await exportStaticHtml(site, {
+        captureDirectory,
+        outputDirectory,
+        styleMode: 'source',
+      });
+
+      expect(result.appliedSourceStylesheetCount).toBe(1);
+      const home = await readFile(join(outputDirectory, 'index.html'), 'utf8');
+      const about = await readFile(join(outputDirectory, 'company', 'about', 'index.html'), 'utf8');
+      expect(home).toContain(
+        'href="assets/css/theme.css" data-site-rescue-style="source"',
+      );
+      expect(home).not.toContain(
+        'href="assets/css/dependency.css" data-site-rescue-style="source"',
+      );
+      expect(about).toContain(
+        'href="../../assets/css/theme.css" data-site-rescue-style="source"',
+      );
+      expect(home.indexOf('data-site-rescue-style="baseline"')).toBeLessThan(
+        home.indexOf('data-site-rescue-style="source"'),
+      );
+    } finally {
+      await rm(workspace, { force: true, recursive: true });
+    }
+  });
+
+  it('refuses source style mode when a stylesheet is not locally verified', async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-export-source-missing-'));
+    const site = createFixtureSite('unused');
+    site.assets = [
+      {
+        id: 'theme',
+        sourceUrl: 'https://fixture.test/theme.css',
+        role: 'stylesheet',
+        mediaType: 'text/css',
+      },
+    ];
+    try {
+      await expect(
+        exportStaticHtml(site, {
+          captureDirectory: workspace,
+          outputDirectory: join(workspace, 'site'),
+          styleMode: 'source',
+        }),
+      ).rejects.toThrow('requires every source stylesheet to be downloaded and verified');
+    } finally {
+      await rm(workspace, { force: true, recursive: true });
+    }
+  });
+
+  it('refuses source style mode when the capture has no source stylesheet', async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-export-source-none-'));
+    try {
+      await expect(
+        exportStaticHtml(createFixtureSite('unused'), {
+          captureDirectory: workspace,
+          outputDirectory: join(workspace, 'site'),
+          styleMode: 'source',
+        }),
+      ).rejects.toThrow('capture contains no source stylesheets');
     } finally {
       await rm(workspace, { force: true, recursive: true });
     }

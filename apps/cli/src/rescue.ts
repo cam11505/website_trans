@@ -7,6 +7,7 @@ import { runExport, type ExportResult } from './export.js';
 import { runReport, type ReportResult } from './report.js';
 import { runVerify } from './verify.js';
 import type { VerifyStaticSiteResult } from '@site-rescue/static-verifier';
+import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 
 export interface RescueOptions {
   outputDirectory: string;
@@ -18,6 +19,7 @@ export interface RescueOptions {
   maxAssetBytes?: number;
   maxCssDepth?: number;
   maxCssDependencies?: number;
+  styleMode?: StaticHtmlStyleMode;
   capturedAt?: string;
   writeLine?: (line: string) => void;
 }
@@ -54,6 +56,7 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
   });
   const exported = await runExport(capture.outputFile, {
     outputDirectory: siteDirectory,
+    styleMode: options.styleMode,
     writeLine: () => undefined,
   });
   const report = await runReport(capture.outputFile, {
@@ -72,6 +75,7 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
   writeLine(`CSS references rewritten: ${capture.rewrittenCssReferenceCount}`);
   writeLine(`Pages exported: ${exported.pageCount}`);
   writeLine(`Assets copied: ${exported.copiedAssetCount}`);
+  writeLine(`Source stylesheets applied: ${exported.appliedSourceStylesheetCount}`);
   writeLine(`Readiness: ${report.readiness}`);
   writeLine(`Verification: ${verification.valid ? 'valid' : 'invalid'}`);
   writeLine(`Capture: ${captureDirectory}`);

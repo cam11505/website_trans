@@ -12,13 +12,17 @@ import type {
 export interface ExportStaticHtmlOptions {
   captureDirectory: string;
   outputDirectory: string;
+  styleMode?: StaticHtmlStyleMode;
 }
 
 export interface ExportStaticHtmlResult {
   outputDirectory: string;
   pageCount: number;
   copiedAssetCount: number;
+  appliedSourceStylesheetCount: number;
 }
+
+export type StaticHtmlStyleMode = 'baseline' | 'source';
 
 const STYLESHEET_PATH = 'assets/site-rescue.css';
 
@@ -131,6 +135,7 @@ interface RenderContext {
   currentFile: string;
   pageFilesBySourceUrl: ReadonlyMap<string, string>;
   localAssetPaths: ReadonlySet<string>;
+  sourceStylesheetPaths: readonly string[];
   baseUrl: string;
 }
 
@@ -223,6 +228,12 @@ function renderPage(site: Site, page: Page, context: RenderContext): string {
   const title = page.seo?.title ?? page.title;
   const description = page.seo?.description ?? site.metadata.description;
   const stylesheet = relativeReference(context.currentFile, STYLESHEET_PATH);
+  const sourceStylesheets = context.sourceStylesheetPaths
+    .map(
+      (path) =>
+        `  <link rel="stylesheet" href="${escapeHtml(relativeReference(context.currentFile, path))}" data-site-rescue-style="source">`,
+    )
+    .join('\n');
   return `<!doctype html>
 <html lang="${escapeHtml(site.metadata.language ?? 'en')}">
 <head>
@@ -233,7 +244,9 @@ function renderPage(site: Site, page: Page, context: RenderContext): string {
       ? ''
       : `\n  <meta name="description" content="${escapeHtml(description)}">`
   }
-  <link rel="stylesheet" href="${escapeHtml(stylesheet)}">
+  <link rel="stylesheet" href="${escapeHtml(stylesheet)}" data-site-rescue-style="baseline">${
+    sourceStylesheets === '' ? '' : `\n${sourceStylesheets}`
+  }
 </head>
 <body>
   <header>
@@ -247,6 +260,45 @@ ${page.blocks.map((block) => `    ${renderBlock(block, context)}`).join('\n')}
 </body>
 </html>
 `;
+}
+
+function isStylesheetAsset(asset: Site['assets'][number]): boolean {
+  if (asset.role === 'stylesheet') {
+    return true;
+  }
+  if (asset.role === 'dependency') {
+    return false;
+  }
+  const mediaType = asset.mediaType?.split(';', 1)[0]?.trim().toLowerCase();
+  if (mediaType === 'text/css') {
+    return true;
+  }
+  try {
+    return new URL(asset.sourceUrl).pathname.toLowerCase().endsWith('.css');
+  } catch {
+    return false;
+  }
+}
+
+function selectSourceStylesheets(site: Site, styleMode: StaticHtmlStyleMode): string[] {
+  if (styleMode === 'baseline') {
+    return [];
+  }
+  const candidates = site.assets.filter(isStylesheetAsset);
+  if (candidates.length === 0) {
+    throw new Error('Source style mode requested, but the capture contains no source stylesheets.');
+  }
+  const unavailable = candidates.filter(
+    (asset) => asset.localPath === undefined || asset.checksum === undefined,
+  );
+  if (unavailable.length > 0) {
+    throw new Error(
+      `Source style mode requires every source stylesheet to be downloaded and verified; ${unavailable.length} unavailable stylesheet(s) found. Capture again without --skip-assets or use --style-mode baseline.`,
+    );
+  }
+  return [
+    ...new Set(candidates.map((asset) => asset.localPath).filter((path) => path !== undefined)),
+  ];
 }
 
 function checksum(bytes: Uint8Array): string {
@@ -284,6 +336,8 @@ export async function exportStaticHtml(
 ): Promise<ExportStaticHtmlResult> {
   const outputDirectory = resolve(options.outputDirectory);
   const captureDirectory = resolve(options.captureDirectory);
+  const styleMode = options.styleMode ?? 'baseline';
+  const sourceStylesheetPaths = selectSourceStylesheets(site, styleMode);
   const pageFilesBySourceUrl = new Map<string, string>();
   const claimedFiles = new Set<string>([
     collisionKey(STYLESHEET_PATH),
@@ -327,6 +381,7 @@ export async function exportStaticHtml(
         currentFile,
         localAssetPaths,
         pageFilesBySourceUrl,
+        sourceStylesheetPaths,
       }),
       'utf8',
     );
@@ -336,5 +391,6 @@ export async function exportStaticHtml(
     outputDirectory,
     pageCount: site.pages.length,
     copiedAssetCount,
+    appliedSourceStylesheetCount: sourceStylesheetPaths.length,
   };
 }

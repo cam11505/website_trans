@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 12 recursively rescues and verifies stylesheet dependencies, including imported CSS, fonts, and background images.
+> Phase 13 can optionally apply rescued source stylesheets while keeping the safe baseline export as the default.
 
 ## Current capabilities
 
@@ -24,6 +24,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Bounded CSS `@import` and `url()` dependency discovery with local reference rewriting
 - Local path rewriting for normalized image, gallery, and video blocks
 - Static pages with local navigation, responsive baseline CSS, and verified asset copies
+- Explicit `baseline` or `source` static export style modes with safe baseline fallback
 - Offline fixture tests for schema, crawling, adapter detection, and CLI orchestration
 
 ## Requirements
@@ -38,8 +39,10 @@ pnpm install
 pnpm site-rescue diagnose https://example.weebly.com
 pnpm site-rescue diagnose https://example.com
 pnpm site-rescue rescue https://example.weebly.com --output ./rescued-site
+pnpm site-rescue rescue https://example.weebly.com --output ./styled-rescue --style-mode source
 pnpm site-rescue capture https://example.weebly.com --output ./capture
 pnpm site-rescue export ./capture/site.json --output ./site
+pnpm site-rescue export ./capture/site.json --output ./styled-site --style-mode source
 pnpm site-rescue report ./capture/site.json --output ./report
 pnpm site-rescue verify ./site
 pnpm site-rescue preview ./site
@@ -79,8 +82,10 @@ After building, the CLI entry point can also be run directly:
 pnpm build
 node apps/cli/dist/index.js diagnose https://example.weebly.com
 node apps/cli/dist/index.js rescue https://example.weebly.com --output ./rescued-site
+node apps/cli/dist/index.js rescue https://example.weebly.com --output ./styled-rescue --style-mode source
 node apps/cli/dist/index.js capture https://example.weebly.com --output ./capture
 node apps/cli/dist/index.js export ./capture/site.json --output ./site
+node apps/cli/dist/index.js export ./capture/site.json --output ./styled-site --style-mode source
 node apps/cli/dist/index.js report ./capture/site.json --output ./report
 node apps/cli/dist/index.js verify ./site
 node apps/cli/dist/index.js preview ./site
@@ -175,7 +180,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Limits each asset to 50 MiB by default and records individual failures as warnings.
 - Limits stylesheet import depth to 5 and CSS-discovered assets to 500 by default.
 - Does not execute downloaded content.
-- Preserves source stylesheets as migration assets but does not automatically apply them to normalized exported pages.
+- Preserves source stylesheets as migration assets and applies them only when `--style-mode source` is explicitly selected.
 
 ## Static export behavior and limitations
 
@@ -184,6 +189,9 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Copies local assets only after validating their recorded SHA-256 checksums.
 - Escapes text content and displays preserved embed or raw HTML as inert source instead of executing it.
 - Adds a small responsive baseline stylesheet; it does not reproduce the original platform theme pixel-for-pixel.
+- Defaults to `--style-mode baseline`; source mode loads the baseline first and then verified top-level source stylesheets.
+- Source mode refuses captures with missing or unverified top-level stylesheets instead of linking remote CSS.
+- Re-running export in baseline mode provides a deterministic fallback if source CSS conflicts with normalized markup.
 
 ## Migration report behavior
 
@@ -211,7 +219,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Uses no-cache response headers so repeated manual reviews read current local files.
 - Stops cleanly with `Ctrl+C`; it does not open a browser automatically.
 
-## Explicitly out of scope for phase 12
+## Explicitly out of scope for phase 13
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -220,13 +228,14 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Astro or framework-specific exporters
 - Automatic deployment or hosting
 - LAN or public-network serving, HTTPS, authentication, or live reload
-- Automatically applying source stylesheets, CSS optimization, or visual parity analysis
+- Automatically applying source stylesheets by default, CSS optimization, or visual parity analysis
+- CSS sanitization, selector translation, theme editing, or an interactive style toggle
 - Inline styles and JavaScript-loaded CSS
 - JavaScript rendering, browser automation, authenticated crawling, or form behavior recreation
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-012.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-013.
 
 ## License
 
