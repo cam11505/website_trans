@@ -69,11 +69,13 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
 
   writeLine('Site Rescue complete');
   writeLine(`Pages captured: ${capture.pageCount}`);
+  writeLine(`Redirects preserved: ${capture.redirectCount}`);
   writeLine(`Assets downloaded: ${capture.downloadedAssetCount}`);
   writeLine(`Asset downloads failed: ${capture.failedAssetCount}`);
   writeLine(`CSS dependencies discovered: ${capture.discoveredCssDependencyCount}`);
   writeLine(`CSS references rewritten: ${capture.rewrittenCssReferenceCount}`);
   writeLine(`Pages exported: ${exported.pageCount}`);
+  writeLine(`Redirect fallback pages exported: ${exported.redirectPageCount}`);
   writeLine(`Assets copied: ${exported.copiedAssetCount}`);
   writeLine(`Source stylesheets applied: ${exported.appliedSourceStylesheetCount}`);
   writeLine(`Readiness: ${report.readiness}`);

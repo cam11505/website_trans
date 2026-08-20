@@ -14,6 +14,7 @@ import {
   normalizeStartUrl,
   type Fetcher,
 } from '@site-rescue/crawler';
+import { applyRedirectEvidence } from '@site-rescue/redirects';
 import { DEFAULT_SOURCE_ADAPTERS } from './adapters.js';
 
 export interface CaptureOptions {
@@ -42,6 +43,7 @@ export interface CaptureResult {
   discoveredCssDependencyCount: number;
   rewrittenCssReferenceCount: number;
   warningCount: number;
+  redirectCount: number;
 }
 
 async function writeJsonAtomically(outputDirectory: string, value: unknown): Promise<string> {
@@ -72,7 +74,7 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     throw new Error('No supported source adapter detected this website.');
   }
 
-  const crawl = await crawlSameOrigin(initialDocument.url, {
+  const crawl = await crawlSameOrigin(url, {
     fetcher: options.fetcher,
     initialDocument,
     maxPages: options.maxPages ?? DEFAULT_MAX_PAGES,
@@ -89,6 +91,8 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
       warnings: crawl.warnings,
     }),
   );
+  const redirectResult = applyRedirectEvidence(site, crawl.redirects);
+  site = redirectResult.site;
   let downloadedAssetCount = 0;
   let storedFileCount = 0;
   let deduplicatedAssetCount = 0;
@@ -128,6 +132,7 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
   writeLine(`CSS dependencies discovered: ${discoveredCssDependencyCount}`);
   writeLine(`CSS references rewritten: ${rewrittenCssReferenceCount}`);
   writeLine(`Warnings: ${site.warnings.length}`);
+  writeLine(`Redirects preserved: ${site.redirects.length}`);
   writeLine(`Output: ${outputFile}`);
 
   return {
@@ -142,5 +147,6 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     discoveredCssDependencyCount,
     rewrittenCssReferenceCount,
     warningCount: site.warnings.length,
+    redirectCount: site.redirects.length,
   };
 }

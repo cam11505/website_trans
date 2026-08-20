@@ -51,6 +51,35 @@ describe('diagnose command', () => {
     expect(lines.some((line) => line.includes('outside.test'))).toBe(false);
   });
 
+  it('reports same-origin redirect aliases separately from unique pages', async () => {
+    const lines: string[] = [];
+    const redirectFetcher: Fetcher = async (input) => {
+      if (input.endsWith('/')) {
+        return new Response(
+          '<meta name="generator" content="Weebly"><title>Home</title><a href="/legacy">Legacy</a>',
+          { status: 200, headers: { 'content-type': 'text/html' } },
+        );
+      }
+      const response = new Response('<title>About</title>', {
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+      });
+      Object.defineProperty(response, 'url', {
+        value: 'https://fixture.weebly.com/about.html',
+      });
+      return response;
+    };
+
+    await runDiagnose('fixture.weebly.com', {
+      fetcher: redirectFetcher,
+      writeLine: (line) => lines.push(line),
+    });
+
+    expect(lines).toContain('Discovered pages (2):');
+    expect(lines).toContain('Discovered redirects (1):');
+    expect(lines).toContain('  - /legacy -> /about.html');
+  });
+
   it('captures a validated site.json artifact', async () => {
     const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-'));
     const lines: string[] = [];
@@ -66,6 +95,7 @@ describe('diagnose command', () => {
       expect(result.downloadedAssetCount).toBe(2);
       expect(result.storedFileCount).toBe(2);
       expect(result.failedAssetCount).toBe(0);
+      expect(result.redirectCount).toBe(0);
       expect(site.pages.map((page) => page.title)).toEqual(['Home', 'About']);
       expect(site.assets.map((asset) => asset.sourceUrl)).toEqual([
         'https://fixture.weebly.com/hero.png',

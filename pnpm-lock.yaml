@@ -56,6 +56,9 @@ importers:
       '@site-rescue/preview-server':
         specifier: workspace:*
         version: link:../../packages/preview-server
+      '@site-rescue/redirects':
+        specifier: workspace:*
+        version: link:../../packages/redirects
       '@site-rescue/report':
         specifier: workspace:*
         version: link:../../packages/report
@@ -136,6 +139,12 @@ importers:
         version: link:../../content-schema
 
   packages/preview-server: {}
+
+  packages/redirects:
+    dependencies:
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../content-schema
 
   packages/report:
     dependencies:

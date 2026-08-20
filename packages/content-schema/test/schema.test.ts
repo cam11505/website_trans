@@ -55,4 +55,19 @@ describe('site schema', () => {
     expect(parsed.assets[0]?.role).toBe('stylesheet');
     expect(parseSite(minimalSite).assets).toEqual([]);
   });
+
+  it('accepts normalized permanent redirect mappings', () => {
+    const parsed = parseSite({
+      ...minimalSite,
+      redirects: [{ from: '/legacy', to: '/', status: 301 }],
+    });
+
+    expect(parsed.redirects).toEqual([{ from: '/legacy', to: '/', status: 301 }]);
+    expect(() =>
+      parseSite({
+        ...minimalSite,
+        redirects: [{ from: '/legacy', to: '/', status: 303 }],
+      }),
+    ).toThrow();
+  });
 });

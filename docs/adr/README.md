@@ -17,3 +17,4 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-011](./ADR-011-loopback-local-preview.md) | Loopback-only local preview server | Accepted |
 | [ADR-012](./ADR-012-css-dependency-rescue.md) | Recursive CSS dependency rescue | Accepted |
 | [ADR-013](./ADR-013-opt-in-source-styles.md) | Opt-in source stylesheet application | Accepted |
+| [ADR-014](./ADR-014-redirect-preservation-and-handoff.md) | Redirect preservation and deployment handoff | Accepted |

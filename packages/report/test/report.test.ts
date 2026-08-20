@@ -62,7 +62,7 @@ const site = parseSite({
       mediaType: 'image/png',
     },
   ],
-  redirects: [],
+  redirects: [{ from: '/old-home', to: '/', status: 301 }],
   warnings: [
     {
       code: 'asset-download-failed',
@@ -85,19 +85,22 @@ describe('migration report', () => {
       verifiedLocalAssetCount: 1,
       unverifiedLocalAssetCount: 0,
       remoteAssetCount: 1,
+      redirectCount: 1,
       warningCount: 1,
-      reviewItemCount: 3,
+      reviewItemCount: 4,
     });
     expect(report.warningCounts).toEqual({ 'asset-download-failed': 1 });
     expect(report.reviewItems.map((item) => item.code)).toEqual([
       'raw-html-review-required',
       'embed-review-required',
+      'redirect-deployment-required',
       'remote-asset',
     ]);
 
     const markdown = renderMigrationReportMarkdown(report);
     expect(markdown).toContain('Readiness: **review-required**');
     expect(markdown).toContain('| Remote assets | 1 |');
+    expect(markdown).toContain('| Redirects | 1 |');
     expect(markdown).toContain('**raw-html-review-required**');
     expect(markdown).not.toContain('<script>');
     expect(markdown).toContain('Report \\<script\\>\\| fixture');

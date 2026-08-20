@@ -58,6 +58,7 @@ describe('export command', () => {
 
       expect(result).toMatchObject({
         pageCount: 1,
+        redirectPageCount: 0,
         copiedAssetCount: 1,
         appliedSourceStylesheetCount: 0,
       });
@@ -66,6 +67,7 @@ describe('export command', () => {
       );
       expect(lines).toContain('Site Rescue static export complete');
       expect(lines).toContain('Pages written: 1');
+      expect(lines).toContain('Redirect fallback pages written: 0');
       expect(lines).toContain('Assets copied: 1');
       expect(lines).toContain('Source stylesheets applied: 0');
     } finally {
