@@ -12,6 +12,7 @@
     { "path": "../../packages/redirects" },
     { "path": "../../packages/asset-pipeline" },
     { "path": "../../packages/exporters/static-html" },
+    { "path": "../../packages/output-safety" },
     { "path": "../../packages/report" },
     { "path": "../../packages/rescue-manifest" },
     { "path": "../../packages/static-verifier" },

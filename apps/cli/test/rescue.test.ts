@@ -67,7 +67,8 @@ const fetcher: Fetcher = async (input) => {
 
 describe('rescue command', () => {
   it('captures and exports a Weebly fixture in one operation', async () => {
-    const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-cli-rescue-'));
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-cli-rescue-'));
+    const outputDirectory = join(workspace, 'rescue');
     const lines: string[] = [];
     try {
       const result = await runRescue('fixture.weebly.com', {
@@ -176,12 +177,13 @@ describe('rescue command', () => {
       expect(lines).toContain(`Bundle files recorded: ${bundleManifest.files.length}`);
       expect(lines).toContain(`Manifest: ${result.manifest!.manifestFile}`);
     } finally {
-      await rm(outputDirectory, { force: true, recursive: true });
+      await rm(workspace, { force: true, recursive: true });
     }
   });
 
   it('can export remote asset references when downloads are skipped', async () => {
-    const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-cli-rescue-skip-'));
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-cli-rescue-skip-'));
+    const outputDirectory = join(workspace, 'rescue');
     try {
       const result = await runRescue('fixture.weebly.com', {
         capturedAt: '2026-08-19T00:00:00.000Z',
@@ -198,7 +200,7 @@ describe('rescue command', () => {
       expect(result.verification.valid).toBe(true);
       expect(home).toContain('src="https://fixture.weebly.com/hero.png"');
     } finally {
-      await rm(outputDirectory, { force: true, recursive: true });
+      await rm(workspace, { force: true, recursive: true });
     }
   });
 });

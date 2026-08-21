@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseSite } from '@site-rescue/content-schema';
+import { withFreshOutputDirectory } from '@site-rescue/output-safety';
 import { writeMigrationReport } from '@site-rescue/report';
 
 export interface ReportOptions {
@@ -19,6 +20,15 @@ export interface ReportResult {
 }
 
 export async function runReport(inputFile: string, options: ReportOptions): Promise<ReportResult> {
+  return withFreshOutputDirectory(options.outputDirectory, async (outputDirectory) =>
+    runReportInDirectory(inputFile, { ...options, outputDirectory }),
+  );
+}
+
+async function runReportInDirectory(
+  inputFile: string,
+  options: ReportOptions,
+): Promise<ReportResult> {
   const writeLine = options.writeLine ?? console.log;
   const absoluteInput = resolve(inputFile);
   const site = parseSite(JSON.parse(await readFile(absoluteInput, 'utf8')) as unknown);

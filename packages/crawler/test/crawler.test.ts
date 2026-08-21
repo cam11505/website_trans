@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { crawlSameOrigin, extractSameOriginLinks, type Fetcher } from '../src/index.js';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  crawlSameOrigin,
+  extractSameOriginLinks,
+  fetchHtmlDocument,
+  type Fetcher,
+} from '../src/index.js';
 
 const pages = new Map<string, string>([
   [
@@ -108,5 +113,36 @@ describe('same-origin crawler', () => {
         message: 'Page redirected to a different origin.',
       },
     ]);
+  });
+
+  it('retries transient HTML responses before parsing the page', async () => {
+    const statuses = [503, 200];
+    const fetcher = vi.fn(async () => {
+      const status = statuses.shift()!;
+      return new Response(status === 200 ? '<title>Recovered</title>' : 'retry', {
+        status,
+        headers: { 'content-type': 'text/html' },
+      });
+    });
+
+    const document = await fetchHtmlDocument('https://example.test/', {
+      fetcher,
+      maxRetries: 1,
+    });
+
+    expect(document.title).toBe('Recovered');
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects HTML bodies above the configured byte limit', async () => {
+    await expect(
+      fetchHtmlDocument('https://example.test/', {
+        fetcher: async () =>
+          new Response('<title>Too large</title>', {
+            headers: { 'content-type': 'text/html' },
+          }),
+        maxHtmlBytes: 5,
+      }),
+    ).rejects.toThrow('HTML document exceeds the 5-byte limit');
   });
 });

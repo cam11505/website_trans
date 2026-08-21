@@ -19,3 +19,4 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-013](./ADR-013-opt-in-source-styles.md) | Opt-in source stylesheet application | Accepted |
 | [ADR-014](./ADR-014-redirect-preservation-and-handoff.md) | Redirect preservation and deployment handoff | Accepted |
 | [ADR-015](./ADR-015-deterministic-rescue-bundle-integrity.md) | Deterministic rescue bundle integrity | Accepted |
+| [ADR-016](./ADR-016-reliable-http-and-safe-output.md) | Bounded HTTP reliability and fresh-output-only writes | Accepted |

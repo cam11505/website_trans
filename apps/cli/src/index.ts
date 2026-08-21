@@ -12,15 +12,15 @@ import { runVerifyBundle } from './verify-bundle.js';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 
 const USAGE = `Usage:
-  site-rescue diagnose <url> [--max-pages <number>]
-  site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--skip-assets]
+  site-rescue diagnose <url> [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>]
+  site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>] [--skip-assets]
   site-rescue export <site.json> [--output <directory>] [--style-mode <baseline|source>]
   site-rescue report <site.json> [--output <directory>]
   site-rescue verify <site-directory>
   site-rescue manifest <rescue-directory>
   site-rescue verify-bundle <rescue-directory>
   site-rescue preview <site-directory> [--port <number>]
-  site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--skip-assets] [--style-mode <baseline|source>]
+  site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>] [--skip-assets] [--style-mode <baseline|source>]
 
 Commands:
   diagnose  Detect the source platform and discover same-origin HTML pages
@@ -56,6 +56,40 @@ function parseMaxPages(args: string[]): number | undefined {
     throw new Error('--max-pages must be a positive integer.');
   }
   return value;
+}
+
+function parsePositiveIntegerOption(args: string[], name: string): number | undefined {
+  if (!args.includes(name)) {
+    return undefined;
+  }
+  const value = Number(parseStringOption(args, name));
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new Error(`${name} must be a positive integer.`);
+  }
+  return value;
+}
+
+function parseMaxRetries(args: string[]): number | undefined {
+  if (!args.includes('--max-retries')) {
+    return undefined;
+  }
+  const value = Number(parseStringOption(args, '--max-retries'));
+  if (!Number.isSafeInteger(value) || value < 0 || value > 5) {
+    throw new Error('--max-retries must be an integer between 0 and 5.');
+  }
+  return value;
+}
+
+function parseHttpOptions(args: string[]): {
+  maxHtmlBytes: number | undefined;
+  maxRetries: number | undefined;
+  requestTimeoutMs: number | undefined;
+} {
+  return {
+    maxHtmlBytes: parsePositiveIntegerOption(args, '--max-html-bytes'),
+    maxRetries: parseMaxRetries(args),
+    requestTimeoutMs: parsePositiveIntegerOption(args, '--request-timeout-ms'),
+  };
 }
 
 function parsePort(args: string[]): number | undefined {
@@ -105,10 +139,11 @@ export async function main(args: string[]): Promise<number> {
 
   try {
     if (command === 'diagnose') {
-      await runDiagnose(input, { maxPages: parseMaxPages(args) });
+      await runDiagnose(input, { maxPages: parseMaxPages(args), ...parseHttpOptions(args) });
     } else if (command === 'capture') {
       await runCapture(input, {
         maxPages: parseMaxPages(args),
+        ...parseHttpOptions(args),
         downloadAssets: !args.includes('--skip-assets'),
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-output',
       });
@@ -134,6 +169,7 @@ export async function main(args: string[]): Promise<number> {
     } else {
       const result = await runRescue(input, {
         maxPages: parseMaxPages(args),
+        ...parseHttpOptions(args),
         downloadAssets: !args.includes('--skip-assets'),
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-output',
         styleMode: parseStyleMode(args),

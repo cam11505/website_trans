@@ -7,7 +7,8 @@
   },
   "references": [
     { "path": "../content-schema" },
-    { "path": "../css-references" }
+    { "path": "../css-references" },
+    { "path": "../http-policy" }
   ],
   "include": ["src/**/*.ts"]
 }

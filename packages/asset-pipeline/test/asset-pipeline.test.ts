@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { parseSite } from '@site-rescue/content-schema';
 import { downloadSiteAssets, type AssetFetcher } from '../src/index.js';
 
@@ -129,6 +129,31 @@ describe('asset pipeline', () => {
       expect(result.failedAssetCount).toBe(1);
       expect(result.site.assets[0]?.localPath).toBeUndefined();
       expect(result.site.warnings[0]?.message).toContain('2-byte limit');
+    } finally {
+      await rm(outputDirectory, { force: true, recursive: true });
+    }
+  });
+
+  it('recovers an asset download after a transient HTTP response', async () => {
+    const site = createSite();
+    const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-assets-retry-'));
+    const statuses = [503, 200];
+    const retryingFetcher = vi.fn(async () => {
+      const status = statuses.shift()!;
+      return new Response(status === 200 ? new Uint8Array([1, 2, 3]) : 'retry', {
+        status,
+        headers: { 'content-type': 'image/png' },
+      });
+    });
+    try {
+      const result = await downloadSiteAssets(
+        { ...site, assets: [site.assets[0]!] },
+        { fetcher: retryingFetcher, maxRetries: 1, outputDirectory },
+      );
+
+      expect(result.downloadedAssetCount).toBe(1);
+      expect(result.failedAssetCount).toBe(0);
+      expect(retryingFetcher).toHaveBeenCalledTimes(2);
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });
     }

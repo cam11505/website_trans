@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@site-rescue/content-schema": "workspace:*",
-    "@site-rescue/css-references": "workspace:*"
+    "@site-rescue/css-references": "workspace:*",
+    "@site-rescue/http-policy": "workspace:*"
   }
 }

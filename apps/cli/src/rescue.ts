@@ -10,10 +10,14 @@ import { runVerify } from './verify.js';
 import type { VerifyStaticSiteResult } from '@site-rescue/static-verifier';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 import type { WriteRescueManifestResult } from '@site-rescue/rescue-manifest';
+import { withFreshOutputDirectory } from '@site-rescue/output-safety';
 
 export interface RescueOptions {
   outputDirectory: string;
   maxPages?: number;
+  maxRetries?: number;
+  requestTimeoutMs?: number;
+  maxHtmlBytes?: number;
   fetcher?: Fetcher;
   assetFetcher?: AssetFetcher;
   adapters?: readonly SourceAdapter[];
@@ -39,6 +43,15 @@ export interface RescueResult {
 }
 
 export async function runRescue(inputUrl: string, options: RescueOptions): Promise<RescueResult> {
+  return withFreshOutputDirectory(options.outputDirectory, async (outputDirectory) =>
+    runRescueInDirectory(inputUrl, { ...options, outputDirectory }),
+  );
+}
+
+async function runRescueInDirectory(
+  inputUrl: string,
+  options: RescueOptions,
+): Promise<RescueResult> {
   const writeLine = options.writeLine ?? console.log;
   const outputDirectory = resolve(options.outputDirectory);
   const captureDirectory = resolve(outputDirectory, 'capture');
@@ -47,6 +60,9 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
   const capture = await runCapture(inputUrl, {
     outputDirectory: captureDirectory,
     maxPages: options.maxPages,
+    maxRetries: options.maxRetries,
+    requestTimeoutMs: options.requestTimeoutMs,
+    maxHtmlBytes: options.maxHtmlBytes,
     fetcher: options.fetcher,
     assetFetcher: options.assetFetcher,
     adapters: options.adapters,

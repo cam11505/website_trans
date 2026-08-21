@@ -81,7 +81,8 @@ describe('diagnose command', () => {
   });
 
   it('captures a validated site.json artifact', async () => {
-    const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-'));
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-'));
+    const outputDirectory = join(workspace, 'capture');
     const lines: string[] = [];
     try {
       const result = await runCapture('fixture.weebly.com', {
@@ -111,7 +112,7 @@ describe('diagnose command', () => {
       expect(lines).toContain('Site Rescue capture complete');
       expect(lines).toContain('Assets downloaded: 2');
     } finally {
-      await rm(outputDirectory, { force: true, recursive: true });
+      await rm(workspace, { force: true, recursive: true });
     }
   });
 });

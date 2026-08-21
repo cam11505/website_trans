@@ -42,7 +42,8 @@ describe('Generic HTML CLI integration', () => {
   });
 
   it('captures Generic HTML through the default adapter registry', async () => {
-    const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-generic-'));
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-generic-'));
+    const outputDirectory = join(workspace, 'capture');
     try {
       const result = await runCapture('https://generic.test/', {
         capturedAt: '2026-08-19T00:00:00.000Z',
@@ -57,12 +58,13 @@ describe('Generic HTML CLI integration', () => {
       expect(site.source.adapter).toBe('generic-html');
       expect(site.warnings.map((warning) => warning.code)).toContain('generic-html-fallback');
     } finally {
-      await rm(outputDirectory, { force: true, recursive: true });
+      await rm(workspace, { force: true, recursive: true });
     }
   });
 
   it('rescues, reports, and verifies Generic HTML end to end', async () => {
-    const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-generic-e2e-'));
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-generic-e2e-'));
+    const outputDirectory = join(workspace, 'rescue');
     try {
       const result = await runRescue('https://generic.test/', {
         capturedAt: '2026-08-19T00:00:00.000Z',
@@ -79,7 +81,7 @@ describe('Generic HTML CLI integration', () => {
         '<h1>Generic</h1>',
       );
     } finally {
-      await rm(outputDirectory, { force: true, recursive: true });
+      await rm(workspace, { force: true, recursive: true });
     }
   });
 });
