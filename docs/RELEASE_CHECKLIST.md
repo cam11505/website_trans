@@ -19,6 +19,8 @@ Use this checklist for the first public release and every later release. Release
 - [ ] Run `pnpm release:check` and inspect `release/package/SHA256SUMS.txt`.
 - [ ] Confirm `node release/package/bin/site-rescue.js --version` prints the release version.
 - [ ] Confirm the generated package contains `README.md`, `CHANGELOG.md`, `SECURITY.md`, and `LICENSE`.
+- [ ] Review `THIRD_PARTY_NOTICES.txt` and confirm every bundled runtime package has license text and any supplied NOTICE attribution.
+- [ ] Review every `third_party/licenses` override against its documented authoritative source and exact package version.
 - [ ] Confirm GitHub Actions succeeded for the exact candidate SHA.
 
 ## Package and release

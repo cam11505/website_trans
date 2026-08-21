@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 17 adds a self-contained CLI release package and exact-version release checks.
+> Site Rescue is release-ready and licensed under Apache-2.0. Repository visibility and the `v0.1.0` release remain separate approval steps.
 
 ## Current capabilities
 
@@ -14,6 +14,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Shared bounded HTTP retry, timeout, and response-body policy for HTML and assets
 - Fresh-output-only lifecycle for capture, export, report, and end-to-end rescue commands
 - Self-contained Node.js CLI release package with SHA-256 inventory and smoke verification
+- Apache-2.0 project licensing with bundled third-party license and NOTICE preservation
 - `site-rescue --version` release-version command
 - Weebly detection with confidence and human-readable evidence
 - Generic HTML fallback detection and standards-based content normalization
@@ -124,7 +125,7 @@ node release/package/bin/site-rescue.js --version
 node release/package/bin/site-rescue.js --help
 ```
 
-The generated `release/package` directory is ignored by Git. It contains one bundled CLI entry point, release metadata and documentation, a source map, and `SHA256SUMS.txt`. It remains `UNLICENSED` until the separately approved Apache-2.0 step is completed.
+The generated `release/package` directory is ignored by Git. It contains one bundled CLI entry point, Apache-2.0 project licensing, third-party runtime notices, release metadata and documentation, a source map, and `SHA256SUMS.txt`.
 
 `capture/site.json` contains site metadata, navigation, normalized pages and blocks, an asset manifest, redirects, and warnings. Successfully downloaded files are stored under `capture/assets/`; each manifest entry retains its original `sourceUrl` and adds `localPath`, `mediaType`, and a SHA-256 `checksum`. Failed downloads remain as source URLs and produce `asset-download-failed` warnings without aborting the rest of the capture.
 
@@ -171,7 +172,7 @@ site-rescue/
 │  └─ weebly/                 # Sanitized, deterministic test pages
 └─ docs/
    ├─ RELEASE_CHECKLIST.md    # Exact-commit public release procedure
-   └─ adr/                    # ADR-001 through ADR-017
+   └─ adr/                    # ADR-001 through ADR-018
 ```
 
 The intended long-term boundary is:
@@ -302,10 +303,11 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - `release:check` rebuilds `release/package`, verifies every checksum, executes bundled `--version` and `--help`, and produces a real migration report from an offline fixture.
 - The release package bundles runtime dependencies but still requires Node.js 20.19 or newer.
 - Package metadata remains `private: true` to prevent accidental npm publication; the planned first distribution channel is GitHub Releases.
+- Root, workspace, and generated package metadata use the `Apache-2.0` SPDX identifier; bundled dependencies remain under their own terms recorded in `THIRD_PARTY_NOTICES.txt`. Exact-version audited license overrides cover published packages that omit their license file.
 - Follow [the release checklist](./docs/RELEASE_CHECKLIST.md) before changing visibility, tagging, or publishing.
 - See [CHANGELOG.md](./CHANGELOG.md), [CONTRIBUTING.md](./CONTRIBUTING.md), and [SECURITY.md](./SECURITY.md) for project policy.
 
-## Explicitly out of scope for phase 17
+## Explicitly out of scope before the public v0.1.0 release
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -323,8 +325,8 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-017.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-018.
 
 ## License
 
-No license has been selected yet. Choose and add an open-source license before public distribution.
+Site Rescue is licensed under the [Apache License 2.0](./LICENSE). Bundled third-party runtime components retain their own licenses and notices.
