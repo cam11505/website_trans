@@ -99,6 +99,9 @@ describe('rescue command', () => {
         join(result.siteDirectory, 'legacy-about', 'index.html'),
         'utf8',
       );
+      const bundleManifest = JSON.parse(
+        await readFile(join(result.outputDirectory, 'rescue-manifest.json'), 'utf8'),
+      ) as { files: Array<{ path: string; sha256: string }> };
 
       expect(result.capture).toMatchObject({
         pageCount: 2,
@@ -119,6 +122,17 @@ describe('rescue command', () => {
         issueCount: 0,
         cssFileCount: 2,
       });
+      expect(result.manifest).toMatchObject({
+        fileCount: bundleManifest.files.length,
+        staticVerification: { valid: true },
+      });
+      expect(bundleManifest.files.some((entry) => entry.path === 'capture/site.json')).toBe(
+        true,
+      );
+      expect(bundleManifest.files.some((entry) => entry.path === 'site/index.html')).toBe(true);
+      expect(
+        bundleManifest.files.every((entry) => /^[a-f0-9]{64}$/u.test(entry.sha256)),
+      ).toBe(true);
       expect(site.source.adapter).toBe('weebly');
       expect(site.redirects).toEqual([
         { from: '/legacy-about', to: '/about.html', status: 301 },
@@ -159,6 +173,8 @@ describe('rescue command', () => {
       expect(lines).toContain('Redirect fallback pages exported: 1');
       expect(lines).toContain('Readiness: review-required');
       expect(lines).toContain('Verification: valid');
+      expect(lines).toContain(`Bundle files recorded: ${bundleManifest.files.length}`);
+      expect(lines).toContain(`Manifest: ${result.manifest!.manifestFile}`);
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });
     }

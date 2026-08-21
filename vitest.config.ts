@@ -21,6 +21,10 @@ export default defineConfig({
         'packages/exporters/static-html/src/index.ts',
       ),
       '@site-rescue/report': resolve(process.cwd(), 'packages/report/src/index.ts'),
+      '@site-rescue/rescue-manifest': resolve(
+        process.cwd(),
+        'packages/rescue-manifest/src/index.ts',
+      ),
       '@site-rescue/static-verifier': resolve(
         process.cwd(),
         'packages/static-verifier/src/index.ts',

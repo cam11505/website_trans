@@ -24,6 +24,7 @@
     "@site-rescue/preview-server": "workspace:*",
     "@site-rescue/redirects": "workspace:*",
     "@site-rescue/report": "workspace:*",
+    "@site-rescue/rescue-manifest": "workspace:*",
     "@site-rescue/static-verifier": "workspace:*"
   }
 }

@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 14 preserves same-origin redirect aliases and produces deployment-neutral redirect handoff artifacts.
+> Phase 15 adds deterministic whole-bundle manifests and offline integrity verification.
 
 ## Current capabilities
 
@@ -18,8 +18,10 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue export <site.json>` platform-neutral static HTML export command
 - `site-rescue report <site.json>` migration readiness and manual-review report command
 - `site-rescue verify <site-directory>` offline static link and asset verification command
+- `site-rescue manifest <rescue-directory>` deterministic whole-bundle SHA-256 manifest command
+- `site-rescue verify-bundle <rescue-directory>` offline rescue bundle integrity command
 - `site-rescue preview <site-directory>` verified local HTTP preview command
-- `site-rescue rescue <url>` end-to-end local capture, static export, report, and verification command
+- `site-rescue rescue <url>` end-to-end local capture, static export, report, verification, and bundle manifest command
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
 - Bounded CSS `@import` and `url()` dependency discovery with local reference rewriting
 - Local path rewriting for normalized image, gallery, and video blocks
@@ -27,6 +29,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Explicit `baseline` or `source` static export style modes with safe baseline fallback
 - Same-origin redirect preservation with normalized 301 mappings and duplicate-page prevention
 - Deterministic `redirects.json` handoff manifests and offline-verifiable HTML fallback pages
+- Deterministic `rescue-manifest.json` inventories for capture, site, and report artifacts
 - Offline fixture tests for schema, crawling, adapter detection, and CLI orchestration
 
 ## Requirements
@@ -47,6 +50,8 @@ pnpm site-rescue export ./capture/site.json --output ./site
 pnpm site-rescue export ./capture/site.json --output ./styled-site --style-mode source
 pnpm site-rescue report ./capture/site.json --output ./report
 pnpm site-rescue verify ./site
+pnpm site-rescue manifest ./rescued-site
+pnpm site-rescue verify-bundle ./rescued-site
 pnpm site-rescue preview ./site
 ```
 
@@ -54,6 +59,7 @@ The one-step command keeps reusable capture data separate from the generated web
 
 ```text
 rescued-site/
+├─ rescue-manifest.json
 ├─ capture/
 │  ├─ site.json
 │  └─ assets/
@@ -67,7 +73,7 @@ rescued-site/
    └─ migration-report.md
 ```
 
-Skip binary asset downloads when only a normalized manifest is needed:
+Skip binary asset downloads when only a normalized capture document is needed:
 
 ```bash
 pnpm site-rescue capture https://example.weebly.com --output ./capture --skip-assets
@@ -91,6 +97,8 @@ node apps/cli/dist/index.js export ./capture/site.json --output ./site
 node apps/cli/dist/index.js export ./capture/site.json --output ./styled-site --style-mode source
 node apps/cli/dist/index.js report ./capture/site.json --output ./report
 node apps/cli/dist/index.js verify ./site
+node apps/cli/dist/index.js manifest ./rescued-site
+node apps/cli/dist/index.js verify-bundle ./rescued-site
 node apps/cli/dist/index.js preview ./site
 ```
 
@@ -124,6 +132,7 @@ site-rescue/
 │  ├─ redirects/              # Redirect evidence mapping and conflict handling
 │  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
 │  ├─ report/                  # Platform-neutral migration analysis and reports
+│  ├─ rescue-manifest/         # Whole-bundle inventory and integrity verification
 │  ├─ static-verifier/         # Offline generated-site integrity checks
 │  ├─ preview-server/          # Loopback-only static site preview
 │  ├─ exporters/
@@ -134,7 +143,7 @@ site-rescue/
 ├─ fixtures/
 │  └─ weebly/                 # Sanitized, deterministic test pages
 └─ docs/
-   └─ adr/                    # ADR-001 through ADR-012
+   └─ adr/                    # ADR-001 through ADR-015
 ```
 
 The intended long-term boundary is:
@@ -235,7 +244,18 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Uses no-cache response headers so repeated manual reviews read current local files.
 - Stops cleanly with `Ctrl+C`; it does not open a browser automatically.
 
-## Explicitly out of scope for phase 14
+## Rescue bundle integrity behavior
+
+- Treats `capture/`, `site/`, and `report/` as one portable rescue bundle.
+- Writes a canonically sorted `rescue-manifest.json` containing relative POSIX paths, roles, byte sizes, and SHA-256 checksums.
+- Validates `capture/site.json`, requires reports to match that capture, and runs static verification before writing a manifest.
+- Detects missing, unexpected, size-mismatched, and checksum-mismatched files without network access.
+- Rejects symbolic links, special filesystem entries, unsafe manifest paths, unexpected top-level entries during manifest creation, and bundles above 100,000 files.
+- Returns exit code `2` from `verify-bundle` for integrity mismatches, making it suitable for backup and handoff checks.
+- Excludes the manifest itself from its file inventory so identical bundle contents produce identical manifest bytes.
+- SHA-256 proves content consistency against the recorded manifest; it is not a digital signature and does not prove who created the bundle.
+
+## Explicitly out of scope for phase 15
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -249,10 +269,11 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - CSS sanitization, selector translation, theme editing, or an interactive style toggle
 - Inline styles and JavaScript-loaded CSS
 - JavaScript rendering, browser automation, authenticated crawling, or form behavior recreation
+- ZIP/TAR creation, encryption, digital signatures, cloud upload, or incremental backups
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-014.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-015.
 
 ## License
 

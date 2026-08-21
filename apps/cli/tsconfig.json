@@ -13,6 +13,7 @@
     { "path": "../../packages/asset-pipeline" },
     { "path": "../../packages/exporters/static-html" },
     { "path": "../../packages/report" },
+    { "path": "../../packages/rescue-manifest" },
     { "path": "../../packages/static-verifier" },
     { "path": "../../packages/preview-server" },
     { "path": "../../packages/adapters/generic-html" },
