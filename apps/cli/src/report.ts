@@ -14,6 +14,7 @@ export interface ReportResult {
   markdownFile: string;
   readiness: 'ready' | 'review-required';
   warningCount: number;
+  redirectCount: number;
   reviewItemCount: number;
 }
 
@@ -28,6 +29,7 @@ export async function runReport(inputFile: string, options: ReportOptions): Prom
   writeLine('Site Rescue migration report complete');
   writeLine(`Readiness: ${result.report.readiness}`);
   writeLine(`Warnings: ${result.report.summary.warningCount}`);
+  writeLine(`Redirects: ${result.report.summary.redirectCount}`);
   writeLine(`Manual review items: ${result.report.summary.reviewItemCount}`);
   writeLine(`JSON: ${result.jsonFile}`);
   writeLine(`Markdown: ${result.markdownFile}`);
@@ -38,6 +40,7 @@ export async function runReport(inputFile: string, options: ReportOptions): Prom
     markdownFile: result.markdownFile,
     readiness: result.report.readiness,
     warningCount: result.report.summary.warningCount,
+    redirectCount: result.report.summary.redirectCount,
     reviewItemCount: result.report.summary.reviewItemCount,
   };
 }

@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 13 can optionally apply rescued source stylesheets while keeping the safe baseline export as the default.
+> Phase 14 preserves same-origin redirect aliases and produces deployment-neutral redirect handoff artifacts.
 
 ## Current capabilities
 
@@ -25,6 +25,8 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Local path rewriting for normalized image, gallery, and video blocks
 - Static pages with local navigation, responsive baseline CSS, and verified asset copies
 - Explicit `baseline` or `source` static export style modes with safe baseline fallback
+- Same-origin redirect preservation with normalized 301 mappings and duplicate-page prevention
+- Deterministic `redirects.json` handoff manifests and offline-verifiable HTML fallback pages
 - Offline fixture tests for schema, crawling, adapter detection, and CLI orchestration
 
 ## Requirements
@@ -57,6 +59,7 @@ rescued-site/
 │  └─ assets/
 ├─ site/
 │  ├─ index.html
+│  ├─ redirects.json
 │  ├─ assets/
 │  └─ ...
 └─ report/
@@ -118,6 +121,7 @@ site-rescue/
 │  ├─ core/                   # Source-adapter contracts and registry selection
 │  ├─ crawler/                # Bounded same-origin page discovery
 │  ├─ css-references/         # Shared CSS AST parsing and reference rewriting
+│  ├─ redirects/              # Redirect evidence mapping and conflict handling
 │  ├─ asset-pipeline/          # Downloading, hashing, deduplication, and path rewriting
 │  ├─ report/                  # Platform-neutral migration analysis and reports
 │  ├─ static-verifier/         # Offline generated-site integrity checks
@@ -157,6 +161,7 @@ Default tests do not access live websites. Live compatibility checks should rema
 - Crawls only HTTP(S) links on the exact origin of the starting page.
 - Removes URL fragments and ignores common non-document extensions.
 - Fetches HTML only, follows links breadth-first, and stops at 50 pages by default.
+- Records same-origin requested-to-final URL aliases and normalizes each final page only once.
 - Does not execute JavaScript, sign in, bypass access controls, or process private content.
 - Client-rendered pages and interaction-only navigation may be missed.
 
@@ -193,11 +198,22 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Source mode refuses captures with missing or unverified top-level stylesheets instead of linking remote CSS.
 - Re-running export in baseline mode provides a deterministic fallback if source CSS conflicts with normalized markup.
 
+## Redirect behavior and limitations
+
+- Converts followed same-origin path aliases into normalized 301 migration mappings.
+- Writes a deterministic `redirects.json` manifest for production-host configuration.
+- Writes a canonical, meta-refresh, and clickable-link HTML fallback for each non-colliding redirect source path.
+- Rejects redirect output collisions and redirects whose targets are not exported pages.
+- Treats generated 301 status as migration intent; it does not reproduce the source server's exact status or intermediate chain.
+- Skips query-bearing, cross-origin, missing-target, and conflicting redirect evidence with explicit warnings.
+- HTML fallback pages do not deliver HTTP 301 responses; configure the manifest in the production host.
+
 ## Migration report behavior
 
 - Consumes only a validated `site.json`; it does not call the crawler or a source adapter.
 - Writes deterministic `migration-report.json` and `migration-report.md` artifacts.
 - Summarizes pages, nested content blocks, verified, unverified, and remote assets, warnings, and manual-review items.
+- Summarizes preserved redirects and requires review for production HTTP redirect configuration.
 - Marks a capture as `review-required` when warnings, remote assets, preserved embeds, or raw HTML remain.
 - The report is guidance for migration review; it does not claim visual or functional parity with the source site.
 
@@ -219,7 +235,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Uses no-cache response headers so repeated manual reviews read current local files.
 - Stops cleanly with `Ctrl+C`; it does not open a browser automatically.
 
-## Explicitly out of scope for phase 13
+## Explicitly out of scope for phase 14
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -227,6 +243,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Pixel-perfect cloning or AI redesign
 - Astro or framework-specific exporters
 - Automatic deployment or hosting
+- Host-specific redirect configuration, cross-origin redirects, or query-based redirect rules
 - LAN or public-network serving, HTTPS, authentication, or live reload
 - Automatically applying source stylesheets by default, CSS optimization, or visual parity analysis
 - CSS sanitization, selector translation, theme editing, or an interactive style toggle
@@ -235,7 +252,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-013.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-014.
 
 ## License
 

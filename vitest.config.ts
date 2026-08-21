@@ -11,6 +11,7 @@ export default defineConfig({
         process.cwd(),
         'packages/css-references/src/index.ts',
       ),
+      '@site-rescue/redirects': resolve(process.cwd(), 'packages/redirects/src/index.ts'),
       '@site-rescue/asset-pipeline': resolve(
         process.cwd(),
         'packages/asset-pipeline/src/index.ts',

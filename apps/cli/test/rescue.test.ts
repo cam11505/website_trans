@@ -10,7 +10,7 @@ import { runRescue } from '../src/rescue.js';
 const fixturePages = new Map<string, string>([
   [
     'https://fixture.weebly.com/',
-    '<meta name="generator" content="Weebly"><title>Home</title><link rel="stylesheet" href="/theme.css"><nav><a href="/">Home</a><a href="/about.html">About</a></nav><main id="wsite-content"><h1>Home</h1><p>Hello</p><img src="/hero.png" alt="Hero"></main>',
+    '<meta name="generator" content="Weebly"><title>Home</title><link rel="stylesheet" href="/theme.css"><nav><a href="/">Home</a><a href="/about.html">About</a><a href="/legacy-about">Legacy</a></nav><main id="wsite-content"><h1>Home</h1><p>Hello</p><img src="/hero.png" alt="Hero"></main>',
   ],
   [
     'https://fixture.weebly.com/about.html',
@@ -19,6 +19,16 @@ const fixturePages = new Map<string, string>([
 ]);
 
 const fetcher: Fetcher = async (input) => {
+  if (input === 'https://fixture.weebly.com/legacy-about') {
+    const response = new Response(fixturePages.get('https://fixture.weebly.com/about.html'), {
+      status: 200,
+      headers: { 'content-type': 'text/html' },
+    });
+    Object.defineProperty(response, 'url', {
+      value: 'https://fixture.weebly.com/about.html',
+    });
+    return response;
+  }
   if (input === 'https://fixture.weebly.com/hero.png') {
     return new Response(new Uint8Array([1, 2, 3]), {
       status: 200,
@@ -81,7 +91,14 @@ describe('rescue command', () => {
       );
       const report = JSON.parse(
         await readFile(join(result.reportDirectory, 'migration-report.json'), 'utf8'),
-      ) as { readiness: string; summary: { pageCount: number } };
+      ) as { readiness: string; summary: { pageCount: number; redirectCount: number } };
+      const redirectManifest = JSON.parse(
+        await readFile(join(result.siteDirectory, 'redirects.json'), 'utf8'),
+      ) as { redirects: unknown[] };
+      const redirectPage = await readFile(
+        join(result.siteDirectory, 'legacy-about', 'index.html'),
+        'utf8',
+      );
 
       expect(result.capture).toMatchObject({
         pageCount: 2,
@@ -89,11 +106,13 @@ describe('rescue command', () => {
         discoveredCssDependencyCount: 2,
         rewrittenCssReferenceCount: 2,
         failedAssetCount: 0,
+        redirectCount: 1,
       });
       expect(result.export).toMatchObject({
         pageCount: 2,
         copiedAssetCount: 4,
         appliedSourceStylesheetCount: 1,
+        redirectPageCount: 1,
       });
       expect(result.verification).toMatchObject({
         valid: true,
@@ -101,6 +120,9 @@ describe('rescue command', () => {
         cssFileCount: 2,
       });
       expect(site.source.adapter).toBe('weebly');
+      expect(site.redirects).toEqual([
+        { from: '/legacy-about', to: '/about.html', status: 301 },
+      ]);
       expect(home).toContain('<h1>Home</h1>');
       expect(home).toContain('href="about.html"');
       expect(home).toMatch(/src="assets\/[a-f0-9]{64}\.png"/u);
@@ -120,15 +142,22 @@ describe('rescue command', () => {
         await preview.close();
       }
       expect(about).toContain('<h1>About</h1>');
-      expect(report).toMatchObject({ readiness: 'ready', summary: { pageCount: 2 } });
+      expect(redirectManifest.redirects).toEqual(site.redirects);
+      expect(redirectPage).toContain('href="../about.html"');
+      expect(report).toMatchObject({
+        readiness: 'review-required',
+        summary: { pageCount: 2, redirectCount: 1 },
+      });
       expect(lines).toContain('Site Rescue complete');
       expect(lines).toContain('Pages captured: 2');
+      expect(lines).toContain('Redirects preserved: 1');
       expect(lines).toContain('Pages exported: 2');
       expect(lines).toContain('Assets copied: 4');
       expect(lines).toContain('CSS dependencies discovered: 2');
       expect(lines).toContain('CSS references rewritten: 2');
       expect(lines).toContain('Source stylesheets applied: 1');
-      expect(lines).toContain('Readiness: ready');
+      expect(lines).toContain('Redirect fallback pages exported: 1');
+      expect(lines).toContain('Readiness: review-required');
       expect(lines).toContain('Verification: valid');
     } finally {
       await rm(outputDirectory, { force: true, recursive: true });

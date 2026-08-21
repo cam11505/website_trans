@@ -93,7 +93,11 @@ describe('static HTML exporter', () => {
         outputDirectory,
       });
 
-      expect(result).toMatchObject({ pageCount: 2, copiedAssetCount: 1 });
+      expect(result).toMatchObject({
+        pageCount: 2,
+        redirectPageCount: 0,
+        copiedAssetCount: 1,
+      });
       const home = await readFile(join(outputDirectory, 'index.html'), 'utf8');
       const about = await readFile(join(outputDirectory, 'company', 'about', 'index.html'), 'utf8');
       expect(home).toContain('<title>Home &lt;unsafe&gt;</title>');
@@ -108,6 +112,59 @@ describe('static HTML exporter', () => {
       expect(await readFile(join(outputDirectory, 'assets', 'site-rescue.css'), 'utf8')).toContain(
         '.sr-columns',
       );
+      expect(JSON.parse(await readFile(join(outputDirectory, 'redirects.json'), 'utf8'))).toEqual({
+        version: '1.0.0',
+        redirects: [],
+      });
+    } finally {
+      await rm(workspace, { force: true, recursive: true });
+    }
+  });
+
+  it('writes a deterministic redirect manifest and local fallback pages', async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-export-redirects-'));
+    const captureDirectory = join(workspace, 'capture');
+    const outputDirectory = join(workspace, 'site');
+    const bytes = Buffer.from([1, 2, 3, 4]);
+    const site = createFixtureSite(createHash('sha256').update(bytes).digest('hex'));
+    site.redirects = [{ from: '/legacy', to: '/company/about/', status: 301 }];
+    try {
+      await mkdir(join(captureDirectory, 'assets'), { recursive: true });
+      await writeFile(join(captureDirectory, 'assets', 'hero.png'), bytes);
+
+      const result = await exportStaticHtml(site, { captureDirectory, outputDirectory });
+
+      expect(result.redirectPageCount).toBe(1);
+      expect(JSON.parse(await readFile(join(outputDirectory, 'redirects.json'), 'utf8'))).toEqual({
+        version: '1.0.0',
+        redirects: [{ from: '/legacy', to: '/company/about/', status: 301 }],
+      });
+      const redirectPage = await readFile(
+        join(outputDirectory, 'legacy', 'index.html'),
+        'utf8',
+      );
+      expect(redirectPage).toContain(
+        '<meta http-equiv="refresh" content="0; url=../company/about/index.html">',
+      );
+      expect(redirectPage).toContain(
+        '<link rel="canonical" href="../company/about/index.html">',
+      );
+    } finally {
+      await rm(workspace, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects redirect outputs that collide with normalized pages', async () => {
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-export-redirect-collision-'));
+    const site = createFixtureSite('unused');
+    site.redirects = [{ from: '/', to: '/company/about/', status: 301 }];
+    try {
+      await expect(
+        exportStaticHtml(site, {
+          captureDirectory: workspace,
+          outputDirectory: join(workspace, 'site'),
+        }),
+      ).rejects.toThrow('Redirect output collides with another file');
     } finally {
       await rm(workspace, { force: true, recursive: true });
     }

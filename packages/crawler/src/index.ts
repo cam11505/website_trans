@@ -20,10 +20,16 @@ export interface CrawlWarning {
   message: string;
 }
 
+export interface CrawlRedirect {
+  fromUrl: string;
+  toUrl: string;
+}
+
 export interface CrawlResult {
   startUrl: string;
   pages: HtmlDocument[];
   discoveredUrls: string[];
+  redirects: CrawlRedirect[];
   warnings: CrawlWarning[];
   truncated: boolean;
 }
@@ -164,6 +170,9 @@ export async function crawlSameOrigin(
   const discovered = new Set(queue);
   const processed = new Set<string>();
   const pages: HtmlDocument[] = [];
+  const pageUrls = new Set<string>();
+  const redirects: CrawlRedirect[] = [];
+  const redirectKeys = new Set<string>();
   const warnings: CrawlWarning[] = [];
 
   while (queue.length > 0 && processed.size < maxPages) {
@@ -172,6 +181,9 @@ export async function crawlSameOrigin(
       continue;
     }
     processed.add(currentUrl);
+    if (pageUrls.has(currentUrl)) {
+      continue;
+    }
 
     try {
       const document =
@@ -181,6 +193,26 @@ export async function crawlSameOrigin(
       if (new URL(document.url).origin !== origin) {
         throw new Error('Page redirected to a different origin.');
       }
+      const requestedUrl = canonicalizeUrl(document.requestedUrl);
+      const finalUrl = canonicalizeUrl(document.url);
+      if (requestedUrl === undefined || finalUrl === undefined) {
+        throw new Error('Page returned an invalid redirect URL.');
+      }
+      if (new URL(requestedUrl).origin !== origin) {
+        throw new Error('Page was requested from a different origin.');
+      }
+      discovered.add(finalUrl);
+      if (requestedUrl !== finalUrl) {
+        const key = `${requestedUrl}\n${finalUrl}`;
+        if (!redirectKeys.has(key)) {
+          redirectKeys.add(key);
+          redirects.push({ fromUrl: requestedUrl, toUrl: finalUrl });
+        }
+      }
+      if (pageUrls.has(finalUrl)) {
+        continue;
+      }
+      pageUrls.add(finalUrl);
       pages.push(document);
 
       for (const link of extractSameOriginLinks(document.html, document.url, origin)) {
@@ -201,6 +233,7 @@ export async function crawlSameOrigin(
     startUrl,
     pages,
     discoveredUrls: [...discovered],
+    redirects,
     warnings,
     truncated: queue.length > 0,
   };

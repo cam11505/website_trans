@@ -48,6 +48,7 @@ describe('report command', () => {
       expect(result).toMatchObject({
         readiness: 'ready',
         warningCount: 0,
+        redirectCount: 0,
         reviewItemCount: 0,
       });
       expect(JSON.parse(await readFile(result.jsonFile, 'utf8'))).toMatchObject({
@@ -59,6 +60,7 @@ describe('report command', () => {
       );
       expect(lines).toContain('Site Rescue migration report complete');
       expect(lines).toContain('Readiness: ready');
+      expect(lines).toContain('Redirects: 0');
     } finally {
       await rm(workspace, { force: true, recursive: true });
     }

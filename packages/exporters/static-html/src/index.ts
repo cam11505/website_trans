@@ -18,6 +18,7 @@ export interface ExportStaticHtmlOptions {
 export interface ExportStaticHtmlResult {
   outputDirectory: string;
   pageCount: number;
+  redirectPageCount: number;
   copiedAssetCount: number;
   appliedSourceStylesheetCount: number;
 }
@@ -25,6 +26,8 @@ export interface ExportStaticHtmlResult {
 export type StaticHtmlStyleMode = 'baseline' | 'source';
 
 const STYLESHEET_PATH = 'assets/site-rescue.css';
+const REDIRECT_MANIFEST_PATH = 'redirects.json';
+const REDIRECT_MANIFEST_VERSION = '1.0.0';
 
 const STYLESHEET = `:root {
   color-scheme: light dark;
@@ -262,6 +265,31 @@ ${page.blocks.map((block) => `    ${renderBlock(block, context)}`).join('\n')}
 `;
 }
 
+function renderRedirectPage(currentFile: string, targetFile: string): string {
+  const target = relativeReference(currentFile, targetFile);
+  const escapedTarget = escapeHtml(target);
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="0; url=${escapedTarget}">
+  <link rel="canonical" href="${escapedTarget}">
+  <title>Page moved</title>
+</head>
+<body>
+  <p>This page moved to <a href="${escapedTarget}">${escapedTarget}</a>.</p>
+</body>
+</html>
+`;
+}
+
+function validateRedirectPath(value: string, field: 'from' | 'to'): void {
+  if (value.includes('?') || value.includes('#')) {
+    throw new Error(`Redirect ${field} path must not contain a query or fragment: ${value}`);
+  }
+}
+
 function isStylesheetAsset(asset: Site['assets'][number]): boolean {
   if (asset.role === 'stylesheet') {
     return true;
@@ -339,8 +367,10 @@ export async function exportStaticHtml(
   const styleMode = options.styleMode ?? 'baseline';
   const sourceStylesheetPaths = selectSourceStylesheets(site, styleMode);
   const pageFilesBySourceUrl = new Map<string, string>();
+  const pageFilesByTargetPath = new Map<string, string>();
   const claimedFiles = new Set<string>([
     collisionKey(STYLESHEET_PATH),
+    collisionKey(REDIRECT_MANIFEST_PATH),
     ...site.assets.flatMap((asset) =>
       asset.localPath === undefined ? [] : [collisionKey(asset.localPath)],
     ),
@@ -361,10 +391,40 @@ export async function exportStaticHtml(
       throw new Error(`Multiple pages share the same source URL: ${source.href}`);
     }
     pageFilesBySourceUrl.set(source.href, outputFile);
+    pageFilesByTargetPath.set(page.targetPath, outputFile);
+  }
+
+  const redirectFiles = new Map<string, string>();
+  for (const redirect of site.redirects) {
+    validateRedirectPath(redirect.from, 'from');
+    validateRedirectPath(redirect.to, 'to');
+    const targetFile = pageFilesByTargetPath.get(redirect.to);
+    if (targetFile === undefined) {
+      throw new Error(`Redirect target does not match an exported page: ${redirect.to}`);
+    }
+    const redirectFile = targetPathToFile(redirect.from);
+    const redirectKey = collisionKey(redirectFile);
+    if (claimedFiles.has(redirectKey)) {
+      throw new Error(`Redirect output collides with another file: ${redirectFile}`);
+    }
+    claimedFiles.add(redirectKey);
+    redirectFiles.set(redirectFile, targetFile);
   }
 
   await mkdir(resolveWithin(outputDirectory, 'assets'), { recursive: true });
   await writeFile(resolveWithin(outputDirectory, STYLESHEET_PATH), STYLESHEET, 'utf8');
+  await writeFile(
+    resolveWithin(outputDirectory, REDIRECT_MANIFEST_PATH),
+    `${JSON.stringify(
+      {
+        version: REDIRECT_MANIFEST_VERSION,
+        redirects: site.redirects,
+      },
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  );
   const copiedAssetCount = await copyAssets(site, captureDirectory, outputDirectory);
   const localAssetPaths = new Set(
     site.assets.flatMap((asset) => (asset.localPath === undefined ? [] : [asset.localPath])),
@@ -387,9 +447,16 @@ export async function exportStaticHtml(
     );
   }
 
+  for (const [redirectFile, targetFile] of redirectFiles) {
+    const destination = resolveWithin(outputDirectory, redirectFile);
+    await mkdir(dirname(destination), { recursive: true });
+    await writeFile(destination, renderRedirectPage(redirectFile, targetFile), 'utf8');
+  }
+
   return {
     outputDirectory,
     pageCount: site.pages.length,
+    redirectPageCount: redirectFiles.size,
     copiedAssetCount,
     appliedSourceStylesheetCount: sourceStylesheetPaths.length,
   };

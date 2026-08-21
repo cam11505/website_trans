@@ -25,7 +25,8 @@ export interface MigrationReviewItem {
     | 'embed-review-required'
     | 'raw-html-review-required'
     | 'remote-asset'
-    | 'unverified-local-asset';
+    | 'unverified-local-asset'
+    | 'redirect-deployment-required';
   message: string;
   sourceUrl: string;
   pageId?: string;
@@ -44,6 +45,7 @@ export interface MigrationReport {
     verifiedLocalAssetCount: number;
     unverifiedLocalAssetCount: number;
     remoteAssetCount: number;
+    redirectCount: number;
     warningCount: number;
     reviewItemCount: number;
   };
@@ -140,6 +142,16 @@ export function createMigrationReport(input: Site): MigrationReport {
   const unverifiedLocalAssets = localAssets.filter((asset) => asset.checksum === undefined);
   const reviewItems: MigrationReviewItem[] = [
     ...pageReviewItems,
+    ...(site.redirects.length === 0
+      ? []
+      : [
+          {
+            code: 'redirect-deployment-required' as const,
+            message:
+              'Configure the generated redirect manifest in the production host to deliver real HTTP 301 responses; HTML fallback pages are not equivalent.',
+            sourceUrl: site.source.baseUrl,
+          },
+        ]),
     ...remoteAssets.map((asset) => ({
       code: 'remote-asset' as const,
       message: 'Asset was not stored locally and still depends on the source URL.',
@@ -172,6 +184,7 @@ export function createMigrationReport(input: Site): MigrationReport {
       verifiedLocalAssetCount,
       unverifiedLocalAssetCount: unverifiedLocalAssets.length,
       remoteAssetCount: remoteAssets.length,
+      redirectCount: site.redirects.length,
       warningCount: site.warnings.length,
       reviewItemCount: reviewItems.length,
     },
@@ -221,6 +234,7 @@ export function renderMigrationReportMarkdown(report: MigrationReport): string {
     `| Verified local assets | ${report.summary.verifiedLocalAssetCount} |`,
     `| Unverified local assets | ${report.summary.unverifiedLocalAssetCount} |`,
     `| Remote assets | ${report.summary.remoteAssetCount} |`,
+    `| Redirects | ${report.summary.redirectCount} |`,
     `| Warnings | ${report.summary.warningCount} |`,
     `| Manual review items | ${report.summary.reviewItemCount} |`,
     '',

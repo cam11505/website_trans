@@ -39,8 +39,42 @@ describe('same-origin crawler', () => {
       'https://example.test/contact',
     ]);
     expect(result.pages.map((page) => page.title)).toEqual(['Home', 'About', 'Contact']);
+    expect(result.redirects).toEqual([]);
     expect(result.warnings).toEqual([]);
     expect(result.truncated).toBe(false);
+  });
+
+  it('records same-origin redirects and deduplicates their final documents', async () => {
+    const requests: string[] = [];
+    const redirectingFetcher: Fetcher = async (input) => {
+      requests.push(input);
+      const response = new Response(
+        input.endsWith('/')
+          ? '<title>Home</title><a href="/a-legacy">Legacy</a><a href="/z-about">About</a>'
+          : '<title>About</title>',
+        { status: 200, headers: { 'content-type': 'text/html' } },
+      );
+      if (input.endsWith('/a-legacy')) {
+        Object.defineProperty(response, 'url', { value: 'https://example.test/z-about' });
+      }
+      return response;
+    };
+
+    const result = await crawlSameOrigin('https://example.test/', {
+      fetcher: redirectingFetcher,
+    });
+
+    expect(result.pages.map((page) => page.url)).toEqual([
+      'https://example.test/',
+      'https://example.test/z-about',
+    ]);
+    expect(result.redirects).toEqual([
+      {
+        fromUrl: 'https://example.test/a-legacy',
+        toUrl: 'https://example.test/z-about',
+      },
+    ]);
+    expect(requests).toEqual(['https://example.test/', 'https://example.test/a-legacy']);
   });
 
   it('stops at the configured page limit', async () => {
