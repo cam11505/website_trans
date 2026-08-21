@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 16 adds bounded HTTP reliability and fresh-output-only safety.
+> Phase 17 adds a self-contained CLI release package and exact-version release checks.
 
 ## Current capabilities
 
@@ -13,6 +13,8 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Bounded, deterministic, same-origin HTML crawler
 - Shared bounded HTTP retry, timeout, and response-body policy for HTML and assets
 - Fresh-output-only lifecycle for capture, export, report, and end-to-end rescue commands
+- Self-contained Node.js CLI release package with SHA-256 inventory and smoke verification
+- `site-rescue --version` release-version command
 - Weebly detection with confidence and human-readable evidence
 - Generic HTML fallback detection and standards-based content normalization
 - `site-rescue diagnose <url>` CLI command
@@ -43,6 +45,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 ```bash
 pnpm install
+pnpm site-rescue --version
 pnpm site-rescue diagnose https://example.weebly.com
 pnpm site-rescue diagnose https://example.com
 pnpm site-rescue rescue https://example.weebly.com --output ./rescued-site
@@ -112,6 +115,17 @@ node apps/cli/dist/index.js verify-bundle ./rescued-site
 node apps/cli/dist/index.js preview ./site
 ```
 
+Prepare and verify the self-contained release candidate package:
+
+```bash
+pnpm build
+pnpm release:check
+node release/package/bin/site-rescue.js --version
+node release/package/bin/site-rescue.js --help
+```
+
+The generated `release/package` directory is ignored by Git. It contains one bundled CLI entry point, release metadata and documentation, a source map, and `SHA256SUMS.txt`. It remains `UNLICENSED` until the separately approved Apache-2.0 step is completed.
+
 `capture/site.json` contains site metadata, navigation, normalized pages and blocks, an asset manifest, redirects, and warnings. Successfully downloaded files are stored under `capture/assets/`; each manifest entry retains its original `sourceUrl` and adds `localPath`, `mediaType`, and a SHA-256 `checksum`. Failed downloads remain as source URLs and produce `asset-download-failed` warnings without aborting the rest of the capture.
 
 Example output:
@@ -147,6 +161,7 @@ site-rescue/
 │  ├─ rescue-manifest/         # Whole-bundle inventory and integrity verification
 │  ├─ static-verifier/         # Offline generated-site integrity checks
 │  ├─ preview-server/          # Loopback-only static site preview
+│  ├─ release-tools/           # Release package build, checksum, and smoke verification
 │  ├─ exporters/
 │  │  └─ static-html/          # Platform-neutral static website generation
 │  └─ adapters/
@@ -155,7 +170,8 @@ site-rescue/
 ├─ fixtures/
 │  └─ weebly/                 # Sanitized, deterministic test pages
 └─ docs/
-   └─ adr/                    # ADR-001 through ADR-016
+   ├─ RELEASE_CHECKLIST.md    # Exact-commit public release procedure
+   └─ adr/                    # ADR-001 through ADR-017
 ```
 
 The intended long-term boundary is:
@@ -171,9 +187,10 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm release:check
 ```
 
-GitHub Actions runs these checks plus a built-CLI smoke test on every pull request and every push to `main`. The workflow uses a frozen lockfile, pinned action commits, read-only repository permissions, and a 10-minute job timeout.
+GitHub Actions runs these checks plus built and packaged CLI smoke tests on every pull request and every push to `main`. The workflow uses a frozen lockfile, pinned action commits, read-only repository permissions, and a 10-minute job timeout.
 
 Default tests do not access live websites. Live compatibility checks should remain separate and explicit.
 
@@ -279,7 +296,16 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - `manifest` and `verify-bundle` intentionally inspect an existing rescue bundle.
 - Phase 16 does not provide overwrite, resume, or incremental capture modes.
 
-## Explicitly out of scope for phase 16
+## Release readiness
+
+- All workspace packages must use the root semantic version and remain private before the release policy changes.
+- `release:check` rebuilds `release/package`, verifies every checksum, executes bundled `--version` and `--help`, and produces a real migration report from an offline fixture.
+- The release package bundles runtime dependencies but still requires Node.js 20.19 or newer.
+- Package metadata remains `private: true` to prevent accidental npm publication; the planned first distribution channel is GitHub Releases.
+- Follow [the release checklist](./docs/RELEASE_CHECKLIST.md) before changing visibility, tagging, or publishing.
+- See [CHANGELOG.md](./CHANGELOG.md), [CONTRIBUTING.md](./CONTRIBUTING.md), and [SECURITY.md](./SECURITY.md) for project policy.
+
+## Explicitly out of scope for phase 17
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -297,7 +323,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-016.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-017.
 
 ## License
 

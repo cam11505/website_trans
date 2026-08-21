@@ -156,6 +156,12 @@ importers:
 
   packages/preview-server: {}
 
+  packages/release-tools:
+    dependencies:
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+
   packages/redirects:
     dependencies:
       '@site-rescue/content-schema':

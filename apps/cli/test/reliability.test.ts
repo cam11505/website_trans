@@ -17,6 +17,19 @@ async function exists(path: string): Promise<boolean> {
 }
 
 describe('CLI reliability and safe output', () => {
+  it('prints the release version without running a command', async () => {
+    const lines: string[] = [];
+    const log = vi.spyOn(console, 'log').mockImplementation((line?: unknown) => {
+      lines.push(String(line));
+    });
+    try {
+      await expect(main(['--version'])).resolves.toBe(0);
+      expect(lines).toEqual(['0.1.0']);
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it('refuses an existing capture directory before making a request', async () => {
     const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-cli-existing-'));
     const fetcher = vi.fn<Fetcher>();
