@@ -3,10 +3,12 @@ import { pathToFileURL } from 'node:url';
 import { runCapture } from './capture.js';
 import { runDiagnose } from './diagnose.js';
 import { runExport } from './export.js';
+import { runManifest } from './manifest.js';
 import { runPreview } from './preview.js';
 import { runReport } from './report.js';
 import { runRescue } from './rescue.js';
 import { runVerify } from './verify.js';
+import { runVerifyBundle } from './verify-bundle.js';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 
 const USAGE = `Usage:
@@ -15,6 +17,8 @@ const USAGE = `Usage:
   site-rescue export <site.json> [--output <directory>] [--style-mode <baseline|source>]
   site-rescue report <site.json> [--output <directory>]
   site-rescue verify <site-directory>
+  site-rescue manifest <rescue-directory>
+  site-rescue verify-bundle <rescue-directory>
   site-rescue preview <site-directory> [--port <number>]
   site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--skip-assets] [--style-mode <baseline|source>]
 
@@ -24,8 +28,10 @@ Commands:
   export    Render a validated site.json capture as a static HTML website
   report    Create JSON and Markdown migration reports from a validated capture
   verify    Check generated HTML links and local assets without network access
+  manifest  Write a deterministic SHA-256 manifest for a complete rescue bundle
+  verify-bundle  Verify a rescue bundle manifest and all recorded files offline
   preview   Verify and serve a generated site on 127.0.0.1 for local review
-  rescue    Capture, export, report, and verify a source website locally`;
+  rescue    Capture, export, report, verify, and manifest a source website locally`;
 
 function parseStringOption(args: string[], name: string): string | undefined {
   const optionIndex = args.indexOf(name);
@@ -87,6 +93,8 @@ export async function main(args: string[]): Promise<number> {
       command !== 'export' &&
       command !== 'report' &&
       command !== 'verify' &&
+      command !== 'manifest' &&
+      command !== 'verify-bundle' &&
       command !== 'preview' &&
       command !== 'rescue') ||
     input === undefined
@@ -116,6 +124,11 @@ export async function main(args: string[]): Promise<number> {
     } else if (command === 'verify') {
       const result = await runVerify(input);
       return result.valid ? 0 : 2;
+    } else if (command === 'manifest') {
+      await runManifest(input);
+    } else if (command === 'verify-bundle') {
+      const result = await runVerifyBundle(input);
+      return result.valid ? 0 : 2;
     } else if (command === 'preview') {
       await runPreview(input, { port: parsePort(args) });
     } else {
@@ -143,8 +156,10 @@ if (isEntryPoint) {
 export { runDiagnose } from './diagnose.js';
 export { runCapture } from './capture.js';
 export { runExport } from './export.js';
+export { runManifest } from './manifest.js';
 export { runPreview } from './preview.js';
 export { runReport } from './report.js';
 export { runRescue } from './rescue.js';
 export { runVerify } from './verify.js';
+export { runVerifyBundle } from './verify-bundle.js';
 

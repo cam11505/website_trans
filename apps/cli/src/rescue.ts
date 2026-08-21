@@ -4,10 +4,12 @@ import type { SourceAdapter } from '@site-rescue/core';
 import type { Fetcher } from '@site-rescue/crawler';
 import { runCapture, type CaptureResult } from './capture.js';
 import { runExport, type ExportResult } from './export.js';
+import { runManifest } from './manifest.js';
 import { runReport, type ReportResult } from './report.js';
 import { runVerify } from './verify.js';
 import type { VerifyStaticSiteResult } from '@site-rescue/static-verifier';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
+import type { WriteRescueManifestResult } from '@site-rescue/rescue-manifest';
 
 export interface RescueOptions {
   outputDirectory: string;
@@ -33,6 +35,7 @@ export interface RescueResult {
   export: ExportResult;
   report: ReportResult;
   verification: VerifyStaticSiteResult;
+  manifest?: WriteRescueManifestResult;
 }
 
 export async function runRescue(inputUrl: string, options: RescueOptions): Promise<RescueResult> {
@@ -66,6 +69,9 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
   const verification = await runVerify(siteDirectory, {
     writeLine: () => undefined,
   });
+  const manifest = verification.valid
+    ? await runManifest(outputDirectory, { writeLine: () => undefined })
+    : undefined;
 
   writeLine('Site Rescue complete');
   writeLine(`Pages captured: ${capture.pageCount}`);
@@ -80,9 +86,17 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
   writeLine(`Source stylesheets applied: ${exported.appliedSourceStylesheetCount}`);
   writeLine(`Readiness: ${report.readiness}`);
   writeLine(`Verification: ${verification.valid ? 'valid' : 'invalid'}`);
+  writeLine(
+    manifest === undefined
+      ? 'Bundle manifest: not written because verification failed'
+      : `Bundle files recorded: ${manifest.fileCount}`,
+  );
   writeLine(`Capture: ${captureDirectory}`);
   writeLine(`Website: ${siteDirectory}`);
   writeLine(`Report: ${reportDirectory}`);
+  if (manifest !== undefined) {
+    writeLine(`Manifest: ${manifest.manifestFile}`);
+  }
 
   return {
     outputDirectory,
@@ -93,5 +107,6 @@ export async function runRescue(inputUrl: string, options: RescueOptions): Promi
     export: exported,
     report,
     verification,
+    ...(manifest === undefined ? {} : { manifest }),
   };
 }

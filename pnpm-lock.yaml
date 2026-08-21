@@ -62,6 +62,9 @@ importers:
       '@site-rescue/report':
         specifier: workspace:*
         version: link:../../packages/report
+      '@site-rescue/rescue-manifest':
+        specifier: workspace:*
+        version: link:../../packages/rescue-manifest
       '@site-rescue/static-verifier':
         specifier: workspace:*
         version: link:../../packages/static-verifier
@@ -151,6 +154,18 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../content-schema
+
+  packages/rescue-manifest:
+    dependencies:
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../content-schema
+      '@site-rescue/report':
+        specifier: workspace:*
+        version: link:../report
+      '@site-rescue/static-verifier':
+        specifier: workspace:*
+        version: link:../static-verifier
 
   packages/static-verifier:
     dependencies:
