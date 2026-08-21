@@ -9,6 +9,7 @@ import { runReport } from './report.js';
 import { runRescue } from './rescue.js';
 import { runVerify } from './verify.js';
 import { runVerifyBundle } from './verify-bundle.js';
+import { SITE_RESCUE_VERSION } from './version.js';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 
 const USAGE = `Usage:
@@ -31,7 +32,10 @@ Commands:
   manifest  Write a deterministic SHA-256 manifest for a complete rescue bundle
   verify-bundle  Verify a rescue bundle manifest and all recorded files offline
   preview   Verify and serve a generated site on 127.0.0.1 for local review
-  rescue    Capture, export, report, verify, and manifest a source website locally`;
+  rescue    Capture, export, report, verify, and manifest a source website locally
+
+Global options:
+  --version, -V  Print the Site Rescue version`;
 
 function parseStringOption(args: string[], name: string): string | undefined {
   const optionIndex = args.indexOf(name);
@@ -115,6 +119,10 @@ function parseStyleMode(args: string[]): StaticHtmlStyleMode | undefined {
 }
 
 export async function main(args: string[]): Promise<number> {
+  if (args.includes('--version') || args.includes('-V')) {
+    console.log(SITE_RESCUE_VERSION);
+    return 0;
+  }
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     console.log(USAGE);
     return 0;
