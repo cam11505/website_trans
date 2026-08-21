@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { parseSite } from '@site-rescue/content-schema';
+import { withFreshOutputDirectory } from '@site-rescue/output-safety';
 import {
   exportStaticHtml,
   type StaticHtmlStyleMode,
@@ -21,6 +22,15 @@ export interface ExportResult {
 }
 
 export async function runExport(inputFile: string, options: ExportOptions): Promise<ExportResult> {
+  return withFreshOutputDirectory(options.outputDirectory, async (outputDirectory) =>
+    runExportInDirectory(inputFile, { ...options, outputDirectory }),
+  );
+}
+
+async function runExportInDirectory(
+  inputFile: string,
+  options: ExportOptions,
+): Promise<ExportResult> {
   const writeLine = options.writeLine ?? console.log;
   const absoluteInput = resolve(inputFile);
   const site = parseSite(JSON.parse(await readFile(absoluteInput, 'utf8')) as unknown);

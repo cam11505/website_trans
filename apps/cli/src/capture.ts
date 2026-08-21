@@ -15,11 +15,15 @@ import {
   type Fetcher,
 } from '@site-rescue/crawler';
 import { applyRedirectEvidence } from '@site-rescue/redirects';
+import { withFreshOutputDirectory } from '@site-rescue/output-safety';
 import { DEFAULT_SOURCE_ADAPTERS } from './adapters.js';
 
 export interface CaptureOptions {
   outputDirectory: string;
   maxPages?: number;
+  maxRetries?: number;
+  requestTimeoutMs?: number;
+  maxHtmlBytes?: number;
   fetcher?: Fetcher;
   assetFetcher?: AssetFetcher;
   adapters?: readonly SourceAdapter[];
@@ -63,9 +67,23 @@ async function writeJsonAtomically(outputDirectory: string, value: unknown): Pro
 }
 
 export async function runCapture(inputUrl: string, options: CaptureOptions): Promise<CaptureResult> {
+  return withFreshOutputDirectory(options.outputDirectory, async (outputDirectory) =>
+    runCaptureInDirectory(inputUrl, { ...options, outputDirectory }),
+  );
+}
+
+async function runCaptureInDirectory(
+  inputUrl: string,
+  options: CaptureOptions,
+): Promise<CaptureResult> {
   const writeLine = options.writeLine ?? console.log;
   const url = normalizeStartUrl(inputUrl);
-  const initialDocument = await fetchHtmlDocument(url, { fetcher: options.fetcher });
+  const initialDocument = await fetchHtmlDocument(url, {
+    fetcher: options.fetcher,
+    maxHtmlBytes: options.maxHtmlBytes,
+    maxRetries: options.maxRetries,
+    timeoutMs: options.requestTimeoutMs,
+  });
   const selection = selectSourceAdapter(
     { url: initialDocument.url, html: initialDocument.html },
     options.adapters ?? DEFAULT_SOURCE_ADAPTERS,
@@ -77,7 +95,10 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
   const crawl = await crawlSameOrigin(url, {
     fetcher: options.fetcher,
     initialDocument,
+    maxHtmlBytes: options.maxHtmlBytes,
     maxPages: options.maxPages ?? DEFAULT_MAX_PAGES,
+    maxRetries: options.maxRetries,
+    timeoutMs: options.requestTimeoutMs,
   });
   let site = parseSite(
     selection.adapter.normalize({
@@ -104,9 +125,11 @@ export async function runCapture(inputUrl: string, options: CaptureOptions): Pro
     const assetResult = await downloadSiteAssets(site, {
       fetcher: options.assetFetcher ?? options.fetcher,
       maxAssetBytes: options.maxAssetBytes,
+      maxRetries: options.maxRetries,
       maxCssDepth: options.maxCssDepth,
       maxCssDependencies: options.maxCssDependencies,
       outputDirectory: options.outputDirectory,
+      timeoutMs: options.requestTimeoutMs,
     });
     site = assetResult.site;
     downloadedAssetCount = assetResult.downloadedAssetCount;

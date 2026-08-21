@@ -21,6 +21,7 @@
     "@site-rescue/core": "workspace:*",
     "@site-rescue/crawler": "workspace:*",
     "@site-rescue/exporter-static-html": "workspace:*",
+    "@site-rescue/output-safety": "workspace:*",
     "@site-rescue/preview-server": "workspace:*",
     "@site-rescue/redirects": "workspace:*",
     "@site-rescue/report": "workspace:*",

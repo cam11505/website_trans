@@ -15,19 +15,25 @@ import {
   rewriteCssReferences,
   type CssReference,
 } from '@site-rescue/css-references';
+import {
+  fetchWithRetry,
+  readResponseBytes,
+  type HttpFetcher,
+} from '@site-rescue/http-policy';
 
 export const DEFAULT_MAX_ASSET_BYTES = 50 * 1024 * 1024;
 export const DEFAULT_ASSET_TIMEOUT_MS = 30_000;
 export const DEFAULT_MAX_CSS_DEPTH = 5;
 export const DEFAULT_MAX_CSS_DEPENDENCIES = 500;
 
-export type AssetFetcher = (input: string, init?: RequestInit) => Promise<Response>;
+export type AssetFetcher = HttpFetcher;
 
 export interface DownloadSiteAssetsOptions {
   outputDirectory: string;
   fetcher?: AssetFetcher;
   maxAssetBytes?: number;
   timeoutMs?: number;
+  maxRetries?: number;
   maxCssDepth?: number;
   maxCssDependencies?: number;
 }
@@ -130,74 +136,35 @@ async function fetchAsset(
   fetcher: AssetFetcher,
   maxAssetBytes: number,
   timeoutMs: number,
+  maxRetries: number | undefined,
 ): Promise<FetchResult> {
   const url = new URL(asset.sourceUrl);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error(`unsupported URL protocol: ${url.protocol}`);
   }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetcher(asset.sourceUrl, {
+  const response = await fetchWithRetry(
+    asset.sourceUrl,
+    {
       headers: {
         Accept: '*/*',
         'User-Agent': 'SiteRescue/0.1',
       },
       redirect: 'follow',
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const declaredLength = Number(response.headers.get('content-length'));
-    if (Number.isFinite(declaredLength) && declaredLength > maxAssetBytes) {
-      throw new Error(`asset exceeds the ${maxAssetBytes}-byte limit`);
-    }
-    const finalUrl = canonicalHttpUrl(response.url === '' ? asset.sourceUrl : response.url);
-    if (finalUrl === undefined) {
-      throw new Error('asset redirected to an unsupported URL');
-    }
-    return {
-      bytes: await readResponseBody(response, maxAssetBytes),
-      mediaType: normalizeMediaType(response.headers.get('content-type')) ?? asset.mediaType,
-      finalUrl,
-    };
-  } finally {
-    clearTimeout(timeout);
+    },
+    { fetcher, maxRetries, timeoutMs },
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
   }
-}
-
-async function readResponseBody(response: Response, maxAssetBytes: number): Promise<Uint8Array> {
-  if (response.body === null) {
-    return new Uint8Array();
+  const finalUrl = canonicalHttpUrl(response.url === '' ? asset.sourceUrl : response.url);
+  if (finalUrl === undefined) {
+    throw new Error('asset redirected to an unsupported URL');
   }
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let byteLength = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      byteLength += value.byteLength;
-      if (byteLength > maxAssetBytes) {
-        await reader.cancel();
-        throw new Error(`asset exceeds the ${maxAssetBytes}-byte limit`);
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  const bytes = new Uint8Array(byteLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
+  return {
+    bytes: await readResponseBytes(response, { label: 'asset', maxBytes: maxAssetBytes }),
+    mediaType: normalizeMediaType(response.headers.get('content-type')) ?? asset.mediaType,
+    finalUrl,
+  };
 }
 
 function resolveAssetTarget(outputDirectory: string, localPath: string): string {
@@ -305,12 +272,14 @@ function rewritePages(pages: Page[], localPaths: ReadonlyMap<string, string>): P
 function validateOptions(options: DownloadSiteAssetsOptions): {
   maxAssetBytes: number;
   timeoutMs: number;
+  maxRetries: number | undefined;
   maxCssDepth: number;
   maxCssDependencies: number;
 } {
   const values = {
     maxAssetBytes: options.maxAssetBytes ?? DEFAULT_MAX_ASSET_BYTES,
     timeoutMs: options.timeoutMs ?? DEFAULT_ASSET_TIMEOUT_MS,
+    maxRetries: options.maxRetries,
     maxCssDepth: options.maxCssDepth ?? DEFAULT_MAX_CSS_DEPTH,
     maxCssDependencies: options.maxCssDependencies ?? DEFAULT_MAX_CSS_DEPENDENCIES,
   };
@@ -319,6 +288,12 @@ function validateOptions(options: DownloadSiteAssetsOptions): {
   }
   if (!Number.isInteger(values.timeoutMs) || values.timeoutMs < 1) {
     throw new Error('timeoutMs must be a positive integer.');
+  }
+  if (
+    values.maxRetries !== undefined &&
+    (!Number.isInteger(values.maxRetries) || values.maxRetries < 0)
+  ) {
+    throw new Error('maxRetries must be a non-negative integer.');
   }
   if (!Number.isInteger(values.maxCssDepth) || values.maxCssDepth < 0) {
     throw new Error('maxCssDepth must be a non-negative integer.');
@@ -361,6 +336,7 @@ export async function downloadSiteAssets(
         fetcher,
         limits.maxAssetBytes,
         limits.timeoutMs,
+        limits.maxRetries,
       );
       const record: FetchedRecord = { ...item, ...fetched, cssParseFailed: false };
       records.push(record);

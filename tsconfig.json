@@ -3,6 +3,8 @@
   "references": [
     { "path": "./packages/content-schema" },
     { "path": "./packages/core" },
+    { "path": "./packages/http-policy" },
+    { "path": "./packages/output-safety" },
     { "path": "./packages/crawler" },
     { "path": "./packages/css-references" },
     { "path": "./packages/redirects" },

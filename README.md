@@ -4,13 +4,15 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Phase 15 adds deterministic whole-bundle manifests and offline integrity verification.
+> Phase 16 adds bounded HTTP reliability and fresh-output-only safety.
 
 ## Current capabilities
 
 - Versioned normalized content schema with runtime validation
 - Platform-neutral source-adapter contract and deterministic registry selection
 - Bounded, deterministic, same-origin HTML crawler
+- Shared bounded HTTP retry, timeout, and response-body policy for HTML and assets
+- Fresh-output-only lifecycle for capture, export, report, and end-to-end rescue commands
 - Weebly detection with confidence and human-readable evidence
 - Generic HTML fallback detection and standards-based content normalization
 - `site-rescue diagnose <url>` CLI command
@@ -85,6 +87,14 @@ Limit discovery when testing a large site:
 pnpm site-rescue diagnose https://example.weebly.com --max-pages 20
 ```
 
+Tune bounded request reliability when a source server is slow or unstable:
+
+```bash
+pnpm site-rescue diagnose https://example.weebly.com --max-retries 3 --request-timeout-ms 20000 --max-html-bytes 8388608
+```
+
+`capture`, `export`, `report`, and `rescue` require a new output directory. If the path already exists, the command stops before changing it. A failed run removes only the new directory created for that run.
+
 After building, the CLI entry point can also be run directly:
 
 ```bash
@@ -127,6 +137,8 @@ site-rescue/
 ├─ packages/
 │  ├─ content-schema/         # Platform-neutral normalized site model
 │  ├─ core/                   # Source-adapter contracts and registry selection
+│  ├─ http-policy/            # Bounded retry, timeout, and response-body reads
+│  ├─ output-safety/          # Fresh-output-only command lifecycle
 │  ├─ crawler/                # Bounded same-origin page discovery
 │  ├─ css-references/         # Shared CSS AST parsing and reference rewriting
 │  ├─ redirects/              # Redirect evidence mapping and conflict handling
@@ -143,7 +155,7 @@ site-rescue/
 ├─ fixtures/
 │  └─ weebly/                 # Sanitized, deterministic test pages
 └─ docs/
-   └─ adr/                    # ADR-001 through ADR-015
+   └─ adr/                    # ADR-001 through ADR-016
 ```
 
 The intended long-term boundary is:
@@ -170,6 +182,9 @@ Default tests do not access live websites. Live compatibility checks should rema
 - Crawls only HTTP(S) links on the exact origin of the starting page.
 - Removes URL fragments and ignores common non-document extensions.
 - Fetches HTML only, follows links breadth-first, and stops at 50 pages by default.
+- Limits each HTML response to 5 MiB and each attempt to 15 seconds by default.
+- Retries transient request failures and HTTP 408, 429, 500, 502, 503, and 504 responses twice by default.
+- Does not retry permanent HTTP responses such as 404.
 - Records same-origin requested-to-final URL aliases and normalizes each final page only once.
 - Does not execute JavaScript, sign in, bypass access controls, or process private content.
 - Client-rendered pages and interaction-only navigation may be missed.
@@ -192,6 +207,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Stores binary assets using content-derived filenames and reuses one file when multiple URLs return identical bytes.
 - Stores rewritten stylesheets under stable source-URL hash paths so circular imports can be resolved safely.
 - Limits each asset to 50 MiB by default and records individual failures as warnings.
+- Limits each asset request attempt to 30 seconds and uses the shared transient retry policy.
 - Limits stylesheet import depth to 5 and CSS-discovered assets to 500 by default.
 - Does not execute downloaded content.
 - Preserves source stylesheets as migration assets and applies them only when `--style-mode source` is explicitly selected.
@@ -255,7 +271,15 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Excludes the manifest itself from its file inventory so identical bundle contents produce identical manifest bytes.
 - SHA-256 proves content consistency against the recorded manifest; it is not a digital signature and does not prove who created the bundle.
 
-## Explicitly out of scope for phase 15
+## Safe output behavior
+
+- `capture`, `export`, `report`, and `rescue` accept only a non-existing output directory.
+- Existing files and directories are refused before command work begins and are never modified.
+- A failed operation removes only the exact output directory created by that operation.
+- `manifest` and `verify-bundle` intentionally inspect an existing rescue bundle.
+- Phase 16 does not provide overwrite, resume, or incremental capture modes.
+
+## Explicitly out of scope for phase 16
 
 - GUI or hosted SaaS
 - Cloudflare infrastructure or domain automation
@@ -273,7 +297,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-015.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-016.
 
 ## License
 

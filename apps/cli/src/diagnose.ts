@@ -10,6 +10,9 @@ import { DEFAULT_SOURCE_ADAPTERS } from './adapters.js';
 
 export interface DiagnoseOptions {
   maxPages?: number;
+  maxRetries?: number;
+  requestTimeoutMs?: number;
+  maxHtmlBytes?: number;
   fetcher?: Fetcher;
   adapters?: readonly SourceAdapter[];
   writeLine?: (line: string) => void;
@@ -23,7 +26,12 @@ function displayPath(url: string): string {
 export async function runDiagnose(inputUrl: string, options: DiagnoseOptions = {}): Promise<void> {
   const writeLine = options.writeLine ?? console.log;
   const url = normalizeStartUrl(inputUrl);
-  const initialDocument = await fetchHtmlDocument(url, { fetcher: options.fetcher });
+  const initialDocument = await fetchHtmlDocument(url, {
+    fetcher: options.fetcher,
+    maxHtmlBytes: options.maxHtmlBytes,
+    maxRetries: options.maxRetries,
+    timeoutMs: options.requestTimeoutMs,
+  });
   const selection = selectSourceAdapter(
     { url: initialDocument.url, html: initialDocument.html },
     options.adapters ?? DEFAULT_SOURCE_ADAPTERS,
@@ -31,7 +39,10 @@ export async function runDiagnose(inputUrl: string, options: DiagnoseOptions = {
   const crawl = await crawlSameOrigin(url, {
     fetcher: options.fetcher,
     initialDocument,
+    maxHtmlBytes: options.maxHtmlBytes,
     maxPages: options.maxPages ?? DEFAULT_MAX_PAGES,
+    maxRetries: options.maxRetries,
+    timeoutMs: options.requestTimeoutMs,
   });
 
   writeLine('Site Rescue diagnosis');

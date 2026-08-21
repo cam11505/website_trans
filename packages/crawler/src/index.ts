@@ -1,10 +1,16 @@
 import { load } from 'cheerio';
+import {
+  fetchWithRetry,
+  readResponseText,
+  type HttpFetcher,
+} from '@site-rescue/http-policy';
 
 export const DEFAULT_MAX_PAGES = 50;
 export const DEFAULT_TIMEOUT_MS = 15_000;
+export const DEFAULT_MAX_HTML_BYTES = 5 * 1024 * 1024;
 export const DEFAULT_USER_AGENT = 'SiteRescue/0.1 (+https://github.com/site-rescue/site-rescue)';
 
-export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
+export type Fetcher = HttpFetcher;
 
 export interface HtmlDocument {
   requestedUrl: string;
@@ -37,6 +43,8 @@ export interface CrawlResult {
 export interface CrawlOptions {
   maxPages?: number;
   timeoutMs?: number;
+  maxRetries?: number;
+  maxHtmlBytes?: number;
   userAgent?: string;
   fetcher?: Fetcher;
   initialDocument?: HtmlDocument;
@@ -111,18 +119,28 @@ function getTitle(html: string): string {
 
 export async function fetchHtmlDocument(
   url: string,
-  options: Pick<CrawlOptions, 'fetcher' | 'timeoutMs' | 'userAgent'> = {},
+  options: Pick<
+    CrawlOptions,
+    'fetcher' | 'maxHtmlBytes' | 'maxRetries' | 'timeoutMs' | 'userAgent'
+  > = {},
 ): Promise<HtmlDocument> {
-  const fetcher = options.fetcher ?? fetch;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const response = await fetcher(url, {
-    headers: {
-      accept: 'text/html,application/xhtml+xml',
-      'user-agent': options.userAgent ?? DEFAULT_USER_AGENT,
+  const maxHtmlBytes = options.maxHtmlBytes ?? DEFAULT_MAX_HTML_BYTES;
+  const response = await fetchWithRetry(
+    url,
+    {
+      headers: {
+        accept: 'text/html,application/xhtml+xml',
+        'user-agent': options.userAgent ?? DEFAULT_USER_AGENT,
+      },
+      redirect: 'follow',
     },
-    redirect: 'follow',
-    signal: AbortSignal.timeout(timeoutMs),
-  });
+    {
+      fetcher: options.fetcher,
+      maxRetries: options.maxRetries,
+      timeoutMs,
+    },
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} ${response.statusText}`.trim());
@@ -133,7 +151,10 @@ export async function fetchHtmlDocument(
     throw new Error(`Unsupported content type: ${contentType || 'unknown'}`);
   }
 
-  const html = await response.text();
+  const html = await readResponseText(response, {
+    label: 'HTML document',
+    maxBytes: maxHtmlBytes,
+  });
   const finalUrl = response.url || url;
   return {
     requestedUrl: url,

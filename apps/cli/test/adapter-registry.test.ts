@@ -78,7 +78,8 @@ describe('CLI source adapter injection', () => {
   });
 
   it('normalizes a capture through the selected adapter', async () => {
-    const outputDirectory = await mkdtemp(join(tmpdir(), 'site-rescue-adapter-'));
+    const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-adapter-'));
+    const outputDirectory = join(workspace, 'capture');
     try {
       const result = await runCapture('https://adapter.test/', {
         adapters: [fixtureAdapter],
@@ -94,7 +95,7 @@ describe('CLI source adapter injection', () => {
       expect(site.pages.map((page) => page.sourcePath)).toEqual(['/', '/second']);
       expect(result.pageCount).toBe(2);
     } finally {
-      await rm(outputDirectory, { force: true, recursive: true });
+      await rm(workspace, { force: true, recursive: true });
     }
   });
 });
