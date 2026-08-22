@@ -7,9 +7,14 @@ Use this checklist for the first public release and every later release. Release
 - [ ] Phase 17 release-readiness changes are merged and `main` CI is successful.
 - [ ] `LICENSE` contains the approved Apache-2.0 text.
 - [ ] Root and generated package metadata declare `Apache-2.0`.
+- [ ] Scan all reachable Git history, branches, PRs, issues, reviews, and comments for credentials and private or customer data.
+- [ ] Review commit author names and email addresses as intentionally public metadata.
+- [ ] Run dependency vulnerability audits for production and development dependencies.
+- [ ] Confirm repository description, topics, issue forms, pull request template, and security-reporting route.
 - [ ] `CHANGELOG.md` moves release content from `Unreleased` to the exact version and date.
 - [ ] `SECURITY.md`, private vulnerability reporting, repository description, and topics are reviewed.
 - [ ] Repository visibility is intentionally changed to public only after secret and history review.
+- [ ] After publication, protect `main`, enable available GitHub security analysis, and verify access without repository membership.
 
 ## Exact-commit verification
 

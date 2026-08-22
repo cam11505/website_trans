@@ -16,6 +16,7 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 - Self-contained CLI release-package preparation and verification
 - Apache-2.0 project licensing and SPDX package metadata
 - Generated third-party runtime license and NOTICE inventory for release packages
+- Guarded public issue forms, pull request checklist, and repository-publication controls
 
 ### Release gates remaining
 

@@ -307,6 +307,12 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Follow [the release checklist](./docs/RELEASE_CHECKLIST.md) before changing visibility, tagging, or publishing.
 - See [CHANGELOG.md](./CHANGELOG.md), [CONTRIBUTING.md](./CONTRIBUTING.md), and [SECURITY.md](./SECURITY.md) for project policy.
 
+## Community reports
+
+- Use the structured [bug report](https://github.com/cam11505/website_trans/issues/new?template=bug_report.yml) for reproducible defects with sanitized fixtures and logs.
+- Use the [feature request](https://github.com/cam11505/website_trans/issues/new?template=feature_request.yml) for focused migration capabilities.
+- Follow [SECURITY.md](./SECURITY.md) and use a private security advisory for vulnerabilities. Never disclose credentials, private website content, personal data, or customer data in an issue.
+
 ## Explicitly out of scope before the public v0.1.0 release
 
 - GUI or hosted SaaS
@@ -325,7 +331,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-018.
+See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-019.
 
 ## License
 
