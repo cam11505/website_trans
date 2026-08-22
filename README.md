@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Site Rescue is release-ready and licensed under Apache-2.0. Repository visibility and the `v0.1.0` release remain separate approval steps.
+> Site Rescue is public, release-ready, and licensed under Apache-2.0. The first `v0.1.0` release remains a separate exact-commit approval step.
 
 ## Current capabilities
 
@@ -305,6 +305,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Package metadata remains `private: true` to prevent accidental npm publication; the planned first distribution channel is GitHub Releases.
 - Root, workspace, and generated package metadata use the `Apache-2.0` SPDX identifier; bundled dependencies remain under their own terms recorded in `THIRD_PARTY_NOTICES.txt`. Exact-version audited license overrides cover published packages that omit their license file.
 - Follow [the release checklist](./docs/RELEASE_CHECKLIST.md) before changing visibility, tagging, or publishing.
+- See the [public repository publication record](./docs/PUBLICATION_RECORD.md) for the completed visibility, history-audit, and GitHub protection checks.
 - See [CHANGELOG.md](./CHANGELOG.md), [CONTRIBUTING.md](./CONTRIBUTING.md), and [SECURITY.md](./SECURITY.md) for project policy.
 
 ## Community reports
