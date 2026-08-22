@@ -2,6 +2,8 @@
 
 Use this checklist for the first public release and every later release. Release only from a clean, reviewed commit on `main`.
 
+The initial repository-publication audit and protection results are recorded in [PUBLICATION_RECORD.md](./PUBLICATION_RECORD.md).
+
 ## Public-release gates
 
 - [ ] Phase 17 release-readiness changes are merged and `main` CI is successful.

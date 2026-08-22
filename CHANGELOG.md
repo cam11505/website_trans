@@ -17,8 +17,8 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 - Apache-2.0 project licensing and SPDX package metadata
 - Generated third-party runtime license and NOTICE inventory for release packages
 - Guarded public issue forms, pull request checklist, and repository-publication controls
+- Public GitHub repository with protected `main`, secret scanning, push protection, dependency alerts, and private vulnerability reporting
 
 ### Release gates remaining
 
-- Make the repository public
 - Complete the exact-commit release checklist and publish `v0.1.0`
