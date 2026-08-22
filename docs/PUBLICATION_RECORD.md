@@ -21,6 +21,7 @@
 - Branch protection applies to administrators, requires linear history and resolved conversations, and disallows force pushes and deletion.
 - Pull requests use squash merge; merge commits and rebase merge are disabled.
 - Secret scanning, push protection, Dependabot security updates, automated security fixes, and private vulnerability reporting are enabled.
+- CodeQL default setup analyzes GitHub Actions and JavaScript/TypeScript on a weekly schedule. The initial public `main` analysis succeeded with no open code-scanning alerts.
 - Structured issue forms and a pull request safety checklist route public contributions.
 
 ## Anonymous access verification
