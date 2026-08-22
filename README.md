@@ -4,7 +4,7 @@
 
 Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing websites from hosted platforms that are shutting down or becoming inaccessible. Weebly is the first source adapter; it is not the architecture of the product.
 
-> Site Rescue is public, release-ready, and licensed under Apache-2.0. The first `v0.1.0` release remains a separate exact-commit approval step.
+> Site Rescue `v0.1.0` is the first public release and is licensed under Apache-2.0.
 
 ## Current capabilities
 
@@ -41,6 +41,31 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 - Node.js 20.19 or newer (the CI baseline is recorded in `.node-version`)
 - pnpm 10.34.5 (recorded in `packageManager`)
+
+## Release package
+
+Download `site-rescue-v0.1.0.zip` and `site-rescue-v0.1.0.zip.sha256` from the [`v0.1.0` GitHub Release](https://github.com/cam11505/website_trans/releases/tag/v0.1.0). The archive contains a bundled CLI and does not require pnpm or a dependency installation, but it still requires Node.js 20.19 or newer.
+
+Verify and extract on PowerShell:
+
+```powershell
+Get-FileHash .\site-rescue-v0.1.0.zip -Algorithm SHA256
+Get-Content .\site-rescue-v0.1.0.zip.sha256
+Expand-Archive .\site-rescue-v0.1.0.zip
+node .\site-rescue-v0.1.0\bin\site-rescue.js --version
+node .\site-rescue-v0.1.0\bin\site-rescue.js --help
+```
+
+Verify and extract on macOS or Linux:
+
+```bash
+shasum -a 256 -c site-rescue-v0.1.0.zip.sha256
+unzip site-rescue-v0.1.0.zip
+node site-rescue-v0.1.0/bin/site-rescue.js --version
+node site-rescue-v0.1.0/bin/site-rescue.js --help
+```
+
+The source archive generated automatically by GitHub is not the bundled CLI release package.
 
 ## Quick start
 

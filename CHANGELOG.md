@@ -4,6 +4,10 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ## Unreleased
 
+No unreleased changes.
+
+## 0.1.0 - 2026-08-22
+
 ### Added
 
 - Platform-neutral normalized site schema and source-adapter registry
@@ -18,7 +22,3 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 - Generated third-party runtime license and NOTICE inventory for release packages
 - Guarded public issue forms, pull request checklist, and repository-publication controls
 - Public GitHub repository with protected `main`, secret scanning, push protection, dependency alerts, CodeQL, and private vulnerability reporting
-
-### Release gates remaining
-
-- Complete the exact-commit release checklist and publish `v0.1.0`
