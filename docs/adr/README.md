@@ -22,3 +22,4 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-016](./ADR-016-reliable-http-and-safe-output.md) | Bounded HTTP reliability and fresh-output-only writes | Accepted |
 | [ADR-017](./ADR-017-self-contained-release-package.md) | Self-contained CLI release package | Accepted |
 | [ADR-018](./ADR-018-apache-2.0-license.md) | Apache-2.0 project license and bundled dependency notices | Accepted |
+| [ADR-019](./ADR-019-public-repository-governance.md) | Guarded public repository controls | Accepted |

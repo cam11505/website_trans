@@ -1,0 +1,67 @@
+name: Bug report
+description: Report a reproducible Site Rescue defect using sanitized data
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, private website content, customer data, or undisclosed vulnerabilities. Report security issues through the private security link instead.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Use `site-rescue --version` or provide the tested commit SHA.
+      placeholder: v0.1.0 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: adapter
+    attributes:
+      label: Source adapter
+      options:
+        - Weebly
+        - Generic HTML
+        - Platform detection only
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and Node.js version.
+      placeholder: Windows 11, Node.js 20.19.0
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem
+      description: Describe the observed behavior and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Sanitized reproduction
+      description: Provide minimal commands or a public/sanitized fixture. Remove tokens, private URLs, and customer content.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      description: Optional. Remove credentials, personal data, private URLs, and captured site content.
+      render: text
+  - type: checkboxes
+    id: authorization
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I am authorized to test the referenced website or fixture.
+          required: true
+        - label: I removed credentials, private content, personal data, and customer data from this report.
+          required: true

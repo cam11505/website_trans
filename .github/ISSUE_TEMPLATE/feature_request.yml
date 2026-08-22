@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a focused capability that fits Site Rescue boundaries
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Site Rescue is CLI-first, local-first, and platform-neutral. Do not include confidential platform details or customer data.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Migration problem
+      description: What website-rescue problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the observable behavior, not only a proposed implementation.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Source adapter
+        - Crawler
+        - Content schema
+        - Asset pipeline
+        - Static exporter
+        - Migration report
+        - CLI and local workflow
+        - Reliability or safety
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Public or sanitized example
+      description: Optional. Use public documentation or a fixture with all private content removed.
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Scope confirmation
+      options:
+        - label: This request does not contain credentials, private content, personal data, or customer data.
+          required: true
