@@ -10,12 +10,14 @@ try {
     console.log(`Release package prepared: ${result.outputDirectory}`);
     console.log(`Version: ${result.version}`);
     console.log(`Checksummed files: ${result.fileCount}`);
+    console.log(`Third-party runtime packages: ${result.thirdPartyPackageCount}`);
   } else if (command === 'verify') {
-    await buildReleasePackage(repositoryRoot);
+    const built = await buildReleasePackage(repositoryRoot);
     const result = await verifyReleasePackage(repositoryRoot);
     console.log('Release package verified');
     console.log(`Version: ${result.version}`);
     console.log(`Checksummed files: ${result.fileCount}`);
+    console.log(`Third-party runtime packages: ${built.thirdPartyPackageCount}`);
     console.log('CLI --version: passed');
     console.log('CLI --help: passed');
     console.log('CLI report fixture: passed');

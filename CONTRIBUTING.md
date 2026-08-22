@@ -24,4 +24,4 @@ Thank you for helping improve Site Rescue.
 - Update an ADR when a change alters a previously accepted architectural boundary.
 - Do not include private website content, credentials, tokens, or customer data in fixtures or logs.
 
-By contributing, you confirm that you have the right to submit the contribution under the repository's selected license once it is added.
+By contributing, you confirm that you have the right to submit the contribution under the repository's Apache-2.0 license.

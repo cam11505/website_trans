@@ -22,7 +22,12 @@ const IGNORED_DIRECTORIES = new Set([
   'node_modules',
   'release',
 ]);
-const REQUIRED_DOCUMENTS = ['README.md', 'CHANGELOG.md', 'SECURITY.md'] as const;
+const REQUIRED_PROJECT_FILES = [
+  'README.md',
+  'CHANGELOG.md',
+  'SECURITY.md',
+  'LICENSE',
+] as const;
 
 interface PackageMetadata {
   name?: unknown;
@@ -42,6 +47,7 @@ export interface BuildReleasePackageResult {
   outputDirectory: string;
   checksumFile: string;
   fileCount: number;
+  thirdPartyPackageCount: number;
   version: string;
 }
 
@@ -115,6 +121,17 @@ async function validateWorkspaceVersions(repositoryRoot: string): Promise<{
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u.test(version)) {
     throw new Error(`Root package version is not a supported semantic version: ${version}`);
   }
+  if (rootMetadata.license !== 'Apache-2.0') {
+    throw new Error('Root package license must use the Apache-2.0 SPDX identifier.');
+  }
+  const licenseText = await readFile(join(repositoryRoot, 'LICENSE'), 'utf8');
+  if (
+    !licenseText.includes('Apache License') ||
+    !licenseText.includes('Version 2.0, January 2004') ||
+    !licenseText.includes('END OF TERMS AND CONDITIONS')
+  ) {
+    throw new Error('LICENSE does not contain the expected Apache License 2.0 text.');
+  }
   const manifests = [
     rootPackageFile,
     ...(await collectPackageManifests(join(repositoryRoot, 'apps'))),
@@ -132,8 +149,150 @@ async function validateWorkspaceVersions(repositoryRoot: string): Promise<{
         `Workspace package must remain private before the release policy changes: ${portablePath(relative(repositoryRoot, manifest))}.`,
       );
     }
+    if (metadata.license !== 'Apache-2.0') {
+      throw new Error(
+        `License mismatch in ${portablePath(relative(repositoryRoot, manifest))}: expected Apache-2.0.`,
+      );
+    }
   }
   return { rootMetadata, version };
+}
+
+function packageRootFromInput(repositoryRoot: string, input: string): string | undefined {
+  const path = input.replaceAll('\\', '/');
+  const pnpmMatch = /^(.*node_modules\/\.pnpm\/[^/]+\/node_modules\/(?:@[^/]+\/)?[^/]+)(?:\/|$)/u.exec(
+    path,
+  );
+  const standardMatch = /^(.*node_modules\/(?:@[^/]+\/)?[^/]+)(?:\/|$)/u.exec(path);
+  const packagePath = pnpmMatch?.[1] ?? standardMatch?.[1];
+  return packagePath === undefined
+    ? undefined
+    : resolve(repositoryRoot, ...packagePath.split('/'));
+}
+
+async function findLicenseFile(packageRoot: string): Promise<string | undefined> {
+  const candidates = (await readdir(packageRoot, { withFileTypes: true }))
+    .filter(
+      (entry) =>
+        entry.isFile() && /^(?:licen[cs]e|copying)(?:[._-].*)?$/iu.test(entry.name),
+    )
+    .map((entry) => entry.name)
+    .sort((left, right) => left.localeCompare(right));
+  const licenseFile = candidates[0];
+  return licenseFile === undefined ? undefined : join(packageRoot, licenseFile);
+}
+
+async function findAuditedLicenseOverride(
+  repositoryRoot: string,
+  name: string,
+  version: string,
+): Promise<string | undefined> {
+  const override = join(
+    repositoryRoot,
+    'third_party',
+    'licenses',
+    `${encodeURIComponent(name)}@${encodeURIComponent(version)}.txt`,
+  );
+  try {
+    const entry = await lstat(override);
+    if (!entry.isFile()) {
+      throw new Error(`Audited license override is not a regular file: ${override}`);
+    }
+    return override;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+async function findNoticeFile(packageRoot: string): Promise<string | undefined> {
+  const notice = (await readdir(packageRoot, { withFileTypes: true }))
+    .filter((entry) => entry.isFile() && /^notice(?:[._-].*)?$/iu.test(entry.name))
+    .map((entry) => entry.name)
+    .sort((left, right) => left.localeCompare(right))[0];
+  return notice === undefined ? undefined : join(packageRoot, notice);
+}
+
+async function writeThirdPartyNotices(
+  repositoryRoot: string,
+  outputDirectory: string,
+  inputs: readonly string[],
+): Promise<number> {
+  const packageRoots = new Set<string>();
+  for (const input of inputs) {
+    const packageRoot = packageRootFromInput(repositoryRoot, input);
+    if (packageRoot !== undefined) {
+      packageRoots.add(packageRoot);
+    }
+  }
+  const notices: Array<{
+    license: string;
+    licenseSource: string;
+    name: string;
+    noticeFile?: string;
+    noticeText?: string;
+    text: string;
+    version: string;
+  }> = [];
+  const missingLicenseFiles: string[] = [];
+  for (const packageRoot of packageRoots) {
+    const metadata = await readJson(join(packageRoot, 'package.json'));
+    const name = requireString(metadata.name, 'Bundled package name');
+    const version = requireString(metadata.version, 'Bundled package version');
+    const license = requireString(metadata.license, 'Bundled package license');
+    let licenseFile = await findLicenseFile(packageRoot);
+    let licenseSource: string;
+    if (licenseFile === undefined) {
+      licenseFile = await findAuditedLicenseOverride(repositoryRoot, name, version);
+      if (licenseFile === undefined) {
+        missingLicenseFiles.push(`${name}@${version}`);
+        continue;
+      }
+      licenseSource = `audited override: ${portablePath(relative(repositoryRoot, licenseFile))}`;
+    } else {
+      licenseSource = `published package file: ${basename(licenseFile)}`;
+    }
+    const noticeFile = await findNoticeFile(packageRoot);
+    const licenseText = requireString(
+      await readFile(licenseFile, 'utf8'),
+      `${name}@${version} license text`,
+    );
+    notices.push({
+      name,
+      version,
+      license,
+      licenseSource,
+      text: licenseText.trimEnd(),
+      ...(noticeFile === undefined
+        ? {}
+        : {
+            noticeFile: basename(noticeFile),
+            noticeText: (await readFile(noticeFile, 'utf8')).trimEnd(),
+      }),
+    });
+  }
+  if (missingLicenseFiles.length > 0) {
+    throw new Error(
+      `Bundled dependencies have neither packaged nor audited license files: ${missingLicenseFiles.sort().join(', ')}`,
+    );
+  }
+  notices.sort((left, right) =>
+    `${left.name}@${left.version}`.localeCompare(`${right.name}@${right.version}`),
+  );
+  const sections = notices.map(
+    (notice) =>
+      `${'='.repeat(80)}\n${notice.name}@${notice.version}\nDeclared license: ${notice.license}\nLicense source: ${notice.licenseSource}\n${'-'.repeat(80)}\n${notice.text}${notice.noticeText === undefined ? '' : `\n\nThird-party NOTICE file: ${notice.noticeFile}\n${'-'.repeat(80)}\n${notice.noticeText}`}`,
+  );
+  const introduction =
+    'THIRD-PARTY NOTICES\n\nSite Rescue bundles the following third-party runtime packages. These components remain subject to their own license terms; the Apache-2.0 license for Site Rescue does not replace them.';
+  await writeFile(
+    join(outputDirectory, 'THIRD_PARTY_NOTICES.txt'),
+    `${introduction}${sections.length === 0 ? '\n\nNo third-party runtime packages were bundled.' : `\n\n${sections.join('\n\n')}`}\n`,
+    'utf8',
+  );
+  return notices.length;
 }
 
 async function listRegularFiles(directory: string): Promise<string[]> {
@@ -184,13 +343,13 @@ export async function buildReleasePackage(
   );
   try {
     const { rootMetadata, version } = await validateWorkspaceVersions(root);
-    for (const document of REQUIRED_DOCUMENTS) {
-      await lstat(join(root, document));
+    for (const file of REQUIRED_PROJECT_FILES) {
+      await lstat(join(root, file));
     }
     const binDirectory = join(stagingDirectory, 'bin');
     await mkdir(binDirectory, { recursive: true });
     const cliFile = join(binDirectory, 'site-rescue.js');
-    await (options.bundler ?? build)({
+    const bundleResult = await (options.bundler ?? build)({
       absWorkingDir: root,
       banner: {
         js: "import { createRequire as __siteRescueCreateRequire } from 'node:module'; const require = __siteRescueCreateRequire(import.meta.url);",
@@ -198,8 +357,9 @@ export async function buildReleasePackage(
       bundle: true,
       entryPoints: ['apps/cli/src/index.ts'],
       format: 'esm',
-      legalComments: 'none',
+      legalComments: 'eof',
       logLevel: 'silent',
+      metafile: true,
       outfile: cliFile,
       platform: 'node',
       sourcemap: 'external',
@@ -208,18 +368,26 @@ export async function buildReleasePackage(
     });
     await chmod(cliFile, 0o755);
 
-    for (const document of REQUIRED_DOCUMENTS) {
-      await copyFile(join(root, document), join(stagingDirectory, document));
+    for (const file of REQUIRED_PROJECT_FILES) {
+      await copyFile(join(root, file), join(stagingDirectory, file));
     }
-    let license = 'UNLICENSED';
-    try {
-      await copyFile(join(root, 'LICENSE'), join(stagingDirectory, 'LICENSE'));
-      license = requireString(rootMetadata.license, 'Root package license');
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        throw error;
-      }
+    if (
+      typeof bundleResult !== 'object' ||
+      bundleResult === null ||
+      !('metafile' in bundleResult) ||
+      typeof bundleResult.metafile !== 'object' ||
+      bundleResult.metafile === null ||
+      !('inputs' in bundleResult.metafile) ||
+      typeof bundleResult.metafile.inputs !== 'object' ||
+      bundleResult.metafile.inputs === null
+    ) {
+      throw new Error('Bundler did not return an esbuild metafile.');
     }
+    const thirdPartyPackageCount = await writeThirdPartyNotices(
+      root,
+      stagingDirectory,
+      Object.keys(bundleResult.metafile.inputs),
+    );
 
     const releaseMetadata = {
       name: 'site-rescue',
@@ -229,7 +397,7 @@ export async function buildReleasePackage(
       type: 'module',
       bin: { 'site-rescue': './bin/site-rescue.js' },
       engines: rootMetadata.engines,
-      license,
+      license: requireString(rootMetadata.license, 'Root package license'),
       repository: {
         type: 'git',
         url: 'git+https://github.com/cam11505/website_trans.git',
@@ -249,6 +417,7 @@ export async function buildReleasePackage(
       version,
       checksumFile: join(outputDirectory, basename(checksums.checksumFile)),
       fileCount: checksums.fileCount,
+      thirdPartyPackageCount,
     };
   } catch (error) {
     await rm(stagingDirectory, { force: true, recursive: true });
@@ -289,7 +458,8 @@ export async function verifyReleasePackage(
   if (
     metadata.name !== 'site-rescue' ||
     metadata.version !== version ||
-    metadata.private !== true
+    metadata.private !== true ||
+    metadata.license !== 'Apache-2.0'
   ) {
     throw new Error('Release package metadata does not match the workspace version.');
   }

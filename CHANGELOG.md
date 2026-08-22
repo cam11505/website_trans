@@ -14,9 +14,10 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 - Deterministic whole-bundle integrity manifests
 - Fresh-output-only protection for output-producing commands
 - Self-contained CLI release-package preparation and verification
+- Apache-2.0 project licensing and SPDX package metadata
+- Generated third-party runtime license and NOTICE inventory for release packages
 
 ### Release gates remaining
 
-- Add the selected Apache-2.0 license and update package metadata
 - Make the repository public
 - Complete the exact-commit release checklist and publish `v0.1.0`

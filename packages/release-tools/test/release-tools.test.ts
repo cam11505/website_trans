@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import type { BuildOptions } from 'esbuild';
 import { buildReleasePackage, verifyReleasePackage } from '../src/index.js';
 
-function fixtureBundler(root: string): (options: BuildOptions) => Promise<void> {
+function fixtureBundler(
+  root: string,
+): (options: BuildOptions) => Promise<{ metafile: { inputs: Record<string, object> } }> {
   return async (options) => {
     if (typeof options.outfile !== 'string') {
       throw new Error('Fixture bundler requires an outfile.');
@@ -15,6 +17,9 @@ function fixtureBundler(root: string): (options: BuildOptions) => Promise<void> 
       'utf8',
     );
     await writeFile(`${options.outfile}.map`, '{}\n', 'utf8');
+    return {
+      metafile: { inputs: { 'node_modules/fixture-dependency/index.js': {} } },
+    };
   };
 }
 
@@ -22,12 +27,15 @@ async function createRepository(version = '0.1.0'): Promise<string> {
   const root = await mkdtemp(join(process.cwd(), '.tmp-release-tools-'));
   await mkdir(join(root, 'apps', 'cli', 'src'), { recursive: true });
   await mkdir(join(root, 'packages', 'fixture'), { recursive: true });
+  await mkdir(join(root, 'node_modules', 'fixture-dependency'), { recursive: true });
+  await mkdir(join(root, 'third_party', 'licenses'), { recursive: true });
   await writeFile(
     join(root, 'package.json'),
     `${JSON.stringify({
       name: 'site-rescue',
       version,
       private: true,
+      license: 'Apache-2.0',
       description: 'Release fixture',
       engines: { node: '>=20.19.0' },
     })}\n`,
@@ -35,12 +43,22 @@ async function createRepository(version = '0.1.0'): Promise<string> {
   );
   await writeFile(
     join(root, 'apps', 'cli', 'package.json'),
-    `${JSON.stringify({ name: '@site-rescue/cli', version, private: true })}\n`,
+    `${JSON.stringify({
+      name: '@site-rescue/cli',
+      version,
+      private: true,
+      license: 'Apache-2.0',
+    })}\n`,
     'utf8',
   );
   await writeFile(
     join(root, 'packages', 'fixture', 'package.json'),
-    `${JSON.stringify({ name: '@site-rescue/fixture', version, private: true })}\n`,
+    `${JSON.stringify({
+      name: '@site-rescue/fixture',
+      version,
+      private: true,
+      license: 'Apache-2.0',
+    })}\n`,
     'utf8',
   );
   await writeFile(
@@ -71,6 +89,21 @@ if (args.includes('--version')) {
   for (const document of ['README.md', 'CHANGELOG.md', 'SECURITY.md']) {
     await writeFile(join(root, document), `# ${document}\n`, 'utf8');
   }
+  await writeFile(
+    join(root, 'LICENSE'),
+    'Apache License\nVersion 2.0, January 2004\nEND OF TERMS AND CONDITIONS\n',
+    'utf8',
+  );
+  await writeFile(
+    join(root, 'node_modules', 'fixture-dependency', 'package.json'),
+    `${JSON.stringify({ name: 'fixture-dependency', version: '1.2.3', license: 'MIT' })}\n`,
+    'utf8',
+  );
+  await writeFile(
+    join(root, 'third_party', 'licenses', 'fixture-dependency@1.2.3.txt'),
+    'Audited fixture dependency MIT license text.\n',
+    'utf8',
+  );
   return root;
 }
 
@@ -92,11 +125,17 @@ describe('release tools', () => {
         versionSmokePassed: true,
       });
       expect(metadata).toMatchObject({
-        license: 'UNLICENSED',
+        license: 'Apache-2.0',
         private: true,
         version: '0.1.0',
       });
       expect(await readFile(built.checksumFile, 'utf8')).toContain('bin/site-rescue.js');
+      expect(built.thirdPartyPackageCount).toBe(1);
+      expect(
+        await readFile(join(built.outputDirectory, 'THIRD_PARTY_NOTICES.txt'), 'utf8'),
+      ).toContain(
+        'License source: audited override: third_party/licenses/fixture-dependency@1.2.3.txt',
+      );
     } finally {
       await rm(root, { force: true, recursive: true });
     }
@@ -107,12 +146,34 @@ describe('release tools', () => {
     try {
       await writeFile(
         join(root, 'packages', 'fixture', 'package.json'),
-        `${JSON.stringify({ name: '@site-rescue/fixture', version: '0.2.0', private: true })}\n`,
+        `${JSON.stringify({
+          name: '@site-rescue/fixture',
+          version: '0.2.0',
+          private: true,
+          license: 'Apache-2.0',
+        })}\n`,
         'utf8',
       );
 
       await expect(buildReleasePackage(root)).rejects.toThrow(
         'Version mismatch in packages/fixture/package.json',
+      );
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects a bundled dependency without packaged or audited license text', async () => {
+    const root = await createRepository();
+    try {
+      await rm(
+        join(root, 'third_party', 'licenses', 'fixture-dependency@1.2.3.txt'),
+      );
+
+      await expect(
+        buildReleasePackage(root, { bundler: fixtureBundler(root) }),
+      ).rejects.toThrow(
+        'Bundled dependencies have neither packaged nor audited license files: fixture-dependency@1.2.3',
       );
     } finally {
       await rm(root, { force: true, recursive: true });
