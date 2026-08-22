@@ -2,7 +2,12 @@
 
 ## Supported versions
 
-Site Rescue has not published its first public release. Security support begins with `v0.1.0`; until then, the latest commit on `main` is the only maintained development version.
+| Version | Supported |
+| --- | --- |
+| `0.1.x` | Yes |
+| `< 0.1.0` | No |
+
+Security fixes target the latest `0.1.x` release and the latest commit on `main`.
 
 ## Reporting a vulnerability
 
