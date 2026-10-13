@@ -37,6 +37,7 @@ export interface CaptureOptions {
 
 export interface CaptureResult {
   outputFile: string;
+  crawlTruncated: boolean;
   pageCount: number;
   assetCount: number;
   downloadedAssetCount: number;
@@ -112,6 +113,16 @@ async function runCaptureInDirectory(
       warnings: crawl.warnings,
     }),
   );
+  const truncationWarning = crawl.truncated
+    ? {
+        code: 'crawl-truncated',
+        message: `Crawl reached maxPages=${options.maxPages ?? DEFAULT_MAX_PAGES} after capturing ${crawl.pages.length} page(s) and discovering ${crawl.discoveredUrls.length} URL(s). Some discovered URLs were not processed and additional pages may remain undiscovered. Increase --max-pages and capture again before treating the migration as complete.`,
+        sourceUrl: crawl.startUrl,
+      }
+    : undefined;
+  if (truncationWarning !== undefined) {
+    site = parseSite({ ...site, warnings: [...site.warnings, truncationWarning] });
+  }
   const redirectResult = applyRedirectEvidence(site, crawl.redirects);
   site = redirectResult.site;
   let downloadedAssetCount = 0;
@@ -142,7 +153,10 @@ async function runCaptureInDirectory(
   }
   const outputFile = await writeJsonAtomically(options.outputDirectory, site);
 
-  writeLine('Site Rescue capture complete');
+  writeLine(crawl.truncated ? 'Site Rescue capture incomplete' : 'Site Rescue capture complete');
+  if (truncationWarning !== undefined) {
+    writeLine(`Warning: ${truncationWarning.message}`);
+  }
   writeLine(
     `Platform: ${selection.adapter.displayName} (${Math.round(selection.detection.confidence * 100)}% confidence)`,
   );
@@ -160,6 +174,7 @@ async function runCaptureInDirectory(
 
   return {
     outputFile,
+    crawlTruncated: crawl.truncated,
     pageCount: site.pages.length,
     assetCount: site.assets.length,
     downloadedAssetCount,
