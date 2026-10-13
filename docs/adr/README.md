@@ -24,5 +24,6 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-018](./ADR-018-apache-2.0-license.md) | Apache-2.0 project license and bundled dependency notices | Accepted |
 | [ADR-019](./ADR-019-public-repository-governance.md) | Guarded public repository controls | Accepted |
 | [ADR-022](./ADR-022-versioned-inline-content.md) | Versioned inline content with legacy capture reads | Proposed (SR-002 draft implementation) |
+| [ADR-023](./ADR-023-read-only-html-directory-inventory.md) | Read-only HTML directory inventory before offline import | Proposed (SR-003 inventory draft implementation) |
 
 Proposed ADR-020/021 and the development handoff are tracked separately in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23).

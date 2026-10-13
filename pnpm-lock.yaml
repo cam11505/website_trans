@@ -68,6 +68,9 @@ importers:
       '@site-rescue/rescue-manifest':
         specifier: workspace:*
         version: link:../../packages/rescue-manifest
+      '@site-rescue/source-inventory':
+        specifier: workspace:*
+        version: link:../../packages/source-inventory
       '@site-rescue/static-verifier':
         specifier: workspace:*
         version: link:../../packages/static-verifier
@@ -163,6 +166,15 @@ importers:
         version: 5.0.3
 
   packages/http-policy: {}
+
+  packages/source-inventory:
+    dependencies:
+      '@site-rescue/css-references':
+        specifier: workspace:*
+        version: link:../css-references
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.2.0
 
   packages/output-safety: {}
 
