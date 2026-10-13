@@ -23,3 +23,9 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-017](./ADR-017-self-contained-release-package.md) | Self-contained CLI release package | Accepted |
 | [ADR-018](./ADR-018-apache-2.0-license.md) | Apache-2.0 project license and bundled dependency notices | Accepted |
 | [ADR-019](./ADR-019-public-repository-governance.md) | Guarded public repository controls | Accepted |
+| [ADR-020](./ADR-020-source-acquisition-and-offline-import.md) | Source acquisition, immutable snapshots, and offline import | Proposed |
+| [ADR-021](./ADR-021-rich-content-and-migration-coverage.md) | Rich inline content and migration coverage semantics | Proposed |
+| [ADR-022](./ADR-022-versioned-inline-content.md) | Versioned inline content with legacy capture reads | Proposed (SR-002 draft implementation) |
+| [ADR-023](./ADR-023-read-only-html-directory-inventory.md) | Read-only HTML directory inventory before offline import | Proposed (SR-003 inventory draft implementation) |
+
+The integration branch includes the handoff and all four proposals. ADR-020/021 originated in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23); implementation of a narrower scope does not automatically accept a broader proposal. See [integration progress](../INTEGRATION_PROGRESS.md).

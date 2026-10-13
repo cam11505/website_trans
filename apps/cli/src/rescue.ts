@@ -89,7 +89,14 @@ async function runRescueInDirectory(
     ? await runManifest(outputDirectory, { writeLine: () => undefined })
     : undefined;
 
-  writeLine('Site Rescue complete');
+  writeLine(
+    capture.crawlTruncated ? 'Site Rescue finished with incomplete capture' : 'Site Rescue complete',
+  );
+  if (capture.crawlTruncated) {
+    writeLine(
+      'Capture incomplete: crawl page limit reached; additional pages may remain undiscovered. Increase --max-pages and run rescue again.',
+    );
+  }
   writeLine(`Pages captured: ${capture.pageCount}`);
   writeLine(`Redirects preserved: ${capture.redirectCount}`);
   writeLine(`Assets downloaded: ${capture.downloadedAssetCount}`);

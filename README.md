@@ -6,6 +6,8 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 > Site Rescue `v0.1.0` is the first public release and is licensed under Apache-2.0.
 
+> This development integration includes SR-001, SR-002 and the SR-003 generic HTML directory Inventory phase. These additions are unreleased; see [integration progress and remaining limits](./docs/INTEGRATION_PROGRESS.md). The published v0.1.0 bundle remains unchanged.
+
 ## Current capabilities
 
 - Versioned normalized content schema with runtime validation
@@ -23,6 +25,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue export <site.json>` platform-neutral static HTML export command
 - `site-rescue report <site.json>` migration readiness and manual-review report command
 - `site-rescue verify <site-directory>` offline static link and asset verification command
+- `site-rescue inspect-source <html-directory>` bounded, read-only offline file inventory (no import or ZIP support)
 - `site-rescue manifest <rescue-directory>` deterministic whole-bundle SHA-256 manifest command
 - `site-rescue verify-bundle <rescue-directory>` offline rescue bundle integrity command
 - `site-rescue preview <site-directory>` verified local HTTP preview command
@@ -30,6 +33,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
 - Bounded CSS `@import` and `url()` dependency discovery with local reference rewriting
 - Local path rewriting for normalized image, gallery, and video blocks
+- Semantic inline links, strong/emphasis, literal code, line breaks, and named anchors in paragraphs, headings, and list items
 - Static pages with local navigation, responsive baseline CSS, and verified asset copies
 - Explicit `baseline` or `source` static export style modes with safe baseline fallback
 - Same-origin redirect preservation with normalized 301 mappings and duplicate-page prevention
@@ -81,6 +85,7 @@ pnpm site-rescue export ./capture/site.json --output ./site
 pnpm site-rescue export ./capture/site.json --output ./styled-site --style-mode source
 pnpm site-rescue report ./capture/site.json --output ./report
 pnpm site-rescue verify ./site
+pnpm site-rescue inspect-source ./html-backup --output ./source-inventory
 pnpm site-rescue manifest ./rescued-site
 pnpm site-rescue verify-bundle ./rescued-site
 pnpm site-rescue preview ./site
@@ -122,7 +127,41 @@ Tune bounded request reliability when a source server is slow or unstable:
 pnpm site-rescue diagnose https://example.weebly.com --max-retries 3 --request-timeout-ms 20000 --max-html-bytes 8388608
 ```
 
-`capture`, `export`, `report`, and `rescue` require a new output directory. If the path already exists, the command stops before changing it. A failed run removes only the new directory created for that run.
+`capture`, `export`, `report`, `rescue`, and `inspect-source` require a new output directory. If the path already exists, the command stops before changing it. A failed run removes only the new directory created for that run.
+
+### Offline source inventory (development feature)
+
+`inspect-source` writes deterministic `source-inventory.json` and `source-inventory.md` containing relative file paths, sizes, SHA-256, common HTML/CSS references, missing files and actionable warnings. It reads source bytes without executing scripts, following symlinks or using the network. Choose an output directory separate from the input and its ancestors, including symlink/junction aliases. Default output is `./site-rescue-inventory`.
+
+```bash
+pnpm site-rescue inspect-source ./html-backup --output ./source-inventory
+node release/package/bin/site-rescue.js inspect-source ./html-backup --output ./source-inventory
+```
+
+The bundled example requires a package built from this source branch; the published v0.1.0 release does not include this command. Every inventory says **review required / migration not assessed**. Exit `0` means the inventory was written, including missing-file warnings; exit `1` means invalid input, a safety/resource failure or output failure. Inventory JSON is not a `site.json` capture and cannot be exported, replayed or verified as a rescue bundle.
+
+| Input | Supported in this phase |
+| --- | --- |
+| Generic UTF-8 HTML directory | File inventory and common static references; synthetic fixtures only |
+| Unsupported encoding or oversized HTML/CSS | Bytes hashed; reference inspection skipped with warnings |
+| No HTML / no root index | Layout warnings; no verified backup claim |
+| Official Weebly export ZIP / folder layout | Unverified; authorized sanitized real sample still required |
+| ZIP / TAR input | Rejected; no extraction |
+
+| Limit option | Default |
+| --- | ---: |
+| `--max-entries` (files and directories) | 10,000 |
+| `--max-depth` (root child = 1) | 16 |
+| `--max-file-bytes` | 67,108,864 (64 MiB) |
+| `--max-total-bytes` | 268,435,456 (256 MiB) |
+| `--max-text-bytes` (per HTML/CSS inspection) | 2,097,152 (2 MiB) |
+| `--max-references` | 20,000 |
+
+Overrides require positive safe integers. Hard limits abort before writing an inventory; the text inspection limit records skipped inspection while retaining file hashes. Symlinks/junctions, special files, reserved/non-portable names and NFC/case-folded path collisions are rejected rather than silently omitted.
+
+Local references are checked against inventoried files only: leading `/` maps to the folder root, other paths to the referring file's directory, with exact files and directory `index.html`/`index.htm` fallback. Traversal above root, unsafe schemes, malformed encoding and encoded separators require review. No original public URL or extensionless server route is inferred. External references are recorded without fetching. `<base>`, `srcset`, foreign/template markup, invalid UTF-8, CSS parse failures, query behavior, fragments, JavaScript dependencies and dynamic services require separate review. Other asset formats are hashed without semantic parsing.
+
+Stop source writers before inspection. Metadata/path comparisons detect common concurrent changes but do not provide an atomic snapshot against a hostile writer. SHA-256 records inspected bytes, not source completeness or visual/functional parity. Full SR-003 offline import and SR-004 snapshot/replay remain pending. See [ADR-023](./docs/adr/ADR-023-read-only-html-directory-inventory.md).
 
 After building, the CLI entry point can also be run directly:
 
@@ -176,6 +215,7 @@ site-rescue/
 │  └─ cli/                    # Thin command-line application
 ├─ packages/
 │  ├─ content-schema/         # Platform-neutral normalized site model
+│  ├─ html-inline/            # Shared standard inline HTML interpretation
 │  ├─ core/                   # Source-adapter contracts and registry selection
 │  ├─ http-policy/            # Bounded retry, timeout, and response-body reads
 │  ├─ output-safety/          # Fresh-output-only command lifecycle
@@ -186,6 +226,7 @@ site-rescue/
 │  ├─ report/                  # Platform-neutral migration analysis and reports
 │  ├─ rescue-manifest/         # Whole-bundle inventory and integrity verification
 │  ├─ static-verifier/         # Offline generated-site integrity checks
+│  ├─ source-inventory/        # Read-only, bounded HTML directory inspection
 │  ├─ preview-server/          # Loopback-only static site preview
 │  ├─ release-tools/           # Release package build, checksum, and smoke verification
 │  ├─ exporters/
@@ -225,6 +266,7 @@ Default tests do not access live websites. Live compatibility checks should rema
 - Crawls only HTTP(S) links on the exact origin of the starting page.
 - Removes URL fragments and ignores common non-document extensions.
 - Fetches HTML only, follows links breadth-first, and stops at 50 pages by default.
+- If the page limit leaves pending URLs, capture records a `crawl-truncated` warning with the configured limit, captured page count, and discovered URL count. The URL count may include redirect aliases and is not a total page count; additional pages may remain undiscovered. Increase `--max-pages` and recapture into a new output directory.
 - Limits each HTML response to 5 MiB and each attempt to 15 seconds by default.
 - Retries transient request failures and HTTP 408, 429, 500, 502, 503, and 504 responses twice by default.
 - Does not retry permanent HTTP responses such as 404.
@@ -261,6 +303,8 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Writes one HTML file per normalized page and rewrites known internal page and asset references as relative links.
 - Copies local assets only after validating their recorded SHA-256 checksums.
 - Escapes text content and displays preserved embed or raw HTML as inert source instead of executing it.
+- Renders validated inline trees as semantic HTML and rewrites known page links, including fragments, to local relative references. HTTP(S), mailto, tel, relative and fragment links are supported; unsafe targets are removed with review warnings during capture and rejected in saved inline trees.
+- Preserves source IDs on supported text blocks and inline elements, including named anchors. Source code text retains spacing and line breaks; active attributes and source scripts are never rendered.
 - Adds a small responsive baseline stylesheet; it does not reproduce the original platform theme pixel-for-pixel.
 - Defaults to `--style-mode baseline`; source mode loads the baseline first and then verified top-level source stylesheets.
 - Source mode refuses captures with missing or unverified top-level stylesheets instead of linking remote CSS.
@@ -283,7 +327,19 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Summarizes pages, nested content blocks, verified, unverified, and remote assets, warnings, and manual-review items.
 - Summarizes preserved redirects and requires review for production HTTP redirect configuration.
 - Marks a capture as `review-required` when warnings, remote assets, preserved embeds, or raw HTML remain.
+- A `crawl-truncated` warning always requires review, even when static verification and bundle integrity checks succeed. `capture` and `rescue` explicitly report incomplete capture instead of an unqualified completion message.
+- Truncation uses the existing `{ code, message, sourceUrl }` warning format. Existing captures remain readable, but captures created before this fix cannot reveal previously unrecorded truncation and should be recaptured if their crawl coverage is uncertain.
+- Unsafe inline links, omitted active inline content, or unsupported inline semantics produce actionable warnings and require review.
 - The report is guidance for migration review; it does not claim visual or functional parity with the source site.
+
+## Site schema compatibility
+
+- New captures use site schema **`1.1.0`**; readers accept both **`1.0.0` and `1.1.0`** and preserve the input version. CLI/package and migration report versions remain unchanged.
+- Paragraphs and headings retain their `text` fallback and optionally add `inlines`. Lists retain `items: string[]` and optionally add `itemInlines: InlineNode[][]`, with exactly one inline array per plain item. Supported nodes are `text`, `link`, `strong`, `emphasis`, `code`, `lineBreak`, and anchor `span`.
+- Source `id` fields and inline content require `1.1.0`. Missing inline fields use the previous escaped plain-text renderer, so legacy captures and their bundle manifests remain readable without conversion. Manifests retain the capture's actual schema version.
+- Older tools reject `1.1.0` rather than silently discarding its new fields. To use rich captures, update the tool; no automatic lossy downgrade is provided. Content already flattened in old captures requires recapturing the original source.
+- Inline nesting is bounded at 32 levels. Unsupported semantics or deeper source formatting are flattened/omitted with review warnings. Arbitrary DOM round trips, nested list layout, source CSS semantics, inline media positioning, formatted buttons and image captions remain outside SR-002.
+- See [ADR-022](./docs/adr/ADR-022-versioned-inline-content.md) for the focused compatibility proposal. The broader proposed [ADR-020](./docs/adr/ADR-020-source-acquisition-and-offline-import.md), [ADR-021](./docs/adr/ADR-021-rich-content-and-migration-coverage.md) and [handoff](./docs/CODEX_HANDOFF.md) are included in this integration; they originated in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23).
 
 ## Static verification behavior
 
@@ -357,7 +413,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-019.
+See [Architecture Decision Records](./docs/adr/README.md) for accepted ADR-001 through ADR-019 and proposed ADR-020 through ADR-023.
 
 ## License
 

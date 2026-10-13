@@ -68,6 +68,9 @@ importers:
       '@site-rescue/rescue-manifest':
         specifier: workspace:*
         version: link:../../packages/rescue-manifest
+      '@site-rescue/source-inventory':
+        specifier: workspace:*
+        version: link:../../packages/source-inventory
       '@site-rescue/static-verifier':
         specifier: workspace:*
         version: link:../../packages/static-verifier
@@ -80,6 +83,9 @@ importers:
       '@site-rescue/core':
         specifier: workspace:*
         version: link:../../core
+      '@site-rescue/html-inline':
+        specifier: workspace:*
+        version: link:../../html-inline
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
@@ -95,6 +101,9 @@ importers:
       '@site-rescue/core':
         specifier: workspace:*
         version: link:../../core
+      '@site-rescue/html-inline':
+        specifier: workspace:*
+        version: link:../../html-inline
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
@@ -144,7 +153,28 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
 
+  packages/html-inline:
+    dependencies:
+      '@site-rescue/content-schema':
+        specifier: workspace:*
+        version: link:../content-schema
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.2.0
+      domhandler:
+        specifier: ^5.0.3
+        version: 5.0.3
+
   packages/http-policy: {}
+
+  packages/source-inventory:
+    dependencies:
+      '@site-rescue/css-references':
+        specifier: workspace:*
+        version: link:../css-references
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.2.0
 
   packages/output-safety: {}
 

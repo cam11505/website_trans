@@ -33,7 +33,7 @@ const minimalSite = {
 
 describe('site schema', () => {
   it('accepts a valid versioned site document', () => {
-    expect(parseSite(minimalSite).schemaVersion).toBe('1.0.0');
+    expect(parseSite(minimalSite).schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
   });
 
   it('rejects an unsupported schema version', () => {
