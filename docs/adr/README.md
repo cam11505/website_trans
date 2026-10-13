@@ -23,3 +23,5 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-017](./ADR-017-self-contained-release-package.md) | Self-contained CLI release package | Accepted |
 | [ADR-018](./ADR-018-apache-2.0-license.md) | Apache-2.0 project license and bundled dependency notices | Accepted |
 | [ADR-019](./ADR-019-public-repository-governance.md) | Guarded public repository controls | Accepted |
+| [ADR-020](./ADR-020-source-acquisition-and-offline-import.md) | Source acquisition, immutable snapshots, and offline import | Proposed |
+| [ADR-021](./ADR-021-rich-content-and-migration-coverage.md) | Rich inline content and migration coverage semantics | Proposed |
