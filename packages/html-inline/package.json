@@ -1,0 +1,17 @@
+{
+  "name": "@site-rescue/html-inline",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": { "build": "tsc -b", "typecheck": "tsc -b --pretty false" },
+  "dependencies": {
+    "@site-rescue/content-schema": "workspace:*",
+    "cheerio": "^1.1.2",
+    "domhandler": "^5.0.3"
+  }
+}

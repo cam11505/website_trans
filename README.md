@@ -30,6 +30,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Content-addressed asset downloads with SHA-256 checksums and duplicate-file reuse
 - Bounded CSS `@import` and `url()` dependency discovery with local reference rewriting
 - Local path rewriting for normalized image, gallery, and video blocks
+- Semantic inline links, strong/emphasis, literal code, line breaks, and named anchors in paragraphs, headings, and list items
 - Static pages with local navigation, responsive baseline CSS, and verified asset copies
 - Explicit `baseline` or `source` static export style modes with safe baseline fallback
 - Same-origin redirect preservation with normalized 301 mappings and duplicate-page prevention
@@ -176,6 +177,7 @@ site-rescue/
 │  └─ cli/                    # Thin command-line application
 ├─ packages/
 │  ├─ content-schema/         # Platform-neutral normalized site model
+│  ├─ html-inline/            # Shared standard inline HTML interpretation
 │  ├─ core/                   # Source-adapter contracts and registry selection
 │  ├─ http-policy/            # Bounded retry, timeout, and response-body reads
 │  ├─ output-safety/          # Fresh-output-only command lifecycle
@@ -262,6 +264,8 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Writes one HTML file per normalized page and rewrites known internal page and asset references as relative links.
 - Copies local assets only after validating their recorded SHA-256 checksums.
 - Escapes text content and displays preserved embed or raw HTML as inert source instead of executing it.
+- Renders validated inline trees as semantic HTML and rewrites known page links, including fragments, to local relative references. HTTP(S), mailto, tel, relative and fragment links are supported; unsafe targets are removed with review warnings during capture and rejected in saved inline trees.
+- Preserves source IDs on supported text blocks and inline elements, including named anchors. Source code text retains spacing and line breaks; active attributes and source scripts are never rendered.
 - Adds a small responsive baseline stylesheet; it does not reproduce the original platform theme pixel-for-pixel.
 - Defaults to `--style-mode baseline`; source mode loads the baseline first and then verified top-level source stylesheets.
 - Source mode refuses captures with missing or unverified top-level stylesheets instead of linking remote CSS.
@@ -285,8 +289,18 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Summarizes preserved redirects and requires review for production HTTP redirect configuration.
 - Marks a capture as `review-required` when warnings, remote assets, preserved embeds, or raw HTML remain.
 - A `crawl-truncated` warning always requires review, even when static verification and bundle integrity checks succeed. `capture` and `rescue` explicitly report incomplete capture instead of an unqualified completion message.
-- Truncation uses the existing `{ code, message, sourceUrl }` warning format. Site schema and migration report versions remain `1.0.0`; existing captures remain readable, but captures created before this fix cannot reveal previously unrecorded truncation and should be recaptured if their crawl coverage is uncertain.
+- Truncation uses the existing `{ code, message, sourceUrl }` warning format. Existing captures remain readable, but captures created before this fix cannot reveal previously unrecorded truncation and should be recaptured if their crawl coverage is uncertain.
+- Unsafe inline links, omitted active inline content, or unsupported inline semantics produce actionable warnings and require review.
 - The report is guidance for migration review; it does not claim visual or functional parity with the source site.
+
+## Site schema compatibility
+
+- New captures use site schema **`1.1.0`**; readers accept both **`1.0.0` and `1.1.0`** and preserve the input version. CLI/package and migration report versions remain unchanged.
+- Paragraphs and headings retain their `text` fallback and optionally add `inlines`. Lists retain `items: string[]` and optionally add `itemInlines: InlineNode[][]`, with exactly one inline array per plain item. Supported nodes are `text`, `link`, `strong`, `emphasis`, `code`, `lineBreak`, and anchor `span`.
+- Source `id` fields and inline content require `1.1.0`. Missing inline fields use the previous escaped plain-text renderer, so legacy captures and their bundle manifests remain readable without conversion. Manifests retain the capture's actual schema version.
+- Older tools reject `1.1.0` rather than silently discarding its new fields. To use rich captures, update the tool; no automatic lossy downgrade is provided. Content already flattened in old captures requires recapturing the original source.
+- Inline nesting is bounded at 32 levels. Unsupported semantics or deeper source formatting are flattened/omitted with review warnings. Arbitrary DOM round trips, nested list layout, source CSS semantics, inline media positioning, formatted buttons and image captions remain outside SR-002.
+- See [ADR-022](./docs/adr/ADR-022-versioned-inline-content.md) for the focused compatibility proposal. The broader proposed ADR-020/021 and handoff remain in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23).
 
 ## Static verification behavior
 

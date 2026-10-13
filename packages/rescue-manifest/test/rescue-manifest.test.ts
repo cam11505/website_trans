@@ -67,6 +67,7 @@ describe('rescue bundle manifest', () => {
       const verification = await verifyRescueBundle(root);
 
       expect(secondContents).toBe(firstContents);
+      expect(first.manifest.schemaVersion).toBe('1.0.0');
       expect(first.manifest.files.map((entry) => entry.path)).toEqual([
         'capture/site.json',
         'report/migration-report.json',
@@ -112,6 +113,20 @@ describe('rescue bundle manifest', () => {
         ['size-mismatch', 'site/index.html'],
         ['checksum-mismatch', 'site/style.css'],
       ]);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects a manifest whose supported schema version differs from its capture', async () => {
+    const root = await createBundleFixture();
+    try {
+      const result = await writeRescueManifest(root);
+      await writeFile(result.manifestFile, JSON.stringify({ ...result.manifest, schemaVersion: '1.1.0' }), 'utf8');
+      const verification = await verifyRescueBundle(root);
+      expect(verification).toMatchObject({ valid: false, issues: [
+        { code: 'source-mismatch', path: 'capture/site.json', message: expect.stringContaining('schema version') },
+      ] });
     } finally {
       await rm(root, { force: true, recursive: true });
     }
