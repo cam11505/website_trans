@@ -160,7 +160,7 @@ CLI 支援：
 
 ## 7. GitHub Issues 草稿與標籤建議
 
-建議優先建立這些 Issues；本文件的 SR-ID 是規劃 ID，不是已存在的 GitHub Issue 編號。
+SR-001 已建立 [GitHub Issue #24](https://github.com/cam11505/website_trans/issues/24)；其他 SR-ID 仍是規劃識別碼，尚未建立對應 GitHub Issue。
 
 | ID | 建議標題 | Priority | Acceptance |
 | --- | --- | --- | --- |
