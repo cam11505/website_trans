@@ -7,7 +7,8 @@
   },
   "references": [
     { "path": "../../content-schema" },
-    { "path": "../../core" }
+    { "path": "../../core" },
+    { "path": "../../html-inline" }
   ],
   "include": ["src/**/*.ts"]
 }

@@ -1,6 +1,7 @@
 import { load } from 'cheerio';
 import type { CheerioAPI } from 'cheerio';
 import type { AnyNode, Element } from 'domhandler';
+import { parseListContent, parseTextContent, sourceId } from '@site-rescue/html-inline';
 import type {
   CapturedPageInput,
   DetectionEvidence,
@@ -105,7 +106,7 @@ function isButton(element: ReturnType<CheerioAPI>): boolean {
   return role === 'button' || classes.some((name) => /^(?:btn|button|cta)(?:-|$)/u.test(name));
 }
 
-function parseElement($: CheerioAPI, node: AnyNode, pageUrl: string): ContentBlock[] {
+function parseElement($: CheerioAPI, node: AnyNode, pageUrl: string, warnings: MigrationWarning[]): ContentBlock[] {
   if (node.type !== 'tag') {
     return [];
   }
@@ -116,10 +117,11 @@ function parseElement($: CheerioAPI, node: AnyNode, pageUrl: string): ContentBlo
     return [];
   }
   if (/^h[1-6]$/u.test(tagName)) {
-    const text = normalizeText(element.text());
-    return text === ''
+    const content = parseTextContent($, element.contents().toArray(), pageUrl, warnings);
+    const id = sourceId($, node);
+    return content.text === '' && content.inlines === undefined && id.id === undefined
       ? []
-      : [{ type: 'heading', level: Number(tagName[1]) as 1 | 2 | 3 | 4 | 5 | 6, text }];
+      : [{ type: 'heading', level: Number(tagName[1]) as 1 | 2 | 3 | 4 | 5 | 6, ...content, ...id }];
   }
   if (tagName === 'p') {
     const images = element
@@ -127,30 +129,27 @@ function parseElement($: CheerioAPI, node: AnyNode, pageUrl: string): ContentBlo
       .toArray()
       .map((image) => toImageBlock($, image, pageUrl))
       .filter((image): image is ImageBlock => image !== undefined);
-    const text = normalizeText(element.clone().find('img').remove().end().text());
-    return text === '' ? images : [{ type: 'paragraph', text }, ...images];
+    const content = parseTextContent($, element.clone().find('img').remove().end().contents().toArray(), pageUrl, warnings);
+    const id = sourceId($, node);
+    return content.text === '' && content.inlines === undefined && id.id === undefined
+      ? images : [{ type: 'paragraph', ...content, ...id }, ...images];
   }
   if (tagName === 'img') {
     const image = toImageBlock($, node, pageUrl);
     return image === undefined ? [] : [image];
   }
   if (tagName === 'ul' || tagName === 'ol') {
-    const items = element
-      .children('li')
-      .toArray()
-      .map((item) => normalizeText($(item).text()))
-      .filter((item) => item !== '');
-    return items.length === 0 ? [] : [{ type: 'list', ordered: tagName === 'ol', items }];
+    const content = parseListContent($, node, pageUrl, warnings);
+    return content.items.length === 0 ? [] : [{ type: 'list', ordered: tagName === 'ol', ...content, ...sourceId($, node) }];
   }
   if (tagName === 'a') {
     const label = normalizeText(element.text());
     const href = resolveHttpUrl(element.attr('href'), pageUrl);
-    if (label === '') {
-      return [];
+    if (href !== undefined && isButton(element) && label !== '') {
+      return [{ type: 'button', label, href }];
     }
-    return href !== undefined && isButton(element)
-      ? [{ type: 'button', label, href }]
-      : [{ type: 'paragraph', text: label }];
+    const content = parseTextContent($, [node], pageUrl, warnings);
+    return content.text === '' && content.inlines === undefined ? [] : [{ type: 'paragraph', ...content }];
   }
   if (tagName === 'hr') {
     return [{ type: 'divider' }];
@@ -183,13 +182,13 @@ function parseElement($: CheerioAPI, node: AnyNode, pageUrl: string): ContentBlo
   }
 
   if (element.find(BLOCK_DESCENDANT_SELECTOR).length === 0) {
-    const text = normalizeText(element.text());
-    return text === '' ? [] : [{ type: 'paragraph', text }];
+    const content = parseTextContent($, element.contents().toArray(), pageUrl, warnings);
+    return content.text === '' && content.inlines === undefined ? [] : [{ type: 'paragraph', ...content, ...sourceId($, node) }];
   }
   return element
     .contents()
     .toArray()
-    .flatMap((child) => parseElement($, child, pageUrl));
+    .flatMap((child) => parseElement($, child, pageUrl, warnings));
 }
 
 function parseNavigation($: CheerioAPI, pageUrl: string): NavigationItem[] {
@@ -235,7 +234,7 @@ function parseNavigation($: CheerioAPI, pageUrl: string): NavigationItem[] {
     .filter((item): item is NavigationItem => item !== undefined);
 }
 
-function parsePage(input: CapturedPageInput, index: number): Page {
+function parsePage(input: CapturedPageInput, index: number, warnings: MigrationWarning[]): Page {
   const $ = load(input.html);
   const url = new URL(input.url);
   const main = $('main').first();
@@ -254,7 +253,7 @@ function parsePage(input: CapturedPageInput, index: number): Page {
   const blocks = root
     .contents()
     .toArray()
-    .flatMap((child) => parseElement($, child, input.url));
+    .flatMap((child) => parseElement($, child, input.url, warnings));
   const heading = blocks.find((block) => block.type === 'heading');
   const title = input.title || (heading?.type === 'heading' ? heading.text : 'Untitled page');
   const description = $('meta[name="description"]').attr('content');
@@ -359,7 +358,8 @@ export function normalizeGenericHtmlSite(input: NormalizeGenericHtmlSiteInput): 
   }
   const home = input.pages[0]!;
   const $ = load(home.html);
-  const pages = input.pages.map(parsePage);
+  const inlineWarnings: MigrationWarning[] = [];
+  const pages = input.pages.map((page, index) => parsePage(page, index, inlineWarnings));
   const rawHtmlCount = pages
     .flatMap((page) => page.blocks)
     .reduce((total, block) => total + countRawHtml(block), 0);
@@ -374,6 +374,7 @@ export function normalizeGenericHtmlSite(input: NormalizeGenericHtmlSiteInput): 
       message: warning.message,
       sourceUrl: warning.url,
     })),
+    ...inlineWarnings,
   ];
   if (rawHtmlCount > 0) {
     warnings.push({

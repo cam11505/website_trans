@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseSite } from '@site-rescue/content-schema';
+import { CURRENT_SCHEMA_VERSION, parseSite } from '@site-rescue/content-schema';
 import { crawlSameOrigin, type Fetcher } from '@site-rescue/crawler';
 import { genericHtmlAdapter } from '@site-rescue/adapter-generic-html';
 import { createMigrationReport, type MigrationReport } from '@site-rescue/report';
@@ -60,7 +60,7 @@ describe('crawl truncation readiness', () => {
 
         // With no assets or unsupported blocks, truncation is the only reason for review.
         expect(report.readiness).toBe('review-required');
-        expect(site.schemaVersion).toBe('1.0.0');
+        expect(site.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
         expect(site.pages).toHaveLength(1);
         expect(site.warnings).toEqual([
           {

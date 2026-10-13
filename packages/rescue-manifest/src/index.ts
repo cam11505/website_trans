@@ -2,8 +2,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import {
-  CURRENT_SCHEMA_VERSION,
   parseSite,
+  siteSchemaVersionSchema,
   type Site,
 } from '@site-rescue/content-schema';
 import { createMigrationReport, renderMigrationReportMarkdown } from '@site-rescue/report';
@@ -27,7 +27,7 @@ export interface RescueManifestFile {
 
 export interface RescueManifest {
   manifestVersion: typeof CURRENT_RESCUE_MANIFEST_VERSION;
-  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  schemaVersion: Site['schemaVersion'];
   source: Site['source'];
   files: RescueManifestFile[];
 }
@@ -146,7 +146,8 @@ export function parseRescueManifest(value: unknown): RescueManifest {
   if (value.manifestVersion !== CURRENT_RESCUE_MANIFEST_VERSION) {
     throw new Error(`Unsupported bundle manifest version: ${String(value.manifestVersion)}`);
   }
-  if (value.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+  const schemaVersion = siteSchemaVersionSchema.safeParse(value.schemaVersion);
+  if (!schemaVersion.success) {
     throw new Error(`Unsupported site schema version: ${String(value.schemaVersion)}`);
   }
   if (!Array.isArray(value.files)) {
@@ -188,7 +189,7 @@ export function parseRescueManifest(value: unknown): RescueManifest {
 
   return {
     manifestVersion: CURRENT_RESCUE_MANIFEST_VERSION,
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: schemaVersion.data,
     source: parseSource(value.source),
     files,
   };
@@ -365,7 +366,7 @@ export async function buildRescueManifest(
   return {
     manifest: {
       manifestVersion: CURRENT_RESCUE_MANIFEST_VERSION,
-      schemaVersion: CURRENT_SCHEMA_VERSION,
+      schemaVersion: validated.site.schemaVersion,
       source: validated.site.source,
       files,
     },
@@ -458,6 +459,7 @@ export async function verifyRescueBundle(
       const validated = await validateArtifacts(root);
       staticVerification = validated.staticVerification;
       if (
+        validated.site.schemaVersion !== manifest.schemaVersion ||
         validated.site.source.adapter !== manifest.source.adapter ||
         validated.site.source.baseUrl !== manifest.source.baseUrl ||
         validated.site.source.capturedAt !== manifest.source.capturedAt
@@ -465,7 +467,7 @@ export async function verifyRescueBundle(
         issues.push({
           code: 'source-mismatch',
           path: 'capture/site.json',
-          message: 'Bundle manifest source metadata does not match the validated capture.',
+          message: 'Bundle manifest schema version or source metadata does not match the validated capture.',
         });
       }
     } catch (error) {

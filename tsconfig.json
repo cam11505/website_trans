@@ -3,6 +3,7 @@
   "references": [
     { "path": "./packages/content-schema" },
     { "path": "./packages/core" },
+    { "path": "./packages/html-inline" },
     { "path": "./packages/http-policy" },
     { "path": "./packages/output-safety" },
     { "path": "./packages/crawler" },
