@@ -6,6 +6,8 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 > Site Rescue `v0.1.0` is the first public release and is licensed under Apache-2.0.
 
+> This development integration includes SR-001, SR-002 and the SR-003 generic HTML directory Inventory phase. These additions are unreleased; see [integration progress and remaining limits](./docs/INTEGRATION_PROGRESS.md). The published v0.1.0 bundle remains unchanged.
+
 ## Current capabilities
 
 - Versioned normalized content schema with runtime validation
@@ -337,7 +339,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Source `id` fields and inline content require `1.1.0`. Missing inline fields use the previous escaped plain-text renderer, so legacy captures and their bundle manifests remain readable without conversion. Manifests retain the capture's actual schema version.
 - Older tools reject `1.1.0` rather than silently discarding its new fields. To use rich captures, update the tool; no automatic lossy downgrade is provided. Content already flattened in old captures requires recapturing the original source.
 - Inline nesting is bounded at 32 levels. Unsupported semantics or deeper source formatting are flattened/omitted with review warnings. Arbitrary DOM round trips, nested list layout, source CSS semantics, inline media positioning, formatted buttons and image captions remain outside SR-002.
-- See [ADR-022](./docs/adr/ADR-022-versioned-inline-content.md) for the focused compatibility proposal. The broader proposed ADR-020/021 and handoff remain in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23).
+- See [ADR-022](./docs/adr/ADR-022-versioned-inline-content.md) for the focused compatibility proposal. The broader proposed [ADR-020](./docs/adr/ADR-020-source-acquisition-and-offline-import.md), [ADR-021](./docs/adr/ADR-021-rich-content-and-migration-coverage.md) and [handoff](./docs/CODEX_HANDOFF.md) are included in this integration; they originated in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23).
 
 ## Static verification behavior
 
@@ -411,7 +413,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for ADR-001 through ADR-019.
+See [Architecture Decision Records](./docs/adr/README.md) for accepted ADR-001 through ADR-019 and proposed ADR-020 through ADR-023.
 
 ## License
 

@@ -4,7 +4,19 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ## Unreleased
 
-No unreleased changes.
+### Fixed
+
+- SR-001: a truncated crawl now records an actionable warning and forces migration review; capture/rescue explicitly report incomplete acquisition.
+
+### Added
+
+- SR-002: semantic inline links, strong/emphasis, literal code, line breaks and anchors for paragraphs, headings and list items in both adapters and static export.
+- SR-003 Inventory phase: `inspect-source` for bounded read-only HTML directory file/hash/reference inventory, missing-file evidence and explicit review warnings. ZIP extraction and full offline import are not included.
+- Consolidated development handoff, progress tracking and Proposed ADR-020 through ADR-023.
+
+### Changed
+
+- New captures use Site schema 1.1.0; updated readers retain compatibility with saved 1.0.0 captures and matching bundle manifests. Older readers reject 1.1.0. Package/release versions remain unchanged for this unpublished integration.
 
 ## 0.1.0 - 2026-08-22
 
