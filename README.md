@@ -225,6 +225,7 @@ Default tests do not access live websites. Live compatibility checks should rema
 - Crawls only HTTP(S) links on the exact origin of the starting page.
 - Removes URL fragments and ignores common non-document extensions.
 - Fetches HTML only, follows links breadth-first, and stops at 50 pages by default.
+- If the page limit leaves pending URLs, capture records a `crawl-truncated` warning with the configured limit, captured page count, and discovered URL count. The URL count may include redirect aliases and is not a total page count; additional pages may remain undiscovered. Increase `--max-pages` and recapture into a new output directory.
 - Limits each HTML response to 5 MiB and each attempt to 15 seconds by default.
 - Retries transient request failures and HTTP 408, 429, 500, 502, 503, and 504 responses twice by default.
 - Does not retry permanent HTTP responses such as 404.
@@ -283,6 +284,8 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Summarizes pages, nested content blocks, verified, unverified, and remote assets, warnings, and manual-review items.
 - Summarizes preserved redirects and requires review for production HTTP redirect configuration.
 - Marks a capture as `review-required` when warnings, remote assets, preserved embeds, or raw HTML remain.
+- A `crawl-truncated` warning always requires review, even when static verification and bundle integrity checks succeed. `capture` and `rescue` explicitly report incomplete capture instead of an unqualified completion message.
+- Truncation uses the existing `{ code, message, sourceUrl }` warning format. Site schema and migration report versions remain `1.0.0`; existing captures remain readable, but captures created before this fix cannot reveal previously unrecorded truncation and should be recaptured if their crawl coverage is uncertain.
 - The report is guidance for migration review; it does not claim visual or functional parity with the source site.
 
 ## Static verification behavior
