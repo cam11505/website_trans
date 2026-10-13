@@ -15,6 +15,7 @@
     { "path": "../../packages/output-safety" },
     { "path": "../../packages/report" },
     { "path": "../../packages/rescue-manifest" },
+    { "path": "../../packages/source-inventory" },
     { "path": "../../packages/static-verifier" },
     { "path": "../../packages/preview-server" },
     { "path": "../../packages/adapters/generic-html" },

@@ -23,6 +23,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue export <site.json>` platform-neutral static HTML export command
 - `site-rescue report <site.json>` migration readiness and manual-review report command
 - `site-rescue verify <site-directory>` offline static link and asset verification command
+- `site-rescue inspect-source <html-directory>` bounded, read-only offline file inventory (no import or ZIP support)
 - `site-rescue manifest <rescue-directory>` deterministic whole-bundle SHA-256 manifest command
 - `site-rescue verify-bundle <rescue-directory>` offline rescue bundle integrity command
 - `site-rescue preview <site-directory>` verified local HTTP preview command
@@ -82,6 +83,7 @@ pnpm site-rescue export ./capture/site.json --output ./site
 pnpm site-rescue export ./capture/site.json --output ./styled-site --style-mode source
 pnpm site-rescue report ./capture/site.json --output ./report
 pnpm site-rescue verify ./site
+pnpm site-rescue inspect-source ./html-backup --output ./source-inventory
 pnpm site-rescue manifest ./rescued-site
 pnpm site-rescue verify-bundle ./rescued-site
 pnpm site-rescue preview ./site
@@ -123,7 +125,41 @@ Tune bounded request reliability when a source server is slow or unstable:
 pnpm site-rescue diagnose https://example.weebly.com --max-retries 3 --request-timeout-ms 20000 --max-html-bytes 8388608
 ```
 
-`capture`, `export`, `report`, and `rescue` require a new output directory. If the path already exists, the command stops before changing it. A failed run removes only the new directory created for that run.
+`capture`, `export`, `report`, `rescue`, and `inspect-source` require a new output directory. If the path already exists, the command stops before changing it. A failed run removes only the new directory created for that run.
+
+### Offline source inventory (development feature)
+
+`inspect-source` writes deterministic `source-inventory.json` and `source-inventory.md` containing relative file paths, sizes, SHA-256, common HTML/CSS references, missing files and actionable warnings. It reads source bytes without executing scripts, following symlinks or using the network. Choose an output directory separate from the input and its ancestors, including symlink/junction aliases. Default output is `./site-rescue-inventory`.
+
+```bash
+pnpm site-rescue inspect-source ./html-backup --output ./source-inventory
+node release/package/bin/site-rescue.js inspect-source ./html-backup --output ./source-inventory
+```
+
+The bundled example requires a package built from this source branch; the published v0.1.0 release does not include this command. Every inventory says **review required / migration not assessed**. Exit `0` means the inventory was written, including missing-file warnings; exit `1` means invalid input, a safety/resource failure or output failure. Inventory JSON is not a `site.json` capture and cannot be exported, replayed or verified as a rescue bundle.
+
+| Input | Supported in this phase |
+| --- | --- |
+| Generic UTF-8 HTML directory | File inventory and common static references; synthetic fixtures only |
+| Unsupported encoding or oversized HTML/CSS | Bytes hashed; reference inspection skipped with warnings |
+| No HTML / no root index | Layout warnings; no verified backup claim |
+| Official Weebly export ZIP / folder layout | Unverified; authorized sanitized real sample still required |
+| ZIP / TAR input | Rejected; no extraction |
+
+| Limit option | Default |
+| --- | ---: |
+| `--max-entries` (files and directories) | 10,000 |
+| `--max-depth` (root child = 1) | 16 |
+| `--max-file-bytes` | 67,108,864 (64 MiB) |
+| `--max-total-bytes` | 268,435,456 (256 MiB) |
+| `--max-text-bytes` (per HTML/CSS inspection) | 2,097,152 (2 MiB) |
+| `--max-references` | 20,000 |
+
+Overrides require positive safe integers. Hard limits abort before writing an inventory; the text inspection limit records skipped inspection while retaining file hashes. Symlinks/junctions, special files, reserved/non-portable names and NFC/case-folded path collisions are rejected rather than silently omitted.
+
+Local references are checked against inventoried files only: leading `/` maps to the folder root, other paths to the referring file's directory, with exact files and directory `index.html`/`index.htm` fallback. Traversal above root, unsafe schemes, malformed encoding and encoded separators require review. No original public URL or extensionless server route is inferred. External references are recorded without fetching. `<base>`, `srcset`, foreign/template markup, invalid UTF-8, CSS parse failures, query behavior, fragments, JavaScript dependencies and dynamic services require separate review. Other asset formats are hashed without semantic parsing.
+
+Stop source writers before inspection. Metadata/path comparisons detect common concurrent changes but do not provide an atomic snapshot against a hostile writer. SHA-256 records inspected bytes, not source completeness or visual/functional parity. Full SR-003 offline import and SR-004 snapshot/replay remain pending. See [ADR-023](./docs/adr/ADR-023-read-only-html-directory-inventory.md).
 
 After building, the CLI entry point can also be run directly:
 
@@ -188,6 +224,7 @@ site-rescue/
 │  ├─ report/                  # Platform-neutral migration analysis and reports
 │  ├─ rescue-manifest/         # Whole-bundle inventory and integrity verification
 │  ├─ static-verifier/         # Offline generated-site integrity checks
+│  ├─ source-inventory/        # Read-only, bounded HTML directory inspection
 │  ├─ preview-server/          # Loopback-only static site preview
 │  ├─ release-tools/           # Release package build, checksum, and smoke verification
 │  ├─ exporters/

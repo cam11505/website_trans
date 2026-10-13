@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { runCapture } from './capture.js';
 import { runDiagnose } from './diagnose.js';
 import { runExport } from './export.js';
+import { runInspectSource } from './inspect-source.js';
 import { runManifest } from './manifest.js';
 import { runPreview } from './preview.js';
 import { runReport } from './report.js';
@@ -18,6 +19,7 @@ const USAGE = `Usage:
   site-rescue export <site.json> [--output <directory>] [--style-mode <baseline|source>]
   site-rescue report <site.json> [--output <directory>]
   site-rescue verify <site-directory>
+  site-rescue inspect-source <html-directory> [--output <directory>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
   site-rescue manifest <rescue-directory>
   site-rescue verify-bundle <rescue-directory>
   site-rescue preview <site-directory> [--port <number>]
@@ -29,6 +31,7 @@ Commands:
   export    Render a validated site.json capture as a static HTML website
   report    Create JSON and Markdown migration reports from a validated capture
   verify    Check generated HTML links and local assets without network access
+  inspect-source  Inventory a local HTML directory offline (review required; no import or ZIP support)
   manifest  Write a deterministic SHA-256 manifest for a complete rescue bundle
   verify-bundle  Verify a rescue bundle manifest and all recorded files offline
   preview   Verify and serve a generated site on 127.0.0.1 for local review
@@ -135,6 +138,7 @@ export async function main(args: string[]): Promise<number> {
       command !== 'export' &&
       command !== 'report' &&
       command !== 'verify' &&
+      command !== 'inspect-source' &&
       command !== 'manifest' &&
       command !== 'verify-bundle' &&
       command !== 'preview' &&
@@ -164,6 +168,22 @@ export async function main(args: string[]): Promise<number> {
       await runReport(input, {
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-report',
       });
+    } else if (command === 'inspect-source') {
+      const optionNames = ['--output', '--max-entries', '--max-depth', '--max-file-bytes', '--max-total-bytes', '--max-text-bytes', '--max-references'];
+      for (let index = 2; index < args.length; index += 2) {
+        const option = args[index]!;
+        if (!optionNames.includes(option) || args.indexOf(option) !== index) throw new Error(`Unknown or duplicate inventory option: ${option}.`);
+        parseStringOption(args, option);
+      }
+      const limits = Object.fromEntries([
+        ['maxEntries', parsePositiveIntegerOption(args, '--max-entries')],
+        ['maxDepth', parsePositiveIntegerOption(args, '--max-depth')],
+        ['maxFileBytes', parsePositiveIntegerOption(args, '--max-file-bytes')],
+        ['maxTotalBytes', parsePositiveIntegerOption(args, '--max-total-bytes')],
+        ['maxTextBytes', parsePositiveIntegerOption(args, '--max-text-bytes')],
+        ['maxReferences', parsePositiveIntegerOption(args, '--max-references')],
+      ].filter((entry) => entry[1] !== undefined));
+      await runInspectSource(input, { outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-inventory', limits });
     } else if (command === 'verify') {
       const result = await runVerify(input);
       return result.valid ? 0 : 2;
@@ -200,6 +220,7 @@ if (isEntryPoint) {
 export { runDiagnose } from './diagnose.js';
 export { runCapture } from './capture.js';
 export { runExport } from './export.js';
+export { runInspectSource } from './inspect-source.js';
 export { runManifest } from './manifest.js';
 export { runPreview } from './preview.js';
 export { runReport } from './report.js';
