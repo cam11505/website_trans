@@ -3,6 +3,7 @@
   "references": [
     { "path": "./packages/content-schema" },
     { "path": "./packages/core" },
+    { "path": "./packages/html-inline" },
     { "path": "./packages/http-policy" },
     { "path": "./packages/output-safety" },
     { "path": "./packages/crawler" },
@@ -13,6 +14,7 @@
     { "path": "./packages/report" },
     { "path": "./packages/rescue-manifest" },
     { "path": "./packages/static-verifier" },
+    { "path": "./packages/source-inventory" },
     { "path": "./packages/preview-server" },
     { "path": "./packages/release-tools" },
     { "path": "./packages/adapters/generic-html" },

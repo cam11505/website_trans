@@ -2,11 +2,14 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve, sep } from 'node:path';
 import { posix } from 'node:path';
-import type {
-  ContentBlock,
-  NavigationItem,
-  Page,
-  Site,
+import {
+  parseSite,
+  resolveInlineLink,
+  type ContentBlock,
+  type InlineNode,
+  type NavigationItem,
+  type Page,
+  type Site,
 } from '@site-rescue/content-schema';
 
 export interface ExportStaticHtmlOptions {
@@ -43,6 +46,7 @@ footer { padding-block: 1rem 2rem; color: color-mix(in srgb, CanvasText 65%, tra
 nav ul { display: flex; flex-wrap: wrap; gap: .5rem 1rem; padding: 0; list-style: none; }
 nav ul ul { margin-left: 1rem; }
 a { color: LinkText; }
+code { white-space: pre-wrap; }
 img, video { max-width: 100%; height: auto; }
 figure { margin-inline: 0; }
 .sr-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
@@ -136,6 +140,7 @@ function normalizedUrl(value: string, baseUrl: string): { href: string; hash: st
 
 interface RenderContext {
   currentFile: string;
+  sourceUrl: string;
   pageFilesBySourceUrl: ReadonlyMap<string, string>;
   localAssetPaths: ReadonlySet<string>;
   sourceStylesheetPaths: readonly string[];
@@ -175,12 +180,41 @@ function renderPreservedHtml(label: string, html: string): string {
   return `<details class="sr-preserved"><summary>${escapeHtml(label)}</summary><pre>${escapeHtml(html)}</pre></details>`;
 }
 
+function renderId(id: string | undefined): string {
+  return id === undefined ? '' : ` id="${escapeHtml(id)}"`;
+}
+
+function renderInlines(nodes: readonly InlineNode[], context: RenderContext): string {
+  return nodes.map((node): string => {
+    if (node.type === 'text') {
+      return escapeHtml(node.value);
+    }
+    const id = renderId(node.id);
+    if (node.type === 'code') {
+      return `<code${id}>${escapeHtml(node.value)}</code>`;
+    }
+    if (node.type === 'lineBreak') {
+      return `<br${id}>`;
+    }
+    const children = renderInlines(node.children, context);
+    if (node.type === 'link') {
+      const href = resolveInlineLink(node.href, context.sourceUrl);
+      if (href === undefined) {
+        throw new Error('Unsafe or unsupported inline link target.');
+      }
+      return `<a${id} href="${escapeHtml(rewriteReference(href, context))}">${children}</a>`;
+    }
+    const tag = node.type === 'emphasis' ? 'em' : node.type;
+    return `<${tag}${id}>${children}</${tag}>`;
+  }).join('');
+}
+
 function renderBlock(block: ContentBlock, context: RenderContext): string {
   switch (block.type) {
     case 'heading':
-      return `<h${block.level}>${escapeHtml(block.text)}</h${block.level}>`;
+      return `<h${block.level}${renderId(block.id)}>${block.inlines === undefined ? escapeHtml(block.text) : renderInlines(block.inlines, context)}</h${block.level}>`;
     case 'paragraph':
-      return `<p>${escapeHtml(block.text)}</p>`;
+      return `<p${renderId(block.id)}>${block.inlines === undefined ? escapeHtml(block.text) : renderInlines(block.inlines, context)}</p>`;
     case 'image':
       return renderImage(block, context);
     case 'gallery':
@@ -189,7 +223,7 @@ function renderBlock(block: ContentBlock, context: RenderContext): string {
       return `<p><a class="sr-button" href="${escapeHtml(rewriteReference(block.href, context))}">${escapeHtml(block.label)}</a></p>`;
     case 'list': {
       const tag = block.ordered ? 'ol' : 'ul';
-      return `<${tag}>${block.items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</${tag}>`;
+      return `<${tag}${renderId(block.id)}>${block.items.map((item, index) => `<li>${block.itemInlines === undefined ? escapeHtml(item) : renderInlines(block.itemInlines[index]!, context)}</li>`).join('')}</${tag}>`;
     }
     case 'columns':
       return `<div class="sr-columns">${block.columns
@@ -362,6 +396,7 @@ export async function exportStaticHtml(
   site: Site,
   options: ExportStaticHtmlOptions,
 ): Promise<ExportStaticHtmlResult> {
+  site = parseSite(site);
   const outputDirectory = resolve(options.outputDirectory);
   const captureDirectory = resolve(options.captureDirectory);
   const styleMode = options.styleMode ?? 'baseline';
@@ -438,6 +473,7 @@ export async function exportStaticHtml(
       destination,
       renderPage(site, page, {
         baseUrl: site.source.baseUrl,
+        sourceUrl: page.sourceUrl,
         currentFile,
         localAssetPaths,
         pageFilesBySourceUrl,

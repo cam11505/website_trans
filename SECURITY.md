@@ -9,6 +9,12 @@
 
 Security fixes target the latest `0.1.x` release and the latest commit on `main`.
 
+## Dependency checks
+
+Run `pnpm audit:dependencies` after a frozen install. This checks production and development dependencies against the registry and fails on known advisories at low severity or higher; unavailable registry results are errors, not a clean audit. CI runs the same check. Tests use offline fixtures independently of this network-based metadata check.
+
+See the [2026-10-14 development patch record](./docs/SECURITY_MAINTENANCE_20261014.md) for exact versions and verification. A patched development branch does not update main or an already-published release ZIP; default-branch alert closure requires merged commits and GitHub rescanning.
+
 ## Reporting a vulnerability
 
 Do not publish sensitive vulnerability details in a normal issue.

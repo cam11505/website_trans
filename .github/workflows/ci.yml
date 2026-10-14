@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Dependency security audit
+        run: pnpm audit:dependencies
+
       - name: Lint
         run: pnpm lint
 
@@ -62,3 +65,6 @@ jobs:
 
       - name: Release package smoke test
         run: pnpm release:check
+
+      - name: Bundled offline source inventory smoke test
+        run: node apps/cli/test/packaged-inventory-smoke.mjs

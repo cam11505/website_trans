@@ -42,7 +42,7 @@ describe('Weebly adapter detection', () => {
       ],
     });
 
-    expect(site.schemaVersion).toBe('1.0.0');
+    expect(site.schemaVersion).toBe('1.1.0');
     expect(site.pages).toHaveLength(3);
     expect(site.pages[0]?.blocks.map((block) => block.type)).toEqual([
       'heading',

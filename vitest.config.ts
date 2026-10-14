@@ -6,6 +6,8 @@ export default defineConfig({
     alias: {
       '@site-rescue/content-schema': resolve(process.cwd(), 'packages/content-schema/src/index.ts'),
       '@site-rescue/core': resolve(process.cwd(), 'packages/core/src/index.ts'),
+      '@site-rescue/html-inline': resolve(process.cwd(), 'packages/html-inline/src/index.ts'),
+      '@site-rescue/source-inventory': resolve(process.cwd(), 'packages/source-inventory/src/index.ts'),
       '@site-rescue/http-policy': resolve(process.cwd(), 'packages/http-policy/src/index.ts'),
       '@site-rescue/output-safety': resolve(
         process.cwd(),
