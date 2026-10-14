@@ -2,6 +2,8 @@
 
 This focused development branch follows integration PR #28. It repairs the five open GitHub dependency alerts selected by the user and compatible security issues discovered by a full npm audit. It does not merge main, publish a release, change the Node baseline or implement another roadmap feature.
 
+Review update: [Draft PR #29](https://github.com/cam11505/website_trans/pull/29) now targets main directly and includes the entire PR #28 baseline plus these security fixes. The former feature-base CI passed, but produced no CodeQL check. Fresh main-base CI and CodeQL must verify the updated head; current results are recorded in the PR description. No prerequisite PR merge is needed to review this complete candidate.
+
 ## Reproduction and patch selection
 
 Before changing versions, `pnpm audit --json` exited 1 with **22 package/version advisory entries**: 3 low, 9 moderate, 8 high, 2 critical. This differs from GitHub's five open default-branch alerts; the counts describe different inventories and are not independent vulnerability counts.

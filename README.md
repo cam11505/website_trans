@@ -6,7 +6,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 > Site Rescue `v0.1.0` is the first public release and is licensed under Apache-2.0.
 
-> This development integration includes SR-001, SR-002 and the SR-003 generic HTML directory Inventory phase. These additions are unreleased; see [integration progress and remaining limits](./docs/INTEGRATION_PROGRESS.md). The published v0.1.0 bundle remains unchanged.
+> The current [Draft integration PR #29](https://github.com/cam11505/website_trans/pull/29), targeting main, includes SR-001, SR-002, the SR-003 generic HTML directory Inventory phase and dependency security fixes. These additions are unreleased; see [integration progress and remaining limits](./docs/INTEGRATION_PROGRESS.md). The published v0.1.0 bundle remains unchanged.
 
 ## Current capabilities
 

@@ -1,8 +1,8 @@
-# Site Rescue development integration — 2026-10-13
+# Site Rescue development integration — updated 2026-10-14
 
-This is an **unreleased review snapshot**, on `codex/site-rescue-integration-20261013`, based on main `37798cb3aa71170c0ad60b513a6ae6863da6df67`. The user requested one consolidated GitHub review version. It includes the documentation from PR #23 and implementation history from PR #25, #26 and #27. The original PRs remain available for focused review and regression evidence. No automatic merge, version bump, tag or release is included; the published bundle remains v0.1.0.
+The current **unreleased review candidate is [Draft PR #29](https://github.com/cam11505/website_trans/pull/29)** on `codex/security-dependency-alerts`, targeting main directly. Its history includes the original integration PR #28, documentation from PR #23 and implementations from PR #25, #26 and #27, plus dependency security maintenance. It is based on main `37798cb3aa71170c0ad60b513a6ae6863da6df67`. The original PRs remain available for focused review and regression evidence; they do not have to be merged first to review this complete candidate. No automatic merge, version bump, tag or release is included; the published bundle remains v0.1.0.
 
-The `codex/security-dependency-alerts` follow-up is based on PR #28 and updates dependencies for the user-selected security maintenance task. Its branch audit reduced 22 entries to zero; default main/release alert status is separate. See [exact versions and validation](./SECURITY_MAINTENANCE_20261014.md). Roadmap item counts below are unchanged.
+PR #29 originally used PR #28's integration branch as its base. It now targets main so the whole candidate, including security fixes, can receive fresh CI and CodeQL checks. Its branch audit reduced 22 entries to zero; default main/release alert status is separate. See [exact versions and validation](./SECURITY_MAINTENANCE_20261014.md). Roadmap item counts below are unchanged.
 
 ## Progress against the handoff
 
@@ -22,7 +22,7 @@ The `codex/security-dependency-alerts` follow-up is based on PR #28 and updates 
 ## Try the integrated source
 
 ```bash
-git clone --branch codex/site-rescue-integration-20261013 https://github.com/cam11505/website_trans.git
+git clone --branch codex/security-dependency-alerts https://github.com/cam11505/website_trans.git
 cd website_trans
 pnpm install --frozen-lockfile
 pnpm build
@@ -48,6 +48,7 @@ These links describe earlier stage heads. The consolidated PR targets **main** a
 
 ```bash
 pnpm lint
+pnpm audit:dependencies
 pnpm typecheck
 pnpm test
 pnpm build
@@ -63,4 +64,4 @@ node apps/cli/test/packaged-inventory-smoke.mjs
 - The original PR #28 tree did not repair dependency alerts. The security follow-up described above patches its branch; main/release still need approved integration and rescanning. Dependabot PR #22 remains open. The formal Node runtime baseline and additional platform CI remain SR-007; a local Node 24 pass does not change engines or .node-version.
 - ADR-020 through ADR-023 remain Proposed. Narrow implemented interfaces do not accept the broader acquisition/snapshot/coverage proposals.
 
-The next feature should be selected explicitly after this review. Completing official Weebly import requires an authorized sanitized sample; implementing snapshot/replay or other backlog items needs its own scoped acceptance criteria. This integration does not start another stage.
+After the candidate passes all required checks, merging main still needs explicit user authorization under the original no-automatic-merge instruction. A merge authorization does not authorize a tag or release. The next feature should be selected explicitly after this review. Completing official Weebly import requires an authorized sanitized sample; implementing snapshot/replay or other backlog items needs its own scoped acceptance criteria. This integration does not start another stage.
