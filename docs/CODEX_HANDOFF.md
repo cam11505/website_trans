@@ -9,6 +9,8 @@
 
 ## 最新整合狀態
 
+**2026-10-14 後續決策（優先於下方歷史規劃）：** PR #29 已經使用者核准 squash merge 至 main `d8834de`；合併後 CI／CodeQL 通過、162 tests passed、五筆依賴告警均 fixed，未發版。使用者接著明確指示不再以真實樣本驗證作為前置條件，繼續完成通用 HTML 資料夾離線匯入。本階段依 ADR-024 新增 `import-source`：保存原檔／Hash／路徑映射 → Generic Adapter → 素材本機化 → Export／Report／Verify／Manifest。以合成離線 fixtures 驗收，不宣稱官方 Weebly 格式已驗證。ZIP、完整 snapshot/parser replay 與 SR-004 以後工作仍分開處理；新 PR 不自動合併、不發版。下方候選分支／Issue open／樣本前置要求為歷史快照，不應重複套用到這次已授權的通用匯入。
+
 使用者要求先將現有成果整合到 GitHub。原始整合 PR #28 集中交接文件、ADR-020～023 與 SR-001／002／003 Inventory；後續安全修補 PR #29 現已調整為直接以 main 為基底的完整候選版，分支為 `codex/security-dependency-alerts`。#29 包含 #28 全部歷史與相依套件修補，可集中審查，無須先合併 #28。main 與正式 v0.1.0 未變更；新 head 須通過自己的 CI／CodeQL，再由使用者明確核准合併。
 
 | 項目 | 本整合分支狀態 | 尚待完成 |
