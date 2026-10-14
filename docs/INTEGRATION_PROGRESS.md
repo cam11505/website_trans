@@ -1,6 +1,6 @@
 # Site Rescue development integration — updated 2026-10-14
 
-The current **unreleased review candidate is [Draft PR #29](https://github.com/cam11505/website_trans/pull/29)** on `codex/security-dependency-alerts`, targeting main directly. Its history includes the original integration PR #28, documentation from PR #23 and implementations from PR #25, #26 and #27, plus dependency security maintenance. It is based on main `37798cb3aa71170c0ad60b513a6ae6863da6df67`. The original PRs remain available for focused review and regression evidence; they do not have to be merged first to review this complete candidate. No automatic merge, version bump, tag or release is included; the published bundle remains v0.1.0.
+This record describes the **unreleased integration in [PR #29](https://github.com/cam11505/website_trans/pull/29)**, prepared on `codex/security-dependency-alerts` and retargeted directly to main. Its history includes the original integration PR #28, documentation from PR #23 and implementations from PR #25, #26 and #27, plus dependency security maintenance. Its baseline is main `37798cb3aa71170c0ad60b513a6ae6863da6df67`. The original PRs remain available for focused review and regression evidence; they do not have to be merged first to review this complete candidate. Current merge/check status belongs to the live PR page. This preparation does not automatically merge, bump versions, tag or release; the published bundle remains v0.1.0.
 
 PR #29 originally used PR #28's integration branch as its base. It now targets main so the whole candidate, including security fixes, can receive fresh CI and CodeQL checks. Its branch audit reduced 22 entries to zero; default main/release alert status is separate. See [exact versions and validation](./SECURITY_MAINTENANCE_20261014.md). Roadmap item counts below are unchanged.
 
@@ -17,20 +17,22 @@ PR #29 originally used PR #28's integration branch as its base. It now targets m
 | SR-007: runtime/CI matrix | Not started | Supported runtime policy, formal Node baseline and platform matrix |
 | SR-008: guided UX | Not started | User flow built on reliable CLI core |
 
-繁體中文進度：八項 Roadmap 中，**兩項完成實作、一項部分完成、五項尚未開始**。這是項目狀態，不代表各項工作量相等；完整離線救援目標仍未完成。所有新增程式目前在 review branch，不能把 Draft PR 狀態當作已進 main 或正式發版。
+繁體中文進度：八項 Roadmap 中，**兩項完成實作、一項部分完成、五項尚未開始**。這是項目狀態，不代表各項工作量相等；完整離線救援目標仍未完成。本記錄準備時新增程式仍在 review branch，後續合併狀態以 GitHub 為準，不能把功能實作視為已正式發版。
 
 ## Try the integrated source
 
 ```bash
-git clone --branch codex/security-dependency-alerts https://github.com/cam11505/website_trans.git
+git clone https://github.com/cam11505/website_trans.git
 cd website_trans
+git fetch origin pull/29/head
+git switch --create codex/review-pr29 FETCH_HEAD
 pnpm install --frozen-lockfile
 pnpm build
 node apps/cli/dist/index.js --help
 node apps/cli/dist/index.js inspect-source ./fixtures/shared/html-directory --output ./inventory-review
 ```
 
-The fixture is synthetic and deliberately contains missing references, an external link, a query and inert source script. The inventory must require review and state that migration is not assessed. Exit 0 means an inventory was written; it does not mean migration ready. Use a new output directory on every run, separate from source inputs.
+The PR ref selects this integration even after the feature branch is deleted by the repository's merge policy. The fixture is synthetic and deliberately contains missing references, an external link, a query and inert source script. The inventory must require review and state that migration is not assessed. Exit 0 means an inventory was written; it does not mean migration ready. Use a new output directory on every run, separate from source inputs.
 
 New captures use Site schema **1.1.0**. This source reads both 1.0.0 and 1.1.0, retaining the input version. Older v0.1.0 readers reject 1.1.0. Package versions stay 0.1.0 for this unpublished integration; inventory, report and bundle output contracts remain distinct. See ADR-022 and ADR-023 for exact compatibility and limits.
 
