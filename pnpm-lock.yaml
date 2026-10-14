@@ -60,6 +60,9 @@ importers:
       '@site-rescue/exporter-static-html':
         specifier: workspace:*
         version: link:../../packages/exporters/static-html
+      '@site-rescue/html-directory':
+        specifier: workspace:*
+        version: link:../../packages/html-directory
       '@site-rescue/output-safety':
         specifier: workspace:*
         version: link:../../packages/output-safety
@@ -165,6 +168,24 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../../content-schema
+
+  packages/html-directory:
+    dependencies:
+      '@site-rescue/css-references':
+        specifier: workspace:*
+        version: link:../css-references
+      '@site-rescue/http-policy':
+        specifier: workspace:*
+        version: link:../http-policy
+      '@site-rescue/output-safety':
+        specifier: workspace:*
+        version: link:../output-safety
+      '@site-rescue/source-inventory':
+        specifier: workspace:*
+        version: link:../source-inventory
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.2.0
 
   packages/html-inline:
     dependencies:

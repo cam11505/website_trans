@@ -26,6 +26,7 @@ Site Rescue is an **Apache-2.0, local-first, CLI-first, platform-neutral website
 - packages/core: source-adapter interface and deterministic registry.
 - packages/html-inline: shared standard inline DOM interpretation; no fetching or exporting.
 - packages/source-inventory: bounded read-only generic folder inspection; no ZIP extraction, normalization or snapshot replay.
+- packages/html-directory: generic offline directory acquisition, evidence copies and file/URL mappings; no network, platform normalization or ZIP extraction.
 - packages/crawler, packages/http-policy: bounded authorized live HTTP discovery.
 - packages/adapters/weebly and generic-html: source-specific detection and interpretation.
 - packages/content-schema: versioned, runtime-validated platform-neutral intermediate representation.
@@ -67,4 +68,4 @@ When relevant, also smoke-test the bundled CLI with --help, --version and an **o
 - docs/adr/ADR-022-versioned-inline-content.md — **Proposed**, focused SR-002 implementation.
 - docs/adr/ADR-023-read-only-html-directory-inventory.md — **Proposed**, user-approved generic Inventory phase only.
 
-In the development integration branch, SR-001 and SR-002 are implemented and SR-003 has only a generic HTML directory Inventory. Read the current progress before selecting new work; the original SR-001 starter prompt in the historical handoff is not a new task. Full SR-003 import still requires an authorized sanitized format sample. The user approved generic Inventory without that sample, not official Weebly support. Do not start another roadmap item or merge/publish merely because this integration is ready for review.
+PR #29 merged SR-001, SR-002, generic Inventory and dependency fixes into main. The user subsequently authorized continuing generic offline HTML folder import **without a real-sample prerequisite**. Follow ADR-024 for this focused scope and its evidence/provenance compatibility. Do not ask for a real Weebly sample to continue this generic importer; do not claim official Weebly archive support from synthetic fixtures. ZIP, parser replay, broader coverage and later roadmap items remain separate. The original SR-001 starter prompt is historical. A previous PR's merge authorization does not authorize merging this new PR or publishing a release.

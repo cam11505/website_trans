@@ -12,7 +12,9 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 ### Added
 
 - SR-002: semantic inline links, strong/emphasis, literal code, line breaks and anchors for paragraphs, headings and list items in both adapters and static export.
-- SR-003 Inventory phase: `inspect-source` for bounded read-only HTML directory file/hash/reference inventory, missing-file evidence and explicit review warnings. ZIP extraction and full offline import are not included.
+- SR-003: `inspect-source` for bounded read-only HTML directory file/hash/reference inventory, missing-file evidence and explicit review warnings.
+- SR-003 generic HTML folder follow-up: `import-source` acquires original byte/hash evidence, maps local pages/assets/attachments, and runs offline normalization, export, report, static verification and bundle manifest. Real samples are not a prerequisite for this generic contract; ZIP and official Weebly format support remain excluded.
+- Proposed ADR-024 documents offline acquisition, synthetic URL provenance, compatibility and remaining limits. CI exercises the real bundled import with network guards.
 - Consolidated development handoff, progress tracking and Proposed ADR-020 through ADR-023.
 - `pnpm audit:dependencies` and a CI dependency audit that fails on known low-or-higher advisories or registry errors.
 
