@@ -251,6 +251,7 @@ source website -> source adapter -> normalized site schema -> exporter -> target
 
 ```bash
 pnpm lint
+pnpm audit:dependencies
 pnpm typecheck
 pnpm test
 pnpm build

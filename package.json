@@ -13,6 +13,7 @@
     "build": "tsc -b",
     "clean": "tsc -b --clean",
     "lint": "eslint .",
+    "audit:dependencies": "pnpm audit --audit-level=low",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run --configLoader runner",
     "test:watch": "vitest --configLoader runner",
@@ -27,6 +28,6 @@
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.39.1",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.11"
   }
 }

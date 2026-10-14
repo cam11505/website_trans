@@ -7,12 +7,14 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 ### Fixed
 
 - SR-001: a truncated crawl now records an actionable warning and forces migration review; capture/rescue explicitly report incomplete acquisition.
+- Dependency security maintenance: update Vitest/mocker to 4.1.11, js-yaml to 4.3.2, undici to 7.29.1, brace-expansion to 1.1.21/5.0.12 and source-map-js to 1.2.2; remove old tinypool through Vitest 4. Full branch audit changed from 22 entries to zero known advisories.
 
 ### Added
 
 - SR-002: semantic inline links, strong/emphasis, literal code, line breaks and anchors for paragraphs, headings and list items in both adapters and static export.
 - SR-003 Inventory phase: `inspect-source` for bounded read-only HTML directory file/hash/reference inventory, missing-file evidence and explicit review warnings. ZIP extraction and full offline import are not included.
 - Consolidated development handoff, progress tracking and Proposed ADR-020 through ADR-023.
+- `pnpm audit:dependencies` and a CI dependency audit that fails on known low-or-higher advisories or registry errors.
 
 ### Changed
 
