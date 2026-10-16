@@ -16,6 +16,7 @@ import {
 } from '@site-rescue/crawler';
 import { applyRedirectEvidence } from '@site-rescue/redirects';
 import { withFreshOutputDirectory } from '@site-rescue/output-safety';
+import { writeAcquisitionEvidence } from '@site-rescue/report';
 import { DEFAULT_SOURCE_ADAPTERS } from './adapters.js';
 
 export interface CaptureOptions {
@@ -152,6 +153,11 @@ async function runCaptureInDirectory(
     rewrittenCssReferenceCount = assetResult.rewrittenCssReferenceCount;
   }
   const outputFile = await writeJsonAtomically(options.outputDirectory, site);
+  await writeAcquisitionEvidence(options.outputDirectory, site, {
+    kind: 'live-url', normalizedPageCount: site.pages.length, capturedPageCount: crawl.pages.length,
+    discoveredUrlCount: crawl.discoveredUrls.length, acquisitionWarningCount: crawl.warnings.length,
+    redirectCount: crawl.redirects.length, truncated: crawl.truncated, maxPages: options.maxPages ?? DEFAULT_MAX_PAGES,
+  });
 
   writeLine(crawl.truncated ? 'Site Rescue capture incomplete' : 'Site Rescue capture complete');
   if (truncationWarning !== undefined) {

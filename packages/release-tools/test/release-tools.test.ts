@@ -76,7 +76,7 @@ if (args.includes('--version')) {
   await mkdir(output, { recursive: true });
   await writeFile(
     join(output, 'migration-report.json'),
-    JSON.stringify({ reportVersion: '1.0.0', summary: { pageCount: 1 } }),
+    JSON.stringify({ reportVersion: '2.0.0', readiness: 'review-required', summary: { pageCount: 1 }, coverage: { staticIntegrity: { status: 'not-checked' }, manualReview: { status: 'not-assessed' } } }),
     'utf8',
   );
   console.log('Site Rescue migration report complete');

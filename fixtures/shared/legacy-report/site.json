@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "source": {
+    "adapter": "legacy-fixture",
+    "baseUrl": "https://legacy.example/",
+    "capturedAt": "2026-10-16T00:00:00.000Z"
+  },
+  "metadata": {
+    "title": "Legacy report fixture"
+  },
+  "navigation": [],
+  "pages": [
+    {
+      "id": "home",
+      "sourceUrl": "https://legacy.example/",
+      "sourcePath": "/",
+      "targetPath": "/",
+      "title": "Home",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Legacy"
+        }
+      ]
+    }
+  ],
+  "assets": [],
+  "redirects": [],
+  "warnings": []
+}

@@ -68,3 +68,12 @@ jobs:
 
       - name: Bundled offline source inventory smoke test
         run: node apps/cli/test/packaged-inventory-smoke.mjs
+
+      - name: Bundled offline HTML import smoke test
+        run: node apps/cli/test/packaged-import-smoke.mjs
+
+      - name: Bundled source snapshot replay smoke test
+        run: node apps/cli/test/packaged-replay-smoke.mjs
+
+      - name: Bundled migration coverage and legacy report smoke test
+        run: node apps/cli/test/packaged-coverage-smoke.mjs

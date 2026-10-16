@@ -76,7 +76,7 @@ describe('crawl truncation readiness', () => {
         expect(warning.message).toContain('--max-pages');
         expect(capture.warningCount).toBe(1);
         expect(json).toMatchObject({
-          reportVersion: '1.0.0',
+          reportVersion: '2.0.0',
           readiness: 'review-required',
           warningCounts: { 'crawl-truncated': 1 },
           warnings: site.warnings,
@@ -120,7 +120,7 @@ describe('crawl truncation readiness', () => {
     }
   });
 
-  it.each([3, undefined])('keeps a fully crawled fixture ready with maxPages=%s', async (maxPages) => {
+  it.each([3, undefined])('keeps a fully crawled fixture free of truncation while manual review remains with maxPages=%s', async (maxPages) => {
     const workspace = await mkdtemp(join(tmpdir(), 'site-rescue-full-crawl-'));
     const lines: string[] = [];
     try {
@@ -138,10 +138,12 @@ describe('crawl truncation readiness', () => {
 
       expect(site.pages).toHaveLength(3);
       expect(site.warnings).toEqual([]);
-      expect(rescue.report.readiness).toBe('ready');
+      expect(rescue.report.readiness).toBe('review-required');
+      const report = JSON.parse(await readFile(rescue.report.jsonFile, 'utf8')) as MigrationReport;
+      expect(report.coverage.sourceAcquisition).toMatchObject({ status: 'observed-scope-complete', sourceCompleteness: 'unknown' });
       expect(rescue.verification.valid).toBe(true);
       expect(lines).toContain('Site Rescue complete');
-      expect(lines).toContain('Readiness: ready');
+      expect(lines).toContain('Readiness: review-required');
       expect(lines.some((line) => line.includes('incomplete'))).toBe(false);
     } finally {
       await rm(workspace, { recursive: true, force: true });

@@ -78,11 +78,11 @@ async function runRescueInDirectory(
     styleMode: options.styleMode,
     writeLine: () => undefined,
   });
-  const report = await runReport(capture.outputFile, {
-    outputDirectory: reportDirectory,
+  const verification = await runVerify(siteDirectory, {
     writeLine: () => undefined,
   });
-  const verification = await runVerify(siteDirectory, {
+  const report = await runReport(capture.outputFile, {
+    outputDirectory: reportDirectory, staticVerification: verification,
     writeLine: () => undefined,
   });
   const manifest = verification.valid
