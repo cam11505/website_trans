@@ -90,7 +90,8 @@ export async function acquireHtmlDirectory(directory: string, captureDirectory: 
   const root = await realpath(resolve(directory));
   const targetPath = (file: InventoryFile): string => file === home ? '/index.html' : directoryTargetPath(file.path);
   return withFreshOutputDirectory(captureDirectory, async (capture) => {
-    const filesRoot = join(capture, 'source/files');
+    // Resolve only the fresh output root before creating evidence. Descendant link checks stay strict.
+    const filesRoot = join(await realpath(capture), 'source/files');
     for (const file of inventory.files) {
       const bytes = await readSourceFile(root, file);
       const destination = join(filesRoot, file.path);

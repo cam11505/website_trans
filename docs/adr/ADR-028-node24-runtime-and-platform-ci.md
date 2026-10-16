@@ -21,6 +21,7 @@ The existing Ubuntu-only CI cannot validate Windows junctions or macOS filesyste
 - Preserve read-only workflow permissions and disabled persisted checkout credentials. CodeQL default setup remains GitHub-managed; do not claim its internal runner configuration is controlled by this CI file.
 - A case-collision fixture requires two differently cased files to exist. Skip that case when the actual test filesystem cannot represent them (default macOS volumes), keeping the Linux rejection test intact. Windows-only and Unix-only safety cases remain explicit; no product safety rule is weakened.
 - Full local Windows tests twice reproduced EPERM when committing a completed release staging directory; isolated reruns passed. Retry only EPERM/EBUSY directory rename up to three times (100/200/400ms), without rebundling or changing path/output protections. Persistent locks still fail and clean staging; other errors fail immediately. Deterministic injected-error regressions cover recovery and the bounded failure path.
+- The first real matrix exposed generated evidence reads rejecting macOS temporary-directory aliases and Windows runner short-name paths. Canonicalize the freshly created capture root before creating `source/files`, then retain every existing descendant lstat/realpath/stat/hash check. Do not relax source-root or descendant symlink/junction rejection. An explicit output-parent alias regression reproduced the failure locally before this one-line correction; post-acquisition files-root replacement must still fail. Mutation-test hooks compare canonical source paths so the fixture still triggers under OS aliases.
 
 ## Compatibility and limits
 
@@ -35,3 +36,5 @@ This main-base Draft PR includes unchanged #30–#33 dependencies. No merge, tag
 Before implementation, six release-tool regression cases failed: pinned target propagation, four invalid runtime pins and engine/pin mismatch. After implementation run all repository checks on the actual pinned local runtime, all five actual bundled smokes, security audit, then require exact-head CI on all three platforms and CodeQL. Record actual counts, platform-specific skips, transient failures and limitations in the PR; previous-stage passes are not evidence for this change.
 
 Before staging retry, three additional regressions failed (transient EPERM/EBUSY recovery and bounded persistent EPERM); immediate EACCES rejection already passed. This maintenance is scoped to actual cross-platform release verification, not importer/source behavior.
+
+First matrix run `38920048502` failed on Windows/macOS while Linux passed; the aggregate gate failed as intended. Record the later repaired head's full results, not only this initial failure or a rerun of the old head.
