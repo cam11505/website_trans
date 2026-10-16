@@ -1,4 +1,8 @@
-# Site Rescue development integration — updated 2026-10-14
+# Site Rescue development integration — updated 2026-10-16
+
+## 2026-10-16 generic Snapshot/replay follow-up
+
+PR #30 remains Draft at `0603063`, with its 181-test Linux CI and CodeQL passing. The user requested the next step. This follow-up implements the generic offline part of SR-004: Source Snapshot 1.0.0 original file/hash/acquisition-time metadata, exact raw-source integrity pinning and `replay-source` through the current generic adapter and existing downstream pipeline. It does not read the previous normalized Site, need the original folder, alter old evidence or trust legacy output-only JSON as a replay contract. New output remains review-required. See ADR-025 for compatibility/resource/security limits. Live capture snapshots, ZIP and SR-005 onward remain separate; main and release are unchanged. Fresh validation belongs to the follow-up PR.
 
 ## Current checkpoint after PR #29
 

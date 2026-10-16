@@ -6,6 +6,7 @@ import { parseSite } from '@site-rescue/content-schema';
 import { acquireHtmlDirectory } from '@site-rescue/html-directory';
 import { assertSeparateSourceOutput, withFreshOutputDirectory } from '@site-rescue/output-safety';
 import type { InventoryLimits } from '@site-rescue/source-inventory';
+import { createSourceSnapshot, serializeSourceSnapshot, SOURCE_SNAPSHOT_FILENAME, type SourceSnapshot } from '@site-rescue/source-snapshot';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 import { runExport } from './export.js';
 import { runManifest } from './manifest.js';
@@ -18,13 +19,18 @@ export interface ImportSourceOptions {
   styleMode?: StaticHtmlStyleMode;
   capturedAt?: string;
   writeLine?: (line: string) => void;
+  /** Internal replay pin; checked against acquired original bytes, never used as filesystem paths. */
+  expectedSnapshot?: SourceSnapshot;
 }
 
 export async function runImportSource(directory: string, options: ImportSourceOptions) {
   await assertSeparateSourceOutput(directory, options.outputDirectory);
   return withFreshOutputDirectory(options.outputDirectory, async (outputDirectory) => {
     const captureDirectory = join(outputDirectory, 'capture');
-    const acquired = await acquireHtmlDirectory(directory, captureDirectory, options.limits);
+    const acquired = await acquireHtmlDirectory(directory, captureDirectory, options.limits, options.expectedSnapshot?.files);
+    await writeFile(join(captureDirectory, 'source', SOURCE_SNAPSHOT_FILENAME), serializeSourceSnapshot(createSourceSnapshot(
+      acquired.inventory, options.expectedSnapshot?.acquiredAt ?? options.capturedAt ?? new Date().toISOString(),
+    )));
     let site = normalizeGenericHtmlSite({ baseUrl: acquired.homeUrl, pages: acquired.pages, capturedAt: options.capturedAt });
     const targets = new Map(acquired.pages.map((page) => [page.url, page.targetPath]));
     const assetUrls = new Set(site.assets.map((asset) => asset.sourceUrl));
@@ -35,7 +41,9 @@ export async function runImportSource(directory: string, options: ImportSourceOp
       warnings: [...site.warnings, {
         code: 'offline-html-import', sourceUrl: acquired.homeUrl,
         message: 'Generic HTML directory imported offline. https://site-rescue.invalid/ is a synthetic mapping namespace, not the original website. Review source inventory, conversion warnings, external dependencies and dynamic functionality; static integrity does not establish complete migration.',
-      }, ...acquired.inventory.warnings.filter((warning) => warning.code !== 'inventory-only').map((warning) => ({
+      }, ...(options.expectedSnapshot === undefined ? [] : [{ code: 'source-snapshot-replayed',
+        message: 'Source Snapshot 1.0.0 bytes were verified and re-normalized with the current generic adapter offline. Previous normalized content was not reused; review conversion warnings and output.' }]),
+      ...acquired.inventory.warnings.filter((warning) => warning.code !== 'inventory-only').map((warning) => ({
         code: warning.code, message: `${warning.path === undefined ? '' : `${warning.path}: `}${warning.message} ${warning.action}`,
       }))],
     });

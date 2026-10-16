@@ -81,6 +81,9 @@ importers:
       '@site-rescue/source-inventory':
         specifier: workspace:*
         version: link:../../packages/source-inventory
+      '@site-rescue/source-snapshot':
+        specifier: workspace:*
+        version: link:../../packages/source-snapshot
       '@site-rescue/static-verifier':
         specifier: workspace:*
         version: link:../../packages/static-verifier
@@ -243,6 +246,15 @@ importers:
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
+
+  packages/source-snapshot:
+    dependencies:
+      '@site-rescue/source-inventory':
+        specifier: workspace:*
+        version: link:../source-inventory
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
   packages/static-verifier:
     dependencies:

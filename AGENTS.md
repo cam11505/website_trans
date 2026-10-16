@@ -27,6 +27,7 @@ Site Rescue is an **Apache-2.0, local-first, CLI-first, platform-neutral website
 - packages/html-inline: shared standard inline DOM interpretation; no fetching or exporting.
 - packages/source-inventory: bounded read-only generic folder inspection; no ZIP extraction, normalization or snapshot replay.
 - packages/html-directory: generic offline directory acquisition, evidence copies and file/URL mappings; no network, platform normalization or ZIP extraction.
+- packages/source-snapshot: strict versioned generic source index validation and bounded metadata reads; no source fetching or normalization.
 - packages/crawler, packages/http-policy: bounded authorized live HTTP discovery.
 - packages/adapters/weebly and generic-html: source-specific detection and interpretation.
 - packages/content-schema: versioned, runtime-validated platform-neutral intermediate representation.
@@ -35,7 +36,7 @@ Site Rescue is an **Apache-2.0, local-first, CLI-first, platform-neutral website
 - packages/report: precise migration warnings, coverage and manual-review evidence.
 - packages/static-verifier, rescue-manifest: file/link integrity and portable-bundle checks.
 - packages/output-safety: existing-path protections.
-- New source-input / offline importer / source-snapshot packages are **proposals**, not existing code. Avoid changing the source adapter contract or saved schema without an ADR and backwards-compatibility plan.
+- Other source-input, archive importer and live snapshot contracts remain proposals. Avoid changing the source adapter contract or saved schema without an ADR and backwards-compatibility plan.
 
 ## Verification (from repository root)
 
@@ -69,3 +70,5 @@ When relevant, also smoke-test the bundled CLI with --help, --version and an **o
 - docs/adr/ADR-023-read-only-html-directory-inventory.md — **Proposed**, user-approved generic Inventory phase only.
 
 PR #29 merged SR-001, SR-002, generic Inventory and dependency fixes into main. The user subsequently authorized continuing generic offline HTML folder import **without a real-sample prerequisite**. Follow ADR-024 for this focused scope and its evidence/provenance compatibility. Do not ask for a real Weebly sample to continue this generic importer; do not claim official Weebly archive support from synthetic fixtures. ZIP, parser replay, broader coverage and later roadmap items remain separate. The original SR-001 starter prompt is historical. A previous PR's merge authorization does not authorize merging this new PR or publishing a release.
+
+The next user-authorized step (2026-10-16) implements the generic offline portion of SR-004 on top of unmerged PR #30. Follow ADR-025: explicit Source Snapshot 1.0.0, fixed-name bounded metadata, exact raw file/hash validation, current-adapter replay without old site.json or original folder, new separate output, review-required reporting. Legacy Inventory/provenance stays output-only; missing snapshot indexes require explicit re-import. Live source snapshots, ZIP, broader coverage and runtime work are deferred. Keep both PR #30 and this follow-up unmerged unless separately authorized.

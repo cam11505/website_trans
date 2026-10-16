@@ -29,6 +29,7 @@
     "@site-rescue/report": "workspace:*",
     "@site-rescue/rescue-manifest": "workspace:*",
     "@site-rescue/source-inventory": "workspace:*",
+    "@site-rescue/source-snapshot": "workspace:*",
     "@site-rescue/static-verifier": "workspace:*"
   }
 }

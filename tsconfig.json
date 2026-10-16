@@ -16,6 +16,7 @@
     { "path": "./packages/static-verifier" },
     { "path": "./packages/source-inventory" },
     { "path": "./packages/html-directory" },
+    { "path": "./packages/source-snapshot" },
     { "path": "./packages/preview-server" },
     { "path": "./packages/release-tools" },
     { "path": "./packages/adapters/generic-html" },

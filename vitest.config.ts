@@ -9,6 +9,7 @@ export default defineConfig({
       '@site-rescue/html-inline': resolve(process.cwd(), 'packages/html-inline/src/index.ts'),
       '@site-rescue/source-inventory': resolve(process.cwd(), 'packages/source-inventory/src/index.ts'),
       '@site-rescue/html-directory': resolve(process.cwd(), 'packages/html-directory/src/index.ts'),
+      '@site-rescue/source-snapshot': resolve(process.cwd(), 'packages/source-snapshot/src/index.ts'),
       '@site-rescue/http-policy': resolve(process.cwd(), 'packages/http-policy/src/index.ts'),
       '@site-rescue/output-safety': resolve(
         process.cwd(),

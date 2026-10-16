@@ -11,6 +11,9 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ### Added
 
+- SR-004 generic offline portion: explicit Source Snapshot 1.0.0 original-file/hash/acquisition-time index and `replay-source`, verifying the exact raw file set before re-normalizing with the current generic adapter. Replay works without the original folder or old Site JSON, preserves source evidence and always requires review. Legacy evidence needs explicit re-import; live capture snapshots remain deferred.
+- Proposed ADR-025 and network-guarded actual bundled Snapshot/replay CI smoke.
+
 - SR-002: semantic inline links, strong/emphasis, literal code, line breaks and anchors for paragraphs, headings and list items in both adapters and static export.
 - SR-003: `inspect-source` for bounded read-only HTML directory file/hash/reference inventory, missing-file evidence and explicit review warnings.
 - SR-003 generic HTML folder follow-up: `import-source` acquires original byte/hash evidence, maps local pages/assets/attachments, and runs offline normalization, export, report, static verification and bundle manifest. Real samples are not a prerequisite for this generic contract; ZIP and official Weebly format support remain excluded.

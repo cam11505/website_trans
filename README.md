@@ -27,6 +27,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue verify <site-directory>` offline static link and asset verification command
 - `site-rescue inspect-source <html-directory>` bounded, read-only offline file inventory (no import or ZIP support)
 - `site-rescue import-source <html-directory>` offline generic HTML folder acquisition, static export, report, verification and evidence bundle (development feature)
+- `site-rescue replay-source <snapshot-directory>` verify raw source files and reparse offline with the current generic adapter (development feature)
 - `site-rescue manifest <rescue-directory>` deterministic whole-bundle SHA-256 manifest command
 - `site-rescue verify-bundle <rescue-directory>` offline rescue bundle integrity command
 - `site-rescue preview <site-directory>` verified local HTTP preview command
@@ -88,6 +89,7 @@ pnpm site-rescue report ./capture/site.json --output ./report
 pnpm site-rescue verify ./site
 pnpm site-rescue inspect-source ./html-backup --output ./source-inventory
 pnpm site-rescue import-source ./html-backup --output ./offline-rescue
+pnpm site-rescue replay-source ./offline-rescue/capture/source --output ./replayed-rescue
 pnpm site-rescue manifest ./rescued-site
 pnpm site-rescue verify-bundle ./rescued-site
 pnpm site-rescue preview ./site
@@ -129,7 +131,7 @@ Tune bounded request reliability when a source server is slow or unstable:
 pnpm site-rescue diagnose https://example.weebly.com --max-retries 3 --request-timeout-ms 20000 --max-html-bytes 8388608
 ```
 
-`capture`, `export`, `report`, `rescue`, `inspect-source` and `import-source` require a new output directory. If the path already exists, the command stops before changing it. A fatal run removes only the new directory created for that run; import static-verification failures retain output for review and return exit 2.
+`capture`, `export`, `report`, `rescue`, `inspect-source`, `import-source` and `replay-source` require a new output directory. If the path already exists, the command stops before changing it. A fatal run removes only the new directory created for that run; import/replay static-verification failures retain output for review and return exit 2.
 
 ### Offline HTML folder import (development feature)
 
@@ -148,6 +150,22 @@ The synthetic `https://site-rescue.invalid/` namespace resolves adapter URLs loc
 No network or source scripts run during import. Missing/external references, unsupported markup and dynamic behavior produce warnings; browsing generated output may still request unresolved external resources. Every import remains `review-required`. Exit 0 means the supported static checks passed, exit 2 retains output with static verification problems and no bundle manifest, and exit 1 means a fatal format/safety/resource error. Existing output and original inputs are preserved.
 
 Limits and override flags match `inspect-source` below. Symlinks/junctions, unsafe names, source/output overlap and detected concurrent changes are rejected. Uninspectable HTML/CSS and `<base href>` stop import with a repair message. ZIP extraction, official Weebly backup-format certification, arbitrary DOM/layout parity and source-parser replay are not included. These limits no longer block generic folder development. See [ADR-024](./docs/adr/ADR-024-generic-offline-html-import.md).
+
+### Source Snapshot and offline replay (development feature)
+
+```bash
+pnpm site-rescue import-source ./html-backup --output ./first-rescue
+pnpm site-rescue replay-source ./first-rescue/capture/source --output ./replayed-rescue --style-mode source
+pnpm site-rescue verify-bundle ./replayed-rescue
+```
+
+繁體中文：新匯入會在 `capture/source/source-snapshot.json` 保存原檔清單、SHA-256、來源路徑與原始取得時間。日後即使原始資料夾已移走，也能用 `replay-source` 先核對保存的原檔，再透過目前版本的轉換器重新產生網站與報告；不讀取舊 `site.json`。請指定新的輸出資料夾，原 Snapshot 保持不變。
+
+Source Snapshot **1.0.0** currently supports generic HTML directory acquisition only. All original files must match the recorded set, sizes and hashes; missing, changed or unexpected files fail before adapter normalization. A replay creates a new independent evidence copy, preserving the original acquisition timestamp/index while recording the new normalization timestamp in Site. Outputs always remain `review-required`; they use the existing Site and bundle contracts.
+
+Snapshot metadata is bounded to 4 MiB and uses a strict version/schema. Current CLI Inventory limits apply to source bytes and parsing; stored settings cannot raise them. Symlinks/junctions and overlapping source/output paths (including aliases/ancestors) are rejected. These checks detect common concurrent changes, not atomic isolation: stop source/snapshot writers. Hashes compare bytes with the selected index; they cannot authenticate an index that was altered together with its files. Keep a separately trusted bundle checksum when authenticity matters.
+
+Older SR-003 outputs without this index are not silently upgraded. Re-import their saved `capture/source/files` into a fresh output to create a supported Snapshot. This phase adds no snapshots to live URL capture/rescue, no ZIP extraction, and no promise of identical future parser output. See [ADR-025](./docs/adr/ADR-025-generic-source-snapshot-replay.md).
 
 ### Offline source inventory (development feature)
 

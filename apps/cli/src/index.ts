@@ -5,6 +5,7 @@ import { runDiagnose } from './diagnose.js';
 import { runExport } from './export.js';
 import { runInspectSource } from './inspect-source.js';
 import { runImportSource } from './import-source.js';
+import { runReplaySource } from './replay-source.js';
 import { runManifest } from './manifest.js';
 import { runPreview } from './preview.js';
 import { runReport } from './report.js';
@@ -22,6 +23,7 @@ const USAGE = `Usage:
   site-rescue verify <site-directory>
   site-rescue inspect-source <html-directory> [--output <directory>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
   site-rescue import-source <html-directory> [--output <directory>] [--style-mode <baseline|source>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
+  site-rescue replay-source <snapshot-directory> [--output <directory>] [--style-mode <baseline|source>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
   site-rescue manifest <rescue-directory>
   site-rescue verify-bundle <rescue-directory>
   site-rescue preview <site-directory> [--port <number>]
@@ -35,6 +37,7 @@ Commands:
   verify    Check generated HTML links and local assets without network access
   inspect-source  Inventory a local HTML directory offline (review required; no import or ZIP support)
   import-source   Import a generic HTML folder, export, report and verify offline (no ZIP support)
+  replay-source   Verify saved source bytes and reparse with the current generic HTML adapter offline
   manifest  Write a deterministic SHA-256 manifest for a complete rescue bundle
   verify-bundle  Verify a rescue bundle manifest and all recorded files offline
   preview   Verify and serve a generated site on 127.0.0.1 for local review
@@ -143,6 +146,7 @@ export async function main(args: string[]): Promise<number> {
       command !== 'verify' &&
       command !== 'inspect-source' &&
       command !== 'import-source' &&
+      command !== 'replay-source' &&
       command !== 'manifest' &&
       command !== 'verify-bundle' &&
       command !== 'preview' &&
@@ -172,9 +176,9 @@ export async function main(args: string[]): Promise<number> {
       await runReport(input, {
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-report',
       });
-    } else if (command === 'inspect-source' || command === 'import-source') {
+    } else if (command === 'inspect-source' || command === 'import-source' || command === 'replay-source') {
       const optionNames = ['--output', '--max-entries', '--max-depth', '--max-file-bytes', '--max-total-bytes', '--max-text-bytes', '--max-references'];
-      if (command === 'import-source') optionNames.push('--style-mode');
+      if (command !== 'inspect-source') optionNames.push('--style-mode');
       for (let index = 2; index < args.length; index += 2) {
         const option = args[index]!;
         if (!optionNames.includes(option) || args.indexOf(option) !== index) throw new Error(`Unknown or duplicate inventory option: ${option}.`);
@@ -188,8 +192,9 @@ export async function main(args: string[]): Promise<number> {
         ['maxTextBytes', parsePositiveIntegerOption(args, '--max-text-bytes')],
         ['maxReferences', parsePositiveIntegerOption(args, '--max-references')],
       ].filter((entry) => entry[1] !== undefined));
-      if (command === 'import-source') {
-        const result = await runImportSource(input, { outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-import', limits, styleMode: parseStyleMode(args) });
+      if (command !== 'inspect-source') {
+        const run = command === 'replay-source' ? runReplaySource : runImportSource;
+        const result = await run(input, { outputDirectory: parseStringOption(args, '--output') ?? (command === 'replay-source' ? 'site-rescue-replay' : 'site-rescue-import'), limits, styleMode: parseStyleMode(args) });
         return result.verification.valid ? 0 : 2;
       }
       await runInspectSource(input, { outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-inventory', limits });
@@ -231,6 +236,7 @@ export { runCapture } from './capture.js';
 export { runExport } from './export.js';
 export { runInspectSource } from './inspect-source.js';
 export { runImportSource } from './import-source.js';
+export { runReplaySource } from './replay-source.js';
 export { runManifest } from './manifest.js';
 export { runPreview } from './preview.js';
 export { runReport } from './report.js';

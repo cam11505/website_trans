@@ -70,9 +70,15 @@ export interface AcquiredHtmlDirectory {
 
 /** Acquires generic directory bytes and mappings only; platform interpretation stays in adapters. */
 export async function acquireHtmlDirectory(directory: string, captureDirectory: string,
-  limits?: Partial<InventoryLimits>): Promise<AcquiredHtmlDirectory> {
+  limits?: Partial<InventoryLimits>, expectedFiles?: readonly Pick<InventoryFile, 'path' | 'kind' | 'bytes' | 'sha256'>[]): Promise<AcquiredHtmlDirectory> {
   await assertSeparateSourceOutput(directory, captureDirectory);
   const inventory = await inspectHtmlDirectory(directory, limits);
+  if (expectedFiles !== undefined) {
+    const records = (files: typeof expectedFiles) => files.map(({ path, kind, bytes, sha256 }) => ({ path, kind, bytes, sha256 }));
+    if (JSON.stringify(records(inventory.files)) !== JSON.stringify(records(expectedFiles))) {
+      throw new Error('Source snapshot file set or checksum mismatch: modified, missing or unexpected source files. Restore the recorded source before replay.');
+    }
+  }
   const home = inventory.files.find((file) => file.path === 'index.html') ?? inventory.files.find((file) => file.path === 'index.htm');
   if (home === undefined) throw new Error('HTML directory import requires a root index.html or index.htm. Use inspect-source to review the layout.');
   if (inventory.files.some((file) => (file.kind === 'html' || file.kind === 'css') && file.referenceInspection !== 'checked')) {
