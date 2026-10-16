@@ -6,6 +6,7 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "references": [
+    { "path": "../../url-mapping" },
     { "path": "../../content-schema" },
     { "path": "../../core" },
     { "path": "../../html-inline" }

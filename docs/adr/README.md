@@ -30,5 +30,6 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-024](./ADR-024-generic-offline-html-import.md) | Generic offline HTML folder acquisition, provenance and import | Proposed (SR-003 follow-up implementation) |
 | [ADR-025](./ADR-025-generic-source-snapshot-replay.md) | Generic source snapshot contract and offline current-adapter replay | Proposed (SR-004 generic offline implementation) |
 | [ADR-026](./ADR-026-evidence-based-migration-report.md) | Versioned acquisition/conversion/static/manual-review evidence | Proposed (SR-005 implementation) |
+| [ADR-027](./ADR-027-exact-query-url-mapping.md) | Stable exact-query static paths and redirect handoff | Proposed (SR-006 implementation) |
 
-The integration branch includes the handoff and all four proposals. ADR-020/021 originated in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23); implementation of a narrower scope does not automatically accept a broader proposal. See [integration progress](../INTEGRATION_PROGRESS.md).
+The integration branch includes the handoff and these proposals. ADR-020/021 originated in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23); implementation of a narrower scope does not automatically accept a broader proposal. See [integration progress](../INTEGRATION_PROGRESS.md).

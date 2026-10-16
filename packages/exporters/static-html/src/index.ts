@@ -11,6 +11,8 @@ import {
   type Page,
   type Site,
 } from '@site-rescue/content-schema';
+import { targetPathToFile, hasQueryString, URL_MAPPING_FILENAME } from '@site-rescue/url-mapping';
+export { targetPathToFile } from '@site-rescue/url-mapping';
 
 export interface ExportStaticHtmlOptions {
   captureDirectory: string;
@@ -24,6 +26,10 @@ export interface ExportStaticHtmlResult {
   redirectPageCount: number;
   copiedAssetCount: number;
   appliedSourceStylesheetCount: number;
+  mappedQueryPageCount: number;
+  entryPageCount: number;
+  unresolvedQueryReferenceCount: number;
+  mappingFile?: string;
 }
 
 export type StaticHtmlStyleMode = 'baseline' | 'source';
@@ -90,40 +96,6 @@ function collisionKey(relativePath: string): string {
   return relativePath.toLowerCase();
 }
 
-function validateSegment(segment: string, targetPath: string): void {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(segment);
-  } catch {
-    throw new Error(`Invalid encoded target path: ${targetPath}`);
-  }
-  if (
-    decoded === '.' ||
-    decoded === '..' ||
-    decoded.includes('/') ||
-    decoded.includes('\\') ||
-    decoded.includes('\0')
-  ) {
-    throw new Error(`Unsafe target path: ${targetPath}`);
-  }
-}
-
-export function targetPathToFile(targetPath: string): string {
-  if (!targetPath.startsWith('/') || targetPath.startsWith('//') || targetPath.includes('\\')) {
-    throw new Error(`Target path must be an absolute site path: ${targetPath}`);
-  }
-  const pathname = targetPath.split(/[?#]/u, 1)[0] ?? '/';
-  const segments = pathname.split('/').filter((segment) => segment !== '');
-  segments.forEach((segment) => validateSegment(segment, targetPath));
-  if (segments.length === 0) {
-    return 'index.html';
-  }
-  if (pathname.endsWith('/') || posix.extname(segments.at(-1) ?? '') === '') {
-    return posix.join(...segments, 'index.html');
-  }
-  return posix.join(...segments);
-}
-
 function normalizedUrl(value: string, baseUrl: string): { href: string; hash: string } | undefined {
   try {
     const url = new URL(value, baseUrl);
@@ -146,6 +118,7 @@ interface RenderContext {
   localAssetPaths: ReadonlySet<string>;
   sourceStylesheetPaths: readonly string[];
   baseUrl: string;
+  unresolvedQueryLinks: Map<string, { sourceUrl: string; reference: string }>;
 }
 
 function relativeReference(currentFile: string, targetFile: string): string {
@@ -153,15 +126,20 @@ function relativeReference(currentFile: string, targetFile: string): string {
   return relative === '' ? posix.basename(targetFile) : relative;
 }
 
-function rewriteReference(value: string, context: RenderContext): string {
+function rewriteReference(value: string, context: RenderContext, baseUrl = context.sourceUrl): string {
   if (context.localAssetPaths.has(value)) {
     return relativeReference(context.currentFile, value);
   }
-  const normalized = normalizedUrl(value, context.baseUrl);
+  const normalized = normalizedUrl(value, baseUrl);
   if (normalized === undefined) {
     return value;
   }
   const targetFile = context.pageFilesBySourceUrl.get(normalized.href) ?? context.assetFilesBySourceUrl.get(normalized.href);
+  if (targetFile === undefined && hasQueryString(normalized.href) && new URL(normalized.href).origin === new URL(context.baseUrl).origin) {
+    const reference = normalized.href + normalized.hash;
+    context.unresolvedQueryLinks.set(`${context.sourceUrl}\0${reference}`, { sourceUrl: context.sourceUrl, reference });
+    return reference;
+  }
   return targetFile === undefined
     ? value
     : `${relativeReference(context.currentFile, targetFile)}${normalized.hash}`;
@@ -254,7 +232,7 @@ function renderNavigation(items: NavigationItem[], context: RenderContext): stri
     `<ul>${children
       .map(
         (item) =>
-          `<li><a href="${escapeHtml(rewriteReference(item.href, context))}">${escapeHtml(item.label)}</a>${
+          `<li><a href="${escapeHtml(rewriteReference(item.href, context, context.baseUrl))}">${escapeHtml(item.label)}</a>${
             item.children.length === 0 ? '' : renderItems(item.children)
           }</li>`,
       )
@@ -320,8 +298,8 @@ function renderRedirectPage(currentFile: string, targetFile: string): string {
 }
 
 function validateRedirectPath(value: string, field: 'from' | 'to'): void {
-  if (value.includes('?') || value.includes('#')) {
-    throw new Error(`Redirect ${field} path must not contain a query or fragment: ${value}`);
+  if (value.includes('#')) {
+    throw new Error(`Redirect ${field} path must not contain a fragment: ${value}`);
   }
 }
 
@@ -402,6 +380,10 @@ export async function exportStaticHtml(
   const captureDirectory = resolve(options.captureDirectory);
   const styleMode = options.styleMode ?? 'baseline';
   const sourceStylesheetPaths = selectSourceStylesheets(site, styleMode);
+  const mappedQueryPageCount = site.pages.filter((page) => hasQueryString(page.sourceUrl) || hasQueryString(page.targetPath)).length;
+  const queryRedirects = site.redirects.some((redirect) => hasQueryString(redirect.from) || hasQueryString(redirect.to));
+  const needsQueryMapping = mappedQueryPageCount > 0 || queryRedirects;
+  const unresolvedQueryLinks: RenderContext['unresolvedQueryLinks'] = new Map();
   const pageFilesBySourceUrl = new Map<string, string>();
   const assetFilesBySourceUrl = new Map(site.assets.flatMap((asset) => {
     const source = normalizedUrl(asset.sourceUrl, site.source.baseUrl);
@@ -411,6 +393,7 @@ export async function exportStaticHtml(
   const claimedFiles = new Set<string>([
     collisionKey(STYLESHEET_PATH),
     collisionKey(REDIRECT_MANIFEST_PATH),
+    ...(needsQueryMapping ? [collisionKey(URL_MAPPING_FILENAME)] : []),
     ...site.assets.flatMap((asset) =>
       asset.localPath === undefined ? [] : [collisionKey(asset.localPath)],
     ),
@@ -435,6 +418,7 @@ export async function exportStaticHtml(
   }
 
   const redirectFiles = new Map<string, string>();
+  const redirectMappings: { from: string; to: string; status: number; outputFile: string; targetFile: string }[] = [];
   for (const redirect of site.redirects) {
     validateRedirectPath(redirect.from, 'from');
     validateRedirectPath(redirect.to, 'to');
@@ -449,7 +433,18 @@ export async function exportStaticHtml(
     }
     claimedFiles.add(redirectKey);
     redirectFiles.set(redirectFile, targetFile);
+    const alias = normalizedUrl(redirect.from, site.source.baseUrl);
+    if (alias === undefined || pageFilesBySourceUrl.has(alias.href)) throw new Error(`Redirect source collides with a captured source URL: ${redirect.from}`);
+    // Link aliases directly to final content so named fragments resolve on the actual target page.
+    pageFilesBySourceUrl.set(alias.href, targetFile);
+    redirectMappings.push({ ...redirect, outputFile: redirectFile, targetFile });
   }
+
+  const base = normalizedUrl(site.source.baseUrl, site.source.baseUrl);
+  const entryTarget = base === undefined ? undefined : pageFilesBySourceUrl.get(base.href);
+  const entryPoint = hasQueryString(site.source.baseUrl) && entryTarget !== undefined && !claimedFiles.has(collisionKey('index.html'))
+    ? { outputFile: 'index.html', targetFile: entryTarget, sourceUrl: site.source.baseUrl } : null;
+  if (entryPoint !== null) claimedFiles.add(collisionKey(entryPoint.outputFile));
 
   await mkdir(resolveWithin(outputDirectory, 'assets'), { recursive: true });
   await writeFile(resolveWithin(outputDirectory, STYLESHEET_PATH), STYLESHEET, 'utf8');
@@ -457,8 +452,9 @@ export async function exportStaticHtml(
     resolveWithin(outputDirectory, REDIRECT_MANIFEST_PATH),
     `${JSON.stringify(
       {
-        version: REDIRECT_MANIFEST_VERSION,
+        version: queryRedirects ? '2.0.0' : REDIRECT_MANIFEST_VERSION,
         redirects: site.redirects,
+        ...(queryRedirects ? { queryMatching: 'exact-serialized-path-and-query', staticFallbacks: redirectMappings } : {}),
       },
       null,
       2,
@@ -484,6 +480,7 @@ export async function exportStaticHtml(
         localAssetPaths,
         pageFilesBySourceUrl,
         sourceStylesheetPaths,
+        unresolvedQueryLinks,
       }),
       'utf8',
     );
@@ -494,6 +491,19 @@ export async function exportStaticHtml(
     await mkdir(dirname(destination), { recursive: true });
     await writeFile(destination, renderRedirectPage(redirectFile, targetFile), 'utf8');
   }
+  if (entryPoint !== null) {
+    await writeFile(resolveWithin(outputDirectory, entryPoint.outputFile), renderRedirectPage(entryPoint.outputFile, entryPoint.targetFile), 'utf8');
+  }
+  if (needsQueryMapping) {
+    const compare = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0;
+    await writeFile(resolveWithin(outputDirectory, URL_MAPPING_FILENAME), `${JSON.stringify({
+      mappingVersion: '1.0.0', queryPolicy: 'exact-serialized-query', pathAlgorithm: 'sha256-target-path-query-without-fragment',
+      pages: site.pages.map((page) => ({ sourceUrl: page.sourceUrl, sourcePath: page.sourcePath, targetPath: page.targetPath, outputFile: targetPathToFile(page.targetPath) }))
+        .sort((left, right) => compare(left.sourceUrl, right.sourceUrl)),
+      redirects: redirectMappings.sort((left, right) => compare(left.from, right.from)), entryPoint,
+      unresolvedQueryLinks: [...unresolvedQueryLinks.values()].sort((left, right) => compare(left.sourceUrl, right.sourceUrl) || compare(left.reference, right.reference)),
+    }, null, 2)}\n`, 'utf8');
+  }
 
   return {
     outputDirectory,
@@ -501,5 +511,7 @@ export async function exportStaticHtml(
     redirectPageCount: redirectFiles.size,
     copiedAssetCount,
     appliedSourceStylesheetCount: sourceStylesheetPaths.length,
+    mappedQueryPageCount, entryPageCount: entryPoint === null ? 0 : 1, unresolvedQueryReferenceCount: unresolvedQueryLinks.size,
+    ...(needsQueryMapping ? { mappingFile: resolveWithin(outputDirectory, URL_MAPPING_FILENAME) } : {}),
   };
 }

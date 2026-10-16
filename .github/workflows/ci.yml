@@ -77,3 +77,6 @@ jobs:
 
       - name: Bundled migration coverage and legacy report smoke test
         run: node apps/cli/test/packaged-coverage-smoke.mjs
+
+      - name: Bundled exact-query mapping and redirect smoke test
+        run: node apps/cli/test/packaged-query-smoke.mjs

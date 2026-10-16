@@ -99,6 +99,9 @@ importers:
       '@site-rescue/html-inline':
         specifier: workspace:*
         version: link:../../html-inline
+      '@site-rescue/url-mapping':
+        specifier: workspace:*
+        version: link:../../url-mapping
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
@@ -117,6 +120,9 @@ importers:
       '@site-rescue/html-inline':
         specifier: workspace:*
         version: link:../../html-inline
+      '@site-rescue/url-mapping':
+        specifier: workspace:*
+        version: link:../../url-mapping
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
@@ -171,6 +177,9 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../../content-schema
+      '@site-rescue/url-mapping':
+        specifier: workspace:*
+        version: link:../../url-mapping
 
   packages/html-directory:
     dependencies:
@@ -213,6 +222,9 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../content-schema
+      '@site-rescue/url-mapping':
+        specifier: workspace:*
+        version: link:../url-mapping
 
   packages/release-tools:
     dependencies:
@@ -270,6 +282,8 @@ importers:
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
+
+  packages/url-mapping: {}
 
 packages:
 

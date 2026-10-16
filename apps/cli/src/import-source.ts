@@ -9,7 +9,7 @@ import type { InventoryLimits } from '@site-rescue/source-inventory';
 import { createSourceSnapshot, serializeSourceSnapshot, SOURCE_SNAPSHOT_FILENAME, type SourceSnapshot } from '@site-rescue/source-snapshot';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 import { writeAcquisitionEvidence } from '@site-rescue/report';
-import { runExport } from './export.js';
+import { runExport, writeQueryMappingSummary } from './export.js';
 import { runManifest } from './manifest.js';
 import { runReport } from './report.js';
 import { runVerify } from './verify.js';
@@ -71,6 +71,7 @@ export async function runImportSource(directory: string, options: ImportSourceOp
     const writeLine = options.writeLine ?? console.log;
     writeLine('Site Rescue offline HTML import finished — review required');
     writeLine(`Pages imported/exported: ${site.pages.length}/${exported.pageCount}`);
+    writeQueryMappingSummary(exported, writeLine);
     writeLine(`Assets stored: ${assets.storedFileCount}; unavailable: ${assets.failedAssetCount}`);
     writeLine(`Readiness: ${report.readiness}; static verification: ${verification.valid ? 'valid' : 'invalid'}`);
     writeLine(`Original bytes and provenance: ${join(captureDirectory, 'source')} and import-source.json`);

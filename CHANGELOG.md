@@ -11,6 +11,8 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ### Added
 
+- SR-006: stable exact-query page output paths, output-only URL mapping 1.0.0, query redirect handoff 2.0.0, local link/fragment aliases and query-only static entry pages. Uncaptured query references retain source URLs with CLI warnings; non-query paths and redirect manifest 1.0.0 remain compatible. Proposed ADR-027 and a network-guarded bundled CLI smoke cover this unreleased scope.
+
 - SR-005: Report 2.0.0 separates observed acquisition, conversion limitations, actual static reference checks and unassessed manual deployment review. Structured acquisition evidence is checksum-bound to its Site; stale evidence fails explicitly. No source coverage/accuracy percentage is inferred.
 - `report --site-directory` performs explicit generated static verification; workflow reports carry the actual result. Prototype-like and future warning codes remain visible and counted safely. Byte-exact legacy Report 1.0.0 bundle validation remains supported.
 

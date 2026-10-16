@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/url-mapping" },
     { "path": "./packages/content-schema" },
     { "path": "./packages/core" },
     { "path": "./packages/html-inline" },

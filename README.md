@@ -375,7 +375,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Writes a canonical, meta-refresh, and clickable-link HTML fallback for each non-colliding redirect source path.
 - Rejects redirect output collisions and redirects whose targets are not exported pages.
 - Treats generated 301 status as migration intent; it does not reproduce the source server's exact status or intermediate chain.
-- Skips query-bearing, cross-origin, missing-target, and conflicting redirect evidence with explicit warnings.
+- Preserves observed exact query aliases to captured targets; cross-origin, missing-target and conflicting evidence still produce warnings. Query-bearing rules use `redirects.json` 2.0.0 with explicit exact-query matching and static fallback paths; non-query-only exports retain 1.0.0.
 - HTML fallback pages do not deliver HTTP 301 responses; configure the manifest in the production host.
 
 ## Migration report behavior
@@ -398,6 +398,15 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 - Older tools reject `1.1.0` rather than silently discarding its new fields. To use rich captures, update the tool; no automatic lossy downgrade is provided. Content already flattened in old captures requires recapturing the original source.
 - Inline nesting is bounded at 32 levels. Unsupported semantics or deeper source formatting are flattened/omitted with review warnings. Arbitrary DOM round trips, nested list layout, source CSS semantics, inline media positioning, formatted buttons and image captions remain outside SR-002.
 - See [ADR-022](./docs/adr/ADR-022-versioned-inline-content.md) for the focused compatibility proposal. The broader proposed [ADR-020](./docs/adr/ADR-020-source-acquisition-and-offline-import.md), [ADR-021](./docs/adr/ADR-021-rich-content-and-migration-coverage.md) and [handoff](./docs/CODEX_HANDOFF.md) are included in this integration; they originated in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23).
+
+## Query-bearing page URLs (SR-006, unreleased)
+
+- Captured pages such as `/page.html?id=1` and `?id=2` export to distinct deterministic `__site-rescue-query/<sha256>.html` files. The digest covers the target pathname and exact serialized query, excluding fragment; plain routes retain existing paths.
+- Parameter order, duplicates, empty values, bare `?`, `+`/`%20` and percent-escape spellings remain distinct. No server-specific equivalence, tracking-parameter removal or unseen query variants are inferred. Both adapters preserve empty query markers in new captures.
+- `site/url-mapping.json` 1.0.0 records original URLs, target/output paths, redirect fallbacks, optional entry page and unresolved same-origin query links. Lists are sorted; unsafe pathnames and collisions still reject before output. Review original query values in this file before publishing it.
+- Known inline/button/navigation links and redirect aliases point to the final local file with fragments preserved. Uncaptured same-origin query links retain their absolute source URL and trigger CLI warnings; no network lookup occurs. A query-only source start URL gets an `index.html` entry fallback only when that output is free.
+- Preview serves generated file paths. Preserving original query routes on a production host requires manual exact pathname-and-query rules; HTML fallback pages do not implement HTTP301. Older deployment tools must reject redirect manifest 2.0.0 rather than discard its query conditions.
+- Saved Site 1.0.0/1.1.0 queries can be re-exported; previously lost bare markers require recapture. Generic HTML folder import/replay continues to map query references to the single inventoried disk file with review warnings. Site/Snapshot/Report/bundle versions are unchanged; source completeness and dynamic/visual parity remain unproven. See [ADR-027](./docs/adr/ADR-027-exact-query-url-mapping.md).
 
 ## Static verification behavior
 
@@ -471,7 +480,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for accepted ADR-001 through ADR-019 and proposed ADR-020 through ADR-023.
+See [Architecture Decision Records](./docs/adr/README.md) for accepted ADR-001 through ADR-019 and proposed ADR-020 through ADR-027.
 
 ## License
 

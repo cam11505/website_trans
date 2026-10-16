@@ -54,7 +54,7 @@ describe('redirect evidence mapper', () => {
     ]);
   });
 
-  it('warns instead of accepting cross-origin, query, missing, or conflicting targets', () => {
+  it('accepts exact queries while warning on cross-origin, missing, or conflicting targets', () => {
     const result = applyRedirectEvidence(site, [
       {
         fromUrl: 'https://outside.test/old',
@@ -74,10 +74,10 @@ describe('redirect evidence mapper', () => {
       },
     ]);
 
-    expect(result.addedRedirectCount).toBe(0);
+    expect(result.addedRedirectCount).toBe(1);
+    expect(result.site.redirects).toEqual([{ from: '/old?variant=1', to: '/about.html', status: 301 }]);
     expect(result.site.warnings.map((warning) => warning.code)).toEqual([
       'redirect-cross-origin-skipped',
-      'redirect-query-unsupported',
       'redirect-target-missing',
       'redirect-source-conflict',
     ]);

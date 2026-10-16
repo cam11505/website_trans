@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
+      '@site-rescue/url-mapping': resolve(process.cwd(), 'packages/url-mapping/src/index.ts'),
       '@site-rescue/content-schema': resolve(process.cwd(), 'packages/content-schema/src/index.ts'),
       '@site-rescue/core': resolve(process.cwd(), 'packages/core/src/index.ts'),
       '@site-rescue/html-inline': resolve(process.cwd(), 'packages/html-inline/src/index.ts'),

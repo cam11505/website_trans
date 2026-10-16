@@ -28,6 +28,7 @@ Site Rescue is an **Apache-2.0, local-first, CLI-first, platform-neutral website
 - packages/source-inventory: bounded read-only generic folder inspection; no ZIP extraction, normalization or snapshot replay.
 - packages/html-directory: generic offline directory acquisition, evidence copies and file/URL mappings; no network, platform normalization or ZIP extraction.
 - packages/source-snapshot: strict versioned generic source index validation and bounded metadata reads; no source fetching or normalization.
+- packages/url-mapping: shared safe target-path/query file mapping and serialized query identity; no fetching, query equivalence assumptions or deployment routing.
 - packages/crawler, packages/http-policy: bounded authorized live HTTP discovery.
 - packages/adapters/weebly and generic-html: source-specific detection and interpretation.
 - packages/content-schema: versioned, runtime-validated platform-neutral intermediate representation.
@@ -75,3 +76,5 @@ PR #29 merged SR-001, SR-002, generic Inventory and dependency fixes into main. 
 The next user-authorized step (2026-10-16) implements the generic offline portion of SR-004 on top of unmerged PR #30. Follow ADR-025: explicit Source Snapshot 1.0.0, fixed-name bounded metadata, exact raw file/hash validation, current-adapter replay without old site.json or original folder, new separate output, review-required reporting. Legacy Inventory/provenance stays output-only; missing snapshot indexes require explicit re-import. Live source snapshots, ZIP, broader coverage and runtime work are deferred. Keep both PR #30 and this follow-up unmerged unless separately authorized.
 
 The subsequent requested step implements SR-005 on unchanged PR #31. Follow ADR-026 for Report 2.0.0 and the additive Site-bound acquisition evidence contract. Preserve old reports/bundles; new generation must not label unknown completeness as ready. PR #30/#31 and this follow-up remain unmerged dependencies. ZIP/live snapshots, query routing, runtime and guided UX remain separate; no merge/tag/release without new authorization.
+
+The following requested step implements SR-006 on unchanged PR #32 (`980178a`). Follow ADR-027: exact serialized query identity, shared safe deterministic output mapping, query redirect manifest 2.0.0, URL mapping 1.0.0 and local final-target fragment links. Plain paths/redirect manifest 1.0.0 and existing Site/Snapshot/Report/bundle contracts remain compatible. Original query routing requires manual hosting configuration; generic folder queries remain file-only with warnings. Next is a separately scoped SR-007 runtime/platform CI task. Keep all dependent Draft PRs unmerged; no release.
