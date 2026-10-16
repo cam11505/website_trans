@@ -1,5 +1,5 @@
 # Site Rescue — Codex 開發交接與架構 Review
-**更新日期：2026-10-14｜文件性質：原始規劃及整合分支狀態；不代表已合併或已發版**
+**更新日期：2026-10-16｜文件性質：原始規劃及整合分支狀態；不代表已合併或已發版**
 
 > 目的：讓下一次進入本 GitHub Repo 的 Codex / 工程師能理解現況、知道先做哪件事、在哪裡改、如何驗收。開發時先讀根目錄 AGENTS.md。
 >
@@ -8,6 +8,10 @@
 > 最新整合狀態段落是候選驗證時的快照；後續合併與發版狀態以即時查詢 GitHub 為準。
 
 ## 最新整合狀態
+
+**2026-10-16 SR-004 後續（本段優先）：** PR #30（`0603063`）仍為 Draft、CI／CodeQL 通過；main 為 `d8834de`。使用者要求繼續下一步，本分支實作通用 HTML 資料夾的 Source Snapshot 1.0.0 與 `replay-source`，先核對保存原檔的完整清單／Hash，再用目前 Generic Adapter 重新解析，不依賴舊 Site JSON 或原始資料夾。來源及舊 Snapshot 不改寫，輸出另存；舊版無 Snapshot 索引時提示明確重新匯入。規格與限制見 ADR-025。這是 SR-004 通用離線部分，Live URL Snapshot 尚未實作；不包含 ZIP、SR-005～008、不合併既有 PR、不發版。後續驗證以新 PR 的 exact-head CI／CodeQL 為準。
+
+**2026-10-14 後續決策（優先於下方歷史規劃）：** PR #29 已經使用者核准 squash merge 至 main `d8834de`；合併後 CI／CodeQL 通過、162 tests passed、五筆依賴告警均 fixed，未發版。使用者接著明確指示不再以真實樣本驗證作為前置條件，繼續完成通用 HTML 資料夾離線匯入。本階段依 ADR-024 新增 `import-source`：保存原檔／Hash／路徑映射 → Generic Adapter → 素材本機化 → Export／Report／Verify／Manifest。以合成離線 fixtures 驗收，不宣稱官方 Weebly 格式已驗證。ZIP、完整 snapshot/parser replay 與 SR-004 以後工作仍分開處理；新 PR 不自動合併、不發版。下方候選分支／Issue open／樣本前置要求為歷史快照，不應重複套用到這次已授權的通用匯入。
 
 使用者要求先將現有成果整合到 GitHub。原始整合 PR #28 集中交接文件、ADR-020～023 與 SR-001／002／003 Inventory；後續安全修補 PR #29 現已調整為直接以 main 為基底的完整候選版，分支為 `codex/security-dependency-alerts`。#29 包含 #28 全部歷史與相依套件修補，可集中審查，無須先合併 #28。main 與正式 v0.1.0 未變更；新 head 須通過自己的 CI／CodeQL，再由使用者明確核准合併。
 

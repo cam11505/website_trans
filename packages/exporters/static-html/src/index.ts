@@ -142,6 +142,7 @@ interface RenderContext {
   currentFile: string;
   sourceUrl: string;
   pageFilesBySourceUrl: ReadonlyMap<string, string>;
+  assetFilesBySourceUrl: ReadonlyMap<string, string>;
   localAssetPaths: ReadonlySet<string>;
   sourceStylesheetPaths: readonly string[];
   baseUrl: string;
@@ -160,7 +161,7 @@ function rewriteReference(value: string, context: RenderContext): string {
   if (normalized === undefined) {
     return value;
   }
-  const targetFile = context.pageFilesBySourceUrl.get(normalized.href);
+  const targetFile = context.pageFilesBySourceUrl.get(normalized.href) ?? context.assetFilesBySourceUrl.get(normalized.href);
   return targetFile === undefined
     ? value
     : `${relativeReference(context.currentFile, targetFile)}${normalized.hash}`;
@@ -402,6 +403,10 @@ export async function exportStaticHtml(
   const styleMode = options.styleMode ?? 'baseline';
   const sourceStylesheetPaths = selectSourceStylesheets(site, styleMode);
   const pageFilesBySourceUrl = new Map<string, string>();
+  const assetFilesBySourceUrl = new Map(site.assets.flatMap((asset) => {
+    const source = normalizedUrl(asset.sourceUrl, site.source.baseUrl);
+    return asset.localPath === undefined || source === undefined ? [] : [[source.href, asset.localPath] as const];
+  }));
   const pageFilesByTargetPath = new Map<string, string>();
   const claimedFiles = new Set<string>([
     collisionKey(STYLESHEET_PATH),
@@ -474,6 +479,7 @@ export async function exportStaticHtml(
       renderPage(site, page, {
         baseUrl: site.source.baseUrl,
         sourceUrl: page.sourceUrl,
+        assetFilesBySourceUrl,
         currentFile,
         localAssetPaths,
         pageFilesBySourceUrl,

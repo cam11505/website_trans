@@ -60,6 +60,9 @@ importers:
       '@site-rescue/exporter-static-html':
         specifier: workspace:*
         version: link:../../packages/exporters/static-html
+      '@site-rescue/html-directory':
+        specifier: workspace:*
+        version: link:../../packages/html-directory
       '@site-rescue/output-safety':
         specifier: workspace:*
         version: link:../../packages/output-safety
@@ -78,6 +81,9 @@ importers:
       '@site-rescue/source-inventory':
         specifier: workspace:*
         version: link:../../packages/source-inventory
+      '@site-rescue/source-snapshot':
+        specifier: workspace:*
+        version: link:../../packages/source-snapshot
       '@site-rescue/static-verifier':
         specifier: workspace:*
         version: link:../../packages/static-verifier
@@ -166,6 +172,24 @@ importers:
         specifier: workspace:*
         version: link:../../content-schema
 
+  packages/html-directory:
+    dependencies:
+      '@site-rescue/css-references':
+        specifier: workspace:*
+        version: link:../css-references
+      '@site-rescue/http-policy':
+        specifier: workspace:*
+        version: link:../http-policy
+      '@site-rescue/output-safety':
+        specifier: workspace:*
+        version: link:../output-safety
+      '@site-rescue/source-inventory':
+        specifier: workspace:*
+        version: link:../source-inventory
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.2.0
+
   packages/html-inline:
     dependencies:
       '@site-rescue/content-schema':
@@ -222,6 +246,15 @@ importers:
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
+
+  packages/source-snapshot:
+    dependencies:
+      '@site-rescue/source-inventory':
+        specifier: workspace:*
+        version: link:../source-inventory
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
   packages/static-verifier:
     dependencies:
