@@ -1,5 +1,5 @@
 # Site Rescue — Codex 開發交接與架構 Review
-**更新日期：2026-10-14｜文件性質：原始規劃及整合分支狀態；不代表已合併或已發版**
+**更新日期：2026-10-16｜文件性質：原始規劃及整合分支狀態；不代表已合併或已發版**
 
 > 目的：讓下一次進入本 GitHub Repo 的 Codex / 工程師能理解現況、知道先做哪件事、在哪裡改、如何驗收。開發時先讀根目錄 AGENTS.md。
 >
@@ -8,6 +8,16 @@
 > 最新整合狀態段落是候選驗證時的快照；後續合併與發版狀態以即時查詢 GitHub 為準。
 
 ## 最新整合狀態
+
+**2026-10-16 SR-007 後續（本段優先）：** PR #33（`7531edd`）仍為 Draft，CI／CodeQL 通過；main 仍為 `d8834de`。本分支保留 #30～33 相依內容，將新開發／新封裝的執行需求統一為 Node >=24.22.0 <25，固定 Node24.22.0 與 pnpm10.34.5；依 `.node-version` 推導封裝目標並拒絕 engines 不一致。CI 在 Ubuntu24.04／Windows2025／macOS15 執行完整品質檢查及五組離線封裝 smoke，保留原受保護的 Quality checks 彙整門檻。實測發現 Windows staging rename 可能暫時 EPERM，先建 regression 再加三次有界重試；永久占用及其他錯誤仍失敗。詳見 ADR-028。Node20 設定與先前測試數為歷史資料；正式 v0.1.0 下載檔及所有資料格式未更動，未合併／未發版。三平台實際結果以新 PR exact-head CI 為準。下一個獨立範圍為 SR-008 引導式操作；不在本階段加入 GUI、ZIP 或 Live Snapshot。
+
+**2026-10-16 SR-006 後續（本段優先）：** PR #32（`980178a`）仍為 Draft，CI／CodeQL 通過；main 仍為 `d8834de`。本分支在原樣保留 #30／31／32 的基礎上，完成已擷取 query 頁面的穩定獨立檔名、可回溯 URL mapping、同源 exact-query redirect 與內部連結／fragment 對應。保留參數順序、重複值、空值及裸 `?`；未擷取變體保留原站 URL 並警告。無 query 路徑相容；query redirect handoff 使用 2.0.0，舊 pathname-only manifest 保持 1.0.0。規格見 ADR-027。只支援已觀察的資源；正式主機 query 路由需人工設定，通用資料夾仍以磁碟檔案為準。來源完整性與人工檢查保持 unknown／review-required；不合併、不發版。下一個獨立範圍為 SR-007 runtime／跨平台驗證，ZIP、Live Snapshot、引導 UX 仍待後續。
+
+**2026-10-16 SR-005 後續（本段優先）：** PR #31（`de46313`）仍為 Draft、CI／CodeQL 通過；main 為 `d8834de`。使用者要求繼續下一步，本分支新增 Report 2.0.0，區分來源取得、轉換限制、實際靜態參照檢查與尚未評估的人工部署檢查。新 capture/import/replay 保存綁定 Site 的結構化來源統計；舊 Site 無證據時保持 unknown，不解析訊息猜數字。來源完整性未知時不回報 ready；已記錄的 checksum 不稱為已完成驗證。舊 Report 1.0.0／Bundle 繼續以凍結規則驗證，不自動改寫。規格見 ADR-026；ZIP、Live Snapshot、SR-006～008 與 PR 合併／發版不在本階段範圍。
+
+**2026-10-16 SR-004 後續（本段優先）：** PR #30（`0603063`）仍為 Draft、CI／CodeQL 通過；main 為 `d8834de`。使用者要求繼續下一步，本分支實作通用 HTML 資料夾的 Source Snapshot 1.0.0 與 `replay-source`，先核對保存原檔的完整清單／Hash，再用目前 Generic Adapter 重新解析，不依賴舊 Site JSON 或原始資料夾。來源及舊 Snapshot 不改寫，輸出另存；舊版無 Snapshot 索引時提示明確重新匯入。規格與限制見 ADR-025。這是 SR-004 通用離線部分，Live URL Snapshot 尚未實作；不包含 ZIP、SR-005～008、不合併既有 PR、不發版。後續驗證以新 PR 的 exact-head CI／CodeQL 為準。
+
+**2026-10-14 後續決策（優先於下方歷史規劃）：** PR #29 已經使用者核准 squash merge 至 main `d8834de`；合併後 CI／CodeQL 通過、162 tests passed、五筆依賴告警均 fixed，未發版。使用者接著明確指示不再以真實樣本驗證作為前置條件，繼續完成通用 HTML 資料夾離線匯入。本階段依 ADR-024 新增 `import-source`：保存原檔／Hash／路徑映射 → Generic Adapter → 素材本機化 → Export／Report／Verify／Manifest。以合成離線 fixtures 驗收，不宣稱官方 Weebly 格式已驗證。ZIP、完整 snapshot/parser replay 與 SR-004 以後工作仍分開處理；新 PR 不自動合併、不發版。下方候選分支／Issue open／樣本前置要求為歷史快照，不應重複套用到這次已授權的通用匯入。
 
 使用者要求先將現有成果整合到 GitHub。原始整合 PR #28 集中交接文件、ADR-020～023 與 SR-001／002／003 Inventory；後續安全修補 PR #29 現已調整為直接以 main 為基底的完整候選版，分支為 `codex/security-dependency-alerts`。#29 包含 #28 全部歷史與相依套件修補，可集中審查，無須先合併 #28。main 與正式 v0.1.0 未變更；新 head 須通過自己的 CI／CodeQL，再由使用者明確核准合併。
 

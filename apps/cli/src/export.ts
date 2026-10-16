@@ -19,6 +19,10 @@ export interface ExportResult {
   redirectPageCount: number;
   copiedAssetCount: number;
   appliedSourceStylesheetCount: number;
+  mappedQueryPageCount: number;
+  entryPageCount: number;
+  unresolvedQueryReferenceCount: number;
+  mappingFile?: string;
 }
 
 export async function runExport(inputFile: string, options: ExportOptions): Promise<ExportResult> {
@@ -45,6 +49,15 @@ async function runExportInDirectory(
   writeLine(`Redirect fallback pages written: ${result.redirectPageCount}`);
   writeLine(`Assets copied: ${result.copiedAssetCount}`);
   writeLine(`Source stylesheets applied: ${result.appliedSourceStylesheetCount}`);
+  writeQueryMappingSummary(result, writeLine);
   writeLine(`Output: ${result.outputDirectory}`);
   return result;
+}
+
+export function writeQueryMappingSummary(result: ExportResult, writeLine: (line: string) => void): void {
+  if (result.mappingFile !== undefined) {
+    writeLine(`Query pages mapped: ${result.mappedQueryPageCount}; static entry pages: ${result.entryPageCount}`);
+    writeLine(`URL mapping: ${result.mappingFile}`);
+  }
+  if (result.unresolvedQueryReferenceCount > 0) writeLine(`Warning: ${result.unresolvedQueryReferenceCount} uncaptured same-origin query reference(s) retain their original URLs; review the URL mapping when present.`);
 }

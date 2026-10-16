@@ -1,0 +1,19 @@
+{
+  "name": "@site-rescue/html-directory",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": { "build": "tsc -b", "typecheck": "tsc -b --pretty false" },
+  "dependencies": {
+    "@site-rescue/css-references": "workspace:*",
+    "@site-rescue/http-policy": "workspace:*",
+    "@site-rescue/output-safety": "workspace:*",
+    "@site-rescue/source-inventory": "workspace:*",
+    "cheerio": "^1.1.2"
+  }
+}

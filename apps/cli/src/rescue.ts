@@ -3,7 +3,7 @@ import type { AssetFetcher } from '@site-rescue/asset-pipeline';
 import type { SourceAdapter } from '@site-rescue/core';
 import type { Fetcher } from '@site-rescue/crawler';
 import { runCapture, type CaptureResult } from './capture.js';
-import { runExport, type ExportResult } from './export.js';
+import { runExport, writeQueryMappingSummary, type ExportResult } from './export.js';
 import { runManifest } from './manifest.js';
 import { runReport, type ReportResult } from './report.js';
 import { runVerify } from './verify.js';
@@ -78,11 +78,11 @@ async function runRescueInDirectory(
     styleMode: options.styleMode,
     writeLine: () => undefined,
   });
-  const report = await runReport(capture.outputFile, {
-    outputDirectory: reportDirectory,
+  const verification = await runVerify(siteDirectory, {
     writeLine: () => undefined,
   });
-  const verification = await runVerify(siteDirectory, {
+  const report = await runReport(capture.outputFile, {
+    outputDirectory: reportDirectory, staticVerification: verification,
     writeLine: () => undefined,
   });
   const manifest = verification.valid
@@ -107,6 +107,7 @@ async function runRescueInDirectory(
   writeLine(`Redirect fallback pages exported: ${exported.redirectPageCount}`);
   writeLine(`Assets copied: ${exported.copiedAssetCount}`);
   writeLine(`Source stylesheets applied: ${exported.appliedSourceStylesheetCount}`);
+  writeQueryMappingSummary(exported, writeLine);
   writeLine(`Readiness: ${report.readiness}`);
   writeLine(`Verification: ${verification.valid ? 'valid' : 'invalid'}`);
   writeLine(

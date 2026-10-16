@@ -27,5 +27,10 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-021](./ADR-021-rich-content-and-migration-coverage.md) | Rich inline content and migration coverage semantics | Proposed |
 | [ADR-022](./ADR-022-versioned-inline-content.md) | Versioned inline content with legacy capture reads | Proposed (SR-002 draft implementation) |
 | [ADR-023](./ADR-023-read-only-html-directory-inventory.md) | Read-only HTML directory inventory before offline import | Proposed (SR-003 inventory draft implementation) |
+| [ADR-024](./ADR-024-generic-offline-html-import.md) | Generic offline HTML folder acquisition, provenance and import | Proposed (SR-003 follow-up implementation) |
+| [ADR-025](./ADR-025-generic-source-snapshot-replay.md) | Generic source snapshot contract and offline current-adapter replay | Proposed (SR-004 generic offline implementation) |
+| [ADR-026](./ADR-026-evidence-based-migration-report.md) | Versioned acquisition/conversion/static/manual-review evidence | Proposed (SR-005 implementation) |
+| [ADR-027](./ADR-027-exact-query-url-mapping.md) | Stable exact-query static paths and redirect handoff | Proposed (SR-006 implementation) |
+| [ADR-028](./ADR-028-node24-runtime-and-platform-ci.md) | Node24 LTS baseline, release consistency and three-platform CI | Proposed (SR-007 implementation; supersedes runtime portions of ADR-002/017) |
 
-The integration branch includes the handoff and all four proposals. ADR-020/021 originated in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23); implementation of a narrower scope does not automatically accept a broader proposal. See [integration progress](../INTEGRATION_PROGRESS.md).
+The integration branch includes the handoff and these proposals. ADR-020/021 originated in [Draft PR #23](https://github.com/cam11505/website_trans/pull/23); implementation of a narrower scope does not automatically accept a broader proposal. See [integration progress](../INTEGRATION_PROGRESS.md).

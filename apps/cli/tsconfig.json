@@ -16,6 +16,8 @@
     { "path": "../../packages/report" },
     { "path": "../../packages/rescue-manifest" },
     { "path": "../../packages/source-inventory" },
+    { "path": "../../packages/html-directory" },
+    { "path": "../../packages/source-snapshot" },
     { "path": "../../packages/static-verifier" },
     { "path": "../../packages/preview-server" },
     { "path": "../../packages/adapters/generic-html" },

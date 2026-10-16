@@ -11,12 +11,28 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ### Added
 
+- SR-006: stable exact-query page output paths, output-only URL mapping 1.0.0, query redirect handoff 2.0.0, local link/fragment aliases and query-only static entry pages. Uncaptured query references retain source URLs with CLI warnings; non-query paths and redirect manifest 1.0.0 remain compatible. Proposed ADR-027 and a network-guarded bundled CLI smoke cover this unreleased scope.
+
+- SR-005: Report 2.0.0 separates observed acquisition, conversion limitations, actual static reference checks and unassessed manual deployment review. Structured acquisition evidence is checksum-bound to its Site; stale evidence fails explicitly. No source coverage/accuracy percentage is inferred.
+- `report --site-directory` performs explicit generated static verification; workflow reports carry the actual result. Prototype-like and future warning codes remain visible and counted safely. Byte-exact legacy Report 1.0.0 bundle validation remains supported.
+
+- SR-004 generic offline portion: explicit Source Snapshot 1.0.0 original-file/hash/acquisition-time index and `replay-source`, verifying the exact raw file set before re-normalizing with the current generic adapter. Replay works without the original folder or old Site JSON, preserves source evidence and always requires review. Legacy evidence needs explicit re-import; live capture snapshots remain deferred.
+- Proposed ADR-025 and network-guarded actual bundled Snapshot/replay CI smoke.
+
 - SR-002: semantic inline links, strong/emphasis, literal code, line breaks and anchors for paragraphs, headings and list items in both adapters and static export.
-- SR-003 Inventory phase: `inspect-source` for bounded read-only HTML directory file/hash/reference inventory, missing-file evidence and explicit review warnings. ZIP extraction and full offline import are not included.
+- SR-003: `inspect-source` for bounded read-only HTML directory file/hash/reference inventory, missing-file evidence and explicit review warnings.
+- SR-003 generic HTML folder follow-up: `import-source` acquires original byte/hash evidence, maps local pages/assets/attachments, and runs offline normalization, export, report, static verification and bundle manifest. Real samples are not a prerequisite for this generic contract; ZIP and official Weebly format support remain excluded.
+- Proposed ADR-024 documents offline acquisition, synthetic URL provenance, compatibility and remaining limits. CI exercises the real bundled import with network guards.
 - Consolidated development handoff, progress tracking and Proposed ADR-020 through ADR-023.
 - `pnpm audit:dependencies` and a CI dependency audit that fails on known low-or-higher advisories or registry errors.
 
 ### Changed
+
+- SR-007: unreleased development/new package requirements are now Node >=24.22.0 <25, with pinned Node24.22.0 and unchanged pnpm10.34.5. Bundle target derives from the runtime pin; mismatching metadata rejects. Full Ubuntu24.04/Windows2025/macOS15 CI and a stable aggregate Quality checks gate replace Ubuntu-only Node20 CI. Actions use verified Node24 commit pins. The published v0.1.0 archive is unchanged; see Proposed ADR-028.
+- Release staging rename retries only temporary EPERM/EBUSY failures three times before failing; other errors remain immediate failures. Regression tests cover recovery, bounded failure and staging cleanup.
+- Canonicalize fresh capture roots before creating offline evidence, supporting macOS temporary-directory aliases and Windows runner short paths while retaining strict source/descendant symlink and junction rejection.
+
+- New Report 2.0.0 always remains review-required while original site completeness and manual review are unproven; `checksumRecordedLocalAssetCount` replaces the old misleading verified count. This changes the report contract, not Site/Snapshot/bundle versions or the published package.
 
 - New captures use Site schema 1.1.0; updated readers retain compatibility with saved 1.0.0 captures and matching bundle manifests. Older readers reject 1.1.0. Package/release versions remain unchanged for this unpublished integration.
 
