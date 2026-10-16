@@ -225,6 +225,12 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../content-schema
+      '@site-rescue/static-verifier':
+        specifier: workspace:*
+        version: link:../static-verifier
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
   packages/rescue-manifest:
     dependencies:

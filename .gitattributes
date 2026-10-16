@@ -1,0 +1,2 @@
+# Golden legacy report bytes must remain portable for bundle compatibility checks.
+fixtures/shared/legacy-report/* text eol=lf

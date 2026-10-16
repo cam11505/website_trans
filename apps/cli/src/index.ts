@@ -19,7 +19,7 @@ const USAGE = `Usage:
   site-rescue diagnose <url> [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>]
   site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>] [--skip-assets]
   site-rescue export <site.json> [--output <directory>] [--style-mode <baseline|source>]
-  site-rescue report <site.json> [--output <directory>]
+  site-rescue report <site.json> [--output <directory>] [--site-directory <generated-directory>]
   site-rescue verify <site-directory>
   site-rescue inspect-source <html-directory> [--output <directory>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
   site-rescue import-source <html-directory> [--output <directory>] [--style-mode <baseline|source>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
@@ -175,6 +175,7 @@ export async function main(args: string[]): Promise<number> {
     } else if (command === 'report') {
       await runReport(input, {
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-report',
+        siteDirectory: parseStringOption(args, '--site-directory'),
       });
     } else if (command === 'inspect-source' || command === 'import-source' || command === 'replay-source') {
       const optionNames = ['--output', '--max-entries', '--max-depth', '--max-file-bytes', '--max-total-bytes', '--max-text-bytes', '--max-references'];

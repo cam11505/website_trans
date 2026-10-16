@@ -74,3 +74,6 @@ jobs:
 
       - name: Bundled source snapshot replay smoke test
         run: node apps/cli/test/packaged-replay-smoke.mjs
+
+      - name: Bundled migration coverage and legacy report smoke test
+        run: node apps/cli/test/packaged-coverage-smoke.mjs

@@ -1,5 +1,9 @@
 # Site Rescue development integration — updated 2026-10-16
 
+## Current SR-005 coverage follow-up
+
+PR #31 remains Draft at `de46313` with exact-head CI/CodeQL green; main is still `d8834de`. The user requested the next step. Report 2.0.0 now separates acquisition/conversion/static/manual-review evidence, records unknown original source completeness, uses actual verifier results and keeps all new reports review-required. New capture evidence binds direct crawler/Inventory counts to the validated Site. Legacy reports/bundles retain byte-exact frozen validation; Site/Snapshot/bundle versions are unchanged. See ADR-026. This branch includes unchanged #30/#31 dependencies for full main-base CI/CodeQL, without merging or publishing. Query routing, runtime, guided UX, ZIP and Live Snapshot acquisition remain separate. Actual stage validation belongs to its PR.
+
 ## 2026-10-16 generic Snapshot/replay follow-up
 
 PR #30 remains Draft at `0603063`, with its 181-test Linux CI and CodeQL passing. The user requested the next step. This follow-up implements the generic offline part of SR-004: Source Snapshot 1.0.0 original file/hash/acquisition-time metadata, exact raw-source integrity pinning and `replay-source` through the current generic adapter and existing downstream pipeline. It does not read the previous normalized Site, need the original folder, alter old evidence or trust legacy output-only JSON as a replay contract. New output remains review-required. See ADR-025 for compatibility/resource/security limits. Live capture snapshots, ZIP and SR-005 onward remain separate; main and release are unchanged. Fresh validation belongs to the follow-up PR.

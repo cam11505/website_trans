@@ -553,8 +553,9 @@ export async function verifyReleasePackage(
     }
     const report = JSON.parse(
       await readFile(join(reportDirectory, 'migration-report.json'), 'utf8'),
-    ) as { reportVersion?: unknown; summary?: { pageCount?: unknown } };
-    if (report.reportVersion !== '1.0.0' || report.summary?.pageCount !== 1) {
+    ) as { reportVersion?: unknown; readiness?: unknown; summary?: { pageCount?: unknown }; coverage?: { staticIntegrity?: { status?: unknown }; manualReview?: { status?: unknown } } };
+    if (report.reportVersion !== '2.0.0' || report.summary?.pageCount !== 1 || report.readiness !== 'review-required' ||
+      report.coverage?.staticIntegrity?.status !== 'not-checked' || report.coverage?.manualReview?.status !== 'not-assessed') {
       throw new Error('Release CLI report fixture output is invalid.');
     }
   } finally {

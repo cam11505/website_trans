@@ -82,7 +82,7 @@ describe('migration report', () => {
       blockCount: 5,
       assetCount: 2,
       localAssetCount: 1,
-      verifiedLocalAssetCount: 1,
+      checksumRecordedLocalAssetCount: 1,
       unverifiedLocalAssetCount: 0,
       remoteAssetCount: 1,
       redirectCount: 1,

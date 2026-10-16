@@ -9,6 +9,8 @@
 
 ## 最新整合狀態
 
+**2026-10-16 SR-005 後續（本段優先）：** PR #31（`de46313`）仍為 Draft、CI／CodeQL 通過；main 為 `d8834de`。使用者要求繼續下一步，本分支新增 Report 2.0.0，區分來源取得、轉換限制、實際靜態參照檢查與尚未評估的人工部署檢查。新 capture/import/replay 保存綁定 Site 的結構化來源統計；舊 Site 無證據時保持 unknown，不解析訊息猜數字。來源完整性未知時不回報 ready；已記錄的 checksum 不稱為已完成驗證。舊 Report 1.0.0／Bundle 繼續以凍結規則驗證，不自動改寫。規格見 ADR-026；ZIP、Live Snapshot、SR-006～008 與 PR 合併／發版不在本階段範圍。
+
 **2026-10-16 SR-004 後續（本段優先）：** PR #30（`0603063`）仍為 Draft、CI／CodeQL 通過；main 為 `d8834de`。使用者要求繼續下一步，本分支實作通用 HTML 資料夾的 Source Snapshot 1.0.0 與 `replay-source`，先核對保存原檔的完整清單／Hash，再用目前 Generic Adapter 重新解析，不依賴舊 Site JSON 或原始資料夾。來源及舊 Snapshot 不改寫，輸出另存；舊版無 Snapshot 索引時提示明確重新匯入。規格與限制見 ADR-025。這是 SR-004 通用離線部分，Live URL Snapshot 尚未實作；不包含 ZIP、SR-005～008、不合併既有 PR、不發版。後續驗證以新 PR 的 exact-head CI／CodeQL 為準。
 
 **2026-10-14 後續決策（優先於下方歷史規劃）：** PR #29 已經使用者核准 squash merge 至 main `d8834de`；合併後 CI／CodeQL 通過、162 tests passed、五筆依賴告警均 fixed，未發版。使用者接著明確指示不再以真實樣本驗證作為前置條件，繼續完成通用 HTML 資料夾離線匯入。本階段依 ADR-024 新增 `import-source`：保存原檔／Hash／路徑映射 → Generic Adapter → 素材本機化 → Export／Report／Verify／Manifest。以合成離線 fixtures 驗收，不宣稱官方 Weebly 格式已驗證。ZIP、完整 snapshot/parser replay 與 SR-004 以後工作仍分開處理；新 PR 不自動合併、不發版。下方候選分支／Issue open／樣本前置要求為歷史快照，不應重複套用到這次已授權的通用匯入。

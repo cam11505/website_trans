@@ -11,6 +11,9 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ### Added
 
+- SR-005: Report 2.0.0 separates observed acquisition, conversion limitations, actual static reference checks and unassessed manual deployment review. Structured acquisition evidence is checksum-bound to its Site; stale evidence fails explicitly. No source coverage/accuracy percentage is inferred.
+- `report --site-directory` performs explicit generated static verification; workflow reports carry the actual result. Prototype-like and future warning codes remain visible and counted safely. Byte-exact legacy Report 1.0.0 bundle validation remains supported.
+
 - SR-004 generic offline portion: explicit Source Snapshot 1.0.0 original-file/hash/acquisition-time index and `replay-source`, verifying the exact raw file set before re-normalizing with the current generic adapter. Replay works without the original folder or old Site JSON, preserves source evidence and always requires review. Legacy evidence needs explicit re-import; live capture snapshots remain deferred.
 - Proposed ADR-025 and network-guarded actual bundled Snapshot/replay CI smoke.
 
@@ -22,6 +25,8 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 - `pnpm audit:dependencies` and a CI dependency audit that fails on known low-or-higher advisories or registry errors.
 
 ### Changed
+
+- New Report 2.0.0 always remains review-required while original site completeness and manual review are unproven; `checksumRecordedLocalAssetCount` replaces the old misleading verified count. This changes the report contract, not Site/Snapshot/bundle versions or the published package.
 
 - New captures use Site schema 1.1.0; updated readers retain compatibility with saved 1.0.0 captures and matching bundle manifests. Older readers reject 1.1.0. Package/release versions remain unchanged for this unpublished integration.
 

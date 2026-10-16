@@ -8,6 +8,7 @@ import { assertSeparateSourceOutput, withFreshOutputDirectory } from '@site-resc
 import type { InventoryLimits } from '@site-rescue/source-inventory';
 import { createSourceSnapshot, serializeSourceSnapshot, SOURCE_SNAPSHOT_FILENAME, type SourceSnapshot } from '@site-rescue/source-snapshot';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
+import { writeAcquisitionEvidence } from '@site-rescue/report';
 import { runExport } from './export.js';
 import { runManifest } from './manifest.js';
 import { runReport } from './report.js';
@@ -53,10 +54,19 @@ export async function runImportSource(directory: string, options: ImportSourceOp
     site = assets.site;
     const captureFile = join(captureDirectory, 'site.json');
     await writeFile(captureFile, `${JSON.stringify(site, null, 2)}\n`);
+    await writeAcquisitionEvidence(captureDirectory, site, {
+      kind: options.expectedSnapshot === undefined ? 'html-directory' : 'snapshot-replay',
+      normalizedPageCount: site.pages.length, inventoriedHtmlCount: acquired.inventory.summary.htmlFiles,
+      originalFileCount: acquired.inventory.summary.files, totalSourceBytes: acquired.inventory.summary.totalBytes,
+      missingReferenceCount: acquired.inventory.references.filter((reference) => reference.status === 'missing').length,
+      externalReferenceCount: acquired.inventory.references.filter((reference) => reference.status === 'external').length,
+      unsafeReferenceCount: acquired.inventory.references.filter((reference) => reference.status === 'unsafe').length,
+      referenceInspection: acquired.inventory.coverage.referenceInspection,
+    });
     const silent = { writeLine: () => undefined };
     const exported = await runExport(captureFile, { ...silent, outputDirectory: join(outputDirectory, 'site'), styleMode: options.styleMode });
-    const report = await runReport(captureFile, { ...silent, outputDirectory: join(outputDirectory, 'report') });
     const verification = await runVerify(join(outputDirectory, 'site'), silent);
+    const report = await runReport(captureFile, { ...silent, outputDirectory: join(outputDirectory, 'report'), staticVerification: verification });
     const manifest = verification.valid ? await runManifest(outputDirectory, silent) : undefined;
     const writeLine = options.writeLine ?? console.log;
     writeLine('Site Rescue offline HTML import finished — review required');

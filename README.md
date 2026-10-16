@@ -24,6 +24,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue capture <url>` normalized JSON capture command
 - `site-rescue export <site.json>` platform-neutral static HTML export command
 - `site-rescue report <site.json>` migration readiness and manual-review report command
+- Report 2.0.0 separates observed acquisition, conversion limitations, actual static checks and unassessed deployment review; reads legacy Report 1.0.0 bundles
 - `site-rescue verify <site-directory>` offline static link and asset verification command
 - `site-rescue inspect-source <html-directory>` bounded, read-only offline file inventory (no import or ZIP support)
 - `site-rescue import-source <html-directory>` offline generic HTML folder acquisition, static export, report, verification and evidence bundle (development feature)
@@ -86,6 +87,7 @@ pnpm site-rescue capture https://example.weebly.com --output ./capture
 pnpm site-rescue export ./capture/site.json --output ./site
 pnpm site-rescue export ./capture/site.json --output ./styled-site --style-mode source
 pnpm site-rescue report ./capture/site.json --output ./report
+pnpm site-rescue report ./capture/site.json --site-directory ./site --output ./checked-report
 pnpm site-rescue verify ./site
 pnpm site-rescue inspect-source ./html-backup --output ./source-inventory
 pnpm site-rescue import-source ./html-backup --output ./offline-rescue
@@ -132,6 +134,23 @@ pnpm site-rescue diagnose https://example.weebly.com --max-retries 3 --request-t
 ```
 
 `capture`, `export`, `report`, `rescue`, `inspect-source`, `import-source` and `replay-source` require a new output directory. If the path already exists, the command stops before changing it. A fatal run removes only the new directory created for that run; import/replay static-verification failures retain output for review and return exit 2.
+
+### Migration coverage and evidence (development feature)
+
+New reports use **Report 2.0.0**. They always remain `review-required`: source completeness is unknown and manual deployment review is not assessed by the CLI. A clean bounded crawl or a fully enumerated folder can be `observed-scope-complete` without proving the original website complete. No migration accuracy percentage is invented.
+
+繁體中文：報告分開呈現「來源取得、轉換限制、靜態完整性、人工部署檢查」。本機連結檢查通過，或素材記錄了 Hash，都不等於整站內容、版面與互動功能已完整移轉。只有實際執行過的靜態檢查才會列為 valid／invalid；單獨從 Site JSON 產生報告時，預設是 not-checked。
+
+```bash
+pnpm site-rescue report ./capture/site.json --output ./report
+pnpm site-rescue report ./capture/site.json --site-directory ./site --output ./checked-report
+```
+
+New captures/imports/replays include `capture/acquisition-evidence.json`, binding structured crawler/Inventory counts to the validated Site checksum. Older Sites without it retain unknown counts; a present stale/invalid sidecar fails instead of mixing evidence from different captures. Reports preserve every warning, group known acquisition/conversion/asset codes and retain unknown codes for review. `checksumRecordedLocalAssetCount` replaces the misleading `verifiedLocalAssetCount`; the count records metadata, not a new byte verification.
+
+Rescue/import/replay now run static verification before writing the report. Explicit `report --site-directory` checks the directory supplied by the user; it does not prove correspondence, visual parity or original source completeness. Report exit 0 means the report was written, including any invalid static result; use `verify` or the workflow exit status to detect failed static checks. Bundle hashing remains a separate integrity operation.
+
+Saved Report 1.0.0 JSON/Markdown and bundles still use the frozen legacy validation rules. They are never silently rewritten or re-certified; regenerate a report for the new semantics. Site, Snapshot and bundle contract versions stay unchanged. See [ADR-026](./docs/adr/ADR-026-evidence-based-migration-report.md).
 
 ### Offline HTML folder import (development feature)
 
