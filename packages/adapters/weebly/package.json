@@ -18,6 +18,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@site-rescue/url-mapping": "workspace:*",
     "@site-rescue/core": "workspace:*",
     "@site-rescue/html-inline": "workspace:*",
     "@site-rescue/content-schema": "workspace:*",

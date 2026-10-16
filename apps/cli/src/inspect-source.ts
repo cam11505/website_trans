@@ -1,31 +1,12 @@
-import { realpath, writeFile } from 'node:fs/promises';
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import { inspectHtmlDirectory, type InventoryLimits, type SourceInventory } from '@site-rescue/source-inventory';
-import { withFreshOutputDirectory } from '@site-rescue/output-safety';
+import { assertSeparateSourceOutput, withFreshOutputDirectory } from '@site-rescue/output-safety';
 
 export interface InspectSourceOptions {
   outputDirectory: string;
   limits?: Partial<InventoryLimits>;
   writeLine?: (line: string) => void;
-}
-
-function inside(parent: string, child: string): boolean {
-  const path = relative(parent, child);
-  return path === '' || (!path.startsWith(`..${sep}`) && path !== '..' && !isAbsolute(path));
-}
-
-async function canonicalOutputPath(directory: string): Promise<string> {
-  const suffix: string[] = [];
-  let parent = resolve(directory);
-  while (true) {
-    try { return join(await realpath(parent), ...suffix); } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      const next = dirname(parent);
-      if (next === parent) throw error;
-      suffix.unshift(basename(parent));
-      parent = next;
-    }
-  }
 }
 
 function markdown(value: string): string {
@@ -55,13 +36,8 @@ export function inventoryMarkdown(inventory: SourceInventory): string {
 export async function runInspectSource(directory: string, options: InspectSourceOptions): Promise<{
   outputDirectory: string; inventory: SourceInventory;
 }> {
-  const source = await realpath(resolve(directory));
+  await assertSeparateSourceOutput(directory, options.outputDirectory);
   const output = resolve(options.outputDirectory);
-  const canonicalOutput = await canonicalOutputPath(output);
-  const overlaps = (candidate: string): boolean => inside(source, candidate) || inside(candidate, source);
-  if (overlaps(output) || overlaps(canonicalOutput)) {
-    throw new Error('Inventory output must be separate from the source directory, including aliases and ancestors.');
-  }
   const inventory = await inspectHtmlDirectory(directory, options.limits);
   const outputDirectory = await withFreshOutputDirectory(output, async (target) => {
     await writeFile(join(target, 'source-inventory.json'), `${JSON.stringify(inventory, null, 2)}\n`, 'utf8');

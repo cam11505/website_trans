@@ -1,4 +1,26 @@
-# Site Rescue development integration — updated 2026-10-14
+# Site Rescue development integration — updated 2026-10-16
+
+## Current SR-006 exact-query follow-up
+
+PR #32 remains Draft at `980178a` with exact-head CI/CodeQL green; main is `d8834de`. This follow-up includes unchanged #30/#31/#32 dependencies and implements stable SHA-256 target-path/query files, output-only URL mapping 1.0.0, exact-query redirect handoff 2.0.0, direct local aliases/fragments and a query-only entry fallback. Plain paths and non-query redirect manifest 1.0.0 remain compatible. Unknown query variants retain source URLs with warnings; no query service or missing content is invented. Regression tests preceded implementation; both adapters and actual bundled export/report/verify/manifest run offline. See ADR-027 and the follow-up PR for actual validation counts. No merge/tag/release is authorized. SR-007 runtime/platform CI is next; generic folder file-only query handling, ZIP and Live Snapshot limits remain unchanged.
+
+Local Windows / Node 24.19.0 validation: frozen-lockfile install, lint, typecheck, build and release check passed; 37 test files / 226 passed / 6 Linux-only skipped (232 total). All five actual bundled CLI smokes passed with fetch/socket guards. Audit found no known vulnerabilities; release package checked eight files and 29 runtime packages. Initial query regression had nine failures before implementation; focused relative-button and unknown-relative-query cases also failed before their fixes. Linux-only cases and exact-head CI/CodeQL must be verified on the new PR, not inferred from local results.
+
+## Current SR-005 coverage follow-up
+
+PR #31 remains Draft at `de46313` with exact-head CI/CodeQL green; main is still `d8834de`. The user requested the next step. Report 2.0.0 now separates acquisition/conversion/static/manual-review evidence, records unknown original source completeness, uses actual verifier results and keeps all new reports review-required. New capture evidence binds direct crawler/Inventory counts to the validated Site. Legacy reports/bundles retain byte-exact frozen validation; Site/Snapshot/bundle versions are unchanged. See ADR-026. This branch includes unchanged #30/#31 dependencies for full main-base CI/CodeQL, without merging or publishing. Query routing, runtime, guided UX, ZIP and Live Snapshot acquisition remain separate. Actual stage validation belongs to its PR.
+
+## 2026-10-16 generic Snapshot/replay follow-up
+
+PR #30 remains Draft at `0603063`, with its 181-test Linux CI and CodeQL passing. The user requested the next step. This follow-up implements the generic offline part of SR-004: Source Snapshot 1.0.0 original file/hash/acquisition-time metadata, exact raw-source integrity pinning and `replay-source` through the current generic adapter and existing downstream pipeline. It does not read the previous normalized Site, need the original folder, alter old evidence or trust legacy output-only JSON as a replay contract. New output remains review-required. See ADR-025 for compatibility/resource/security limits. Live capture snapshots, ZIP and SR-005 onward remain separate; main and release are unchanged. Fresh validation belongs to the follow-up PR.
+
+## Current checkpoint after PR #29
+
+PR #29 was approved and squash-merged as main `d8834de7dacedb020b4b96e907e23e1f93b1e3b8`. [Main CI](https://github.com/cam11505/website_trans/actions/runs/38589246860) passed 32 files / 162 tests; [main CodeQL](https://github.com/cam11505/website_trans/actions/runs/38589247148) passed. Issue #24 closed and all five default-branch dependency alerts were automatically fixed. No version/tag/release was created; v0.1.0 remains the published artifact.
+
+The user then authorized continuing generic HTML folder import without a real-sample prerequisite. The focused follow-up implements `import-source`, using the existing generic adapter and downstream pipeline, with original byte evidence, hashes, explicit synthetic URL provenance and actionable warnings. Generic folder import is tested with synthetic fixtures; official Weebly archive layouts and ZIP extraction are not claimed. See [ADR-024](./adr/ADR-024-generic-offline-html-import.md) and README commands. SR-003 now includes the generic offline pipeline; archive-specific support remains future scope. SR-004 parser replay and later roadmap features are not started by this change. Exact follow-up validation belongs to its PR, not the historical counts below.
+
+## Historical preparation of PR #29
 
 This record describes the **unreleased integration in [PR #29](https://github.com/cam11505/website_trans/pull/29)**, prepared on `codex/security-dependency-alerts` and retargeted directly to main. Its history includes the original integration PR #28, documentation from PR #23 and implementations from PR #25, #26 and #27, plus dependency security maintenance. Its baseline is main `37798cb3aa71170c0ad60b513a6ae6863da6df67`. The original PRs remain available for focused review and regression evidence; they do not have to be merged first to review this complete candidate. Current merge/check status belongs to the live PR page. This preparation does not automatically merge, bump versions, tag or release; the published bundle remains v0.1.0.
 

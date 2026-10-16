@@ -60,6 +60,9 @@ importers:
       '@site-rescue/exporter-static-html':
         specifier: workspace:*
         version: link:../../packages/exporters/static-html
+      '@site-rescue/html-directory':
+        specifier: workspace:*
+        version: link:../../packages/html-directory
       '@site-rescue/output-safety':
         specifier: workspace:*
         version: link:../../packages/output-safety
@@ -78,6 +81,9 @@ importers:
       '@site-rescue/source-inventory':
         specifier: workspace:*
         version: link:../../packages/source-inventory
+      '@site-rescue/source-snapshot':
+        specifier: workspace:*
+        version: link:../../packages/source-snapshot
       '@site-rescue/static-verifier':
         specifier: workspace:*
         version: link:../../packages/static-verifier
@@ -93,6 +99,9 @@ importers:
       '@site-rescue/html-inline':
         specifier: workspace:*
         version: link:../../html-inline
+      '@site-rescue/url-mapping':
+        specifier: workspace:*
+        version: link:../../url-mapping
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
@@ -111,6 +120,9 @@ importers:
       '@site-rescue/html-inline':
         specifier: workspace:*
         version: link:../../html-inline
+      '@site-rescue/url-mapping':
+        specifier: workspace:*
+        version: link:../../url-mapping
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
@@ -165,6 +177,27 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../../content-schema
+      '@site-rescue/url-mapping':
+        specifier: workspace:*
+        version: link:../../url-mapping
+
+  packages/html-directory:
+    dependencies:
+      '@site-rescue/css-references':
+        specifier: workspace:*
+        version: link:../css-references
+      '@site-rescue/http-policy':
+        specifier: workspace:*
+        version: link:../http-policy
+      '@site-rescue/output-safety':
+        specifier: workspace:*
+        version: link:../output-safety
+      '@site-rescue/source-inventory':
+        specifier: workspace:*
+        version: link:../source-inventory
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.2.0
 
   packages/html-inline:
     dependencies:
@@ -189,6 +222,9 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../content-schema
+      '@site-rescue/url-mapping':
+        specifier: workspace:*
+        version: link:../url-mapping
 
   packages/release-tools:
     dependencies:
@@ -201,6 +237,12 @@ importers:
       '@site-rescue/content-schema':
         specifier: workspace:*
         version: link:../content-schema
+      '@site-rescue/static-verifier':
+        specifier: workspace:*
+        version: link:../static-verifier
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
   packages/rescue-manifest:
     dependencies:
@@ -223,6 +265,15 @@ importers:
         specifier: ^1.1.2
         version: 1.2.0
 
+  packages/source-snapshot:
+    dependencies:
+      '@site-rescue/source-inventory':
+        specifier: workspace:*
+        version: link:../source-inventory
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+
   packages/static-verifier:
     dependencies:
       '@site-rescue/css-references':
@@ -231,6 +282,8 @@ importers:
       cheerio:
         specifier: ^1.1.2
         version: 1.2.0
+
+  packages/url-mapping: {}
 
 packages:
 

@@ -272,7 +272,7 @@ describe('static HTML exporter', () => {
 
   it('maps clean paths and rejects traversal attempts', () => {
     expect(targetPathToFile('/')).toBe('index.html');
-    expect(targetPathToFile('/about.html?preview=1')).toBe('about.html');
+    expect(targetPathToFile('/about.html?preview=1')).toMatch(/^__site-rescue-query\/[a-f0-9]{64}\.html$/u);
     expect(targetPathToFile('/company/about')).toBe('company/about/index.html');
     expect(() => targetPathToFile('/%2e%2e/private')).toThrow('Unsafe target path');
     expect(() => targetPathToFile('relative')).toThrow('absolute site path');

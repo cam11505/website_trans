@@ -128,7 +128,7 @@ it('still exports and reports an unchanged saved schema 1.0.0 capture', async ()
     expect(site.schemaVersion).toBe('1.0.0');
     expect(home).toContain('<p>舊版 &lt;safe&gt;</p>');
     expect(home).toContain('<ul><li>舊清單</li></ul>');
-    expect(report.readiness).toBe('ready');
+    expect(report.readiness).toBe('review-required');
   } finally {
     await rm(workspace, { force: true, recursive: true });
   }

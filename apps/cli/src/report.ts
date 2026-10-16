@@ -1,12 +1,15 @@
 import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { parseSite } from '@site-rescue/content-schema';
 import { withFreshOutputDirectory } from '@site-rescue/output-safety';
-import { writeMigrationReport } from '@site-rescue/report';
+import { readAcquisitionEvidence, writeMigrationReport } from '@site-rescue/report';
+import { verifyStaticSite, type VerifyStaticSiteResult } from '@site-rescue/static-verifier';
 
 export interface ReportOptions {
   outputDirectory: string;
   writeLine?: (line: string) => void;
+  siteDirectory?: string;
+  staticVerification?: VerifyStaticSiteResult;
 }
 
 export interface ReportResult {
@@ -34,10 +37,14 @@ async function runReportInDirectory(
   const site = parseSite(JSON.parse(await readFile(absoluteInput, 'utf8')) as unknown);
   const result = await writeMigrationReport(site, {
     outputDirectory: options.outputDirectory,
+    acquisitionEvidence: await readAcquisitionEvidence(dirname(absoluteInput), site),
+    staticVerification: options.siteDirectory === undefined ? options.staticVerification : await verifyStaticSite(options.siteDirectory),
   });
 
   writeLine('Site Rescue migration report complete');
   writeLine(`Readiness: ${result.report.readiness}`);
+  writeLine(`Source acquisition: ${result.report.coverage.sourceAcquisition.status}; original website completeness: unknown`);
+  writeLine(`Static integrity: ${result.report.coverage.staticIntegrity.status}; manual deployment review: not-assessed`);
   writeLine(`Warnings: ${result.report.summary.warningCount}`);
   writeLine(`Redirects: ${result.report.summary.redirectCount}`);
   writeLine(`Manual review items: ${result.report.summary.reviewItemCount}`);

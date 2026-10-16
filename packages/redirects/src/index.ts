@@ -3,7 +3,7 @@ import {
   type MigrationWarning,
   type Site,
 } from '@site-rescue/content-schema';
-import { posix } from 'node:path';
+import { targetPathToFile, urlToSitePath } from '@site-rescue/url-mapping';
 
 type Redirect = Site['redirects'][number];
 
@@ -44,35 +44,7 @@ function redirectWarning(
 }
 
 function routeOutputKey(sitePath: string): string | undefined {
-  if (!sitePath.startsWith('/') || sitePath.startsWith('//') || sitePath.includes('\\')) {
-    return undefined;
-  }
-  const segments = sitePath.split('/').filter((segment) => segment !== '');
-  for (const segment of segments) {
-    let decoded: string;
-    try {
-      decoded = decodeURIComponent(segment);
-    } catch {
-      return undefined;
-    }
-    if (
-      decoded === '.' ||
-      decoded === '..' ||
-      decoded.includes('/') ||
-      decoded.includes('\\') ||
-      decoded.includes('\0')
-    ) {
-      return undefined;
-    }
-  }
-  if (segments.length === 0) {
-    return 'index.html';
-  }
-  const file =
-    sitePath.endsWith('/') || posix.extname(segments.at(-1) ?? '') === ''
-      ? posix.join(...segments, 'index.html')
-      : posix.join(...segments);
-  return file.toLowerCase();
+  try { return targetPathToFile(sitePath).toLowerCase(); } catch { return undefined; }
 }
 
 export function applyRedirectEvidence(
@@ -129,16 +101,6 @@ export function applyRedirectEvidence(
       );
       continue;
     }
-    if (from.search !== '' || to.search !== '') {
-      warnings.push(
-        redirectWarning(
-          'redirect-query-unsupported',
-          'Skipped redirect evidence with a query string; conditional query redirects require manual review.',
-          fromUrl,
-        ),
-      );
-      continue;
-    }
     const targetPath = targetPathsBySourceUrl.get(toUrl);
     if (targetPath === undefined) {
       warnings.push(
@@ -150,7 +112,7 @@ export function applyRedirectEvidence(
       );
       continue;
     }
-    const fromPath = from.pathname;
+    const fromPath = urlToSitePath(from);
     if (fromPath === targetPath) {
       continue;
     }
@@ -165,7 +127,7 @@ export function applyRedirectEvidence(
       );
       continue;
     }
-    if (pageOutputFiles.has(outputFile)) {
+    if (pageOutputFiles.has(outputFile) || targetPathsBySourceUrl.has(fromUrl)) {
       warnings.push(
         redirectWarning(
           'redirect-source-conflict',

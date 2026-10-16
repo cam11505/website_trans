@@ -6,7 +6,8 @@ import {
   siteSchemaVersionSchema,
   type Site,
 } from '@site-rescue/content-schema';
-import { createMigrationReport, renderMigrationReportMarkdown } from '@site-rescue/report';
+import { createMigrationReport, renderMigrationReportMarkdown, createLegacyMigrationReport,
+  renderLegacyMigrationReportMarkdown, readAcquisitionEvidence } from '@site-rescue/report';
 import {
   verifyStaticSite,
   type VerifyStaticSiteResult,
@@ -321,19 +322,36 @@ async function validateArtifacts(directory: string): Promise<ValidatedArtifacts>
   const root = resolve(directory);
   const captureFile = resolve(root, 'capture', 'site.json');
   const site = parseSite(JSON.parse(await readFile(captureFile, 'utf8')) as unknown);
-  const expectedReport = createMigrationReport(site);
   const actualReportJson = await readFile(resolve(root, 'report', 'migration-report.json'), 'utf8');
   const actualReportMarkdown = await readFile(
     resolve(root, 'report', 'migration-report.md'),
     'utf8',
   );
-  if (actualReportJson !== `${JSON.stringify(expectedReport, null, 2)}\n`) {
+  const actualReport: unknown = JSON.parse(actualReportJson);
+  if (!isRecord(actualReport) || !['1.0.0', '2.0.0'].includes(String(actualReport.reportVersion))) throw new Error('Unsupported migration report version.');
+  const staticVerification = await verifyStaticSite(resolve(root, 'site'));
+  let expectedJson: string;
+  let expectedMarkdown: string;
+  if (actualReport.reportVersion === '1.0.0') {
+    const legacy = createLegacyMigrationReport(site);
+    expectedJson = `${JSON.stringify(legacy, null, 2)}\n`;
+    expectedMarkdown = renderLegacyMigrationReportMarkdown(legacy);
+  } else {
+    const integrity = isRecord(actualReport.coverage) && isRecord(actualReport.coverage.staticIntegrity) ? actualReport.coverage.staticIntegrity : undefined;
+    if (integrity === undefined || !['not-checked', 'valid', 'invalid'].includes(String(integrity.status))) throw new Error('Invalid report static integrity status.');
+    const expected = createMigrationReport(site, {
+      acquisitionEvidence: await readAcquisitionEvidence(resolve(root, 'capture'), site),
+      staticVerification: integrity.status === 'not-checked' ? undefined : staticVerification,
+    });
+    expectedJson = `${JSON.stringify(expected, null, 2)}\n`;
+    expectedMarkdown = renderMigrationReportMarkdown(expected);
+  }
+  if (actualReportJson !== expectedJson) {
     throw new Error('migration-report.json does not match capture/site.json.');
   }
-  if (actualReportMarkdown !== renderMigrationReportMarkdown(expectedReport)) {
+  if (actualReportMarkdown !== expectedMarkdown) {
     throw new Error('migration-report.md does not match capture/site.json.');
   }
-  const staticVerification = await verifyStaticSite(resolve(root, 'site'));
   if (!staticVerification.valid) {
     throw new Error(
       `Static site verification failed with ${staticVerification.issueCount} issue(s).`,
