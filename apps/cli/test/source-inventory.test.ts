@@ -224,8 +224,14 @@ describe('generic HTML directory inventory CLI', () => {
     expect(await readdir(source)).not.toContain('inventory');
   });
 
-  it.runIf(process.platform !== 'win32')('rejects portable case collisions', async () => {
+  it.runIf(process.platform !== 'win32')('rejects portable case collisions', async (context) => {
     await writeFile(join(source, 'INDEX.html'), 'duplicate on Windows');
+    const names = await readdir(source);
+    if (!names.includes('INDEX.html') || !names.includes('index.html')) {
+      // Default macOS volumes cannot represent this fixture; Linux still exercises rejection.
+      context.skip();
+      return;
+    }
     expect(await inspect()).toBe(1);
     expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/collision/iu));
   });

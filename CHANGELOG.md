@@ -28,6 +28,9 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ### Changed
 
+- SR-007: unreleased development/new package requirements are now Node >=24.22.0 <25, with pinned Node24.22.0 and unchanged pnpm10.34.5. Bundle target derives from the runtime pin; mismatching metadata rejects. Full Ubuntu24.04/Windows2025/macOS15 CI and a stable aggregate Quality checks gate replace Ubuntu-only Node20 CI. Actions use verified Node24 commit pins. The published v0.1.0 archive is unchanged; see Proposed ADR-028.
+- Release staging rename retries only temporary EPERM/EBUSY failures three times before failing; other errors remain immediate failures. Regression tests cover recovery, bounded failure and staging cleanup.
+
 - New Report 2.0.0 always remains review-required while original site completeness and manual review are unproven; `checksumRecordedLocalAssetCount` replaces the old misleading verified count. This changes the report contract, not Site/Snapshot/bundle versions or the published package.
 
 - New captures use Site schema 1.1.0; updated readers retain compatibility with saved 1.0.0 captures and matching bundle manifests. Older readers reject 1.1.0. Package/release versions remain unchanged for this unpublished integration.

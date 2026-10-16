@@ -13,6 +13,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { build, type BuildOptions } from 'esbuild';
 
 const IGNORED_DIRECTORIES = new Set([
@@ -64,6 +65,18 @@ async function readJson(path: string): Promise<PackageMetadata> {
   return JSON.parse(await readFile(path, 'utf8')) as PackageMetadata;
 }
 
+async function releaseNodeTarget(root: string, metadata: PackageMetadata): Promise<string> {
+  const version = (await readFile(join(root, '.node-version'), 'utf8')).trim();
+  if (!/^24\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/u.test(version)) {
+    throw new Error('.node-version must pin a stable Node 24 runtime (major.minor.patch).');
+  }
+  const engines = metadata.engines;
+  if (typeof engines !== 'object' || engines === null || !('node' in engines) || engines.node !== `>=${version} <25`) {
+    throw new Error('Root engines.node must match .node-version: >=<pinned runtime> <25.');
+  }
+  return `node${version}`;
+}
+
 function requireString(value: unknown, name: string): string {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new Error(`${name} must be a non-empty string.`);
@@ -77,6 +90,20 @@ function portablePath(path: string): string {
 
 function sha256(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex');
+}
+
+async function commitStagingDirectory(staging: string, output: string): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await rename(staging, output);
+      return;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      // Windows file scanners can briefly hold a completed directory after its handles close.
+      if (attempt >= 3 || (code !== 'EPERM' && code !== 'EBUSY')) throw error;
+      await delay(100 * 2 ** attempt);
+    }
+  }
 }
 
 function assertSafeOutputDirectory(repositoryRoot: string, outputDirectory: string): void {
@@ -343,6 +370,7 @@ export async function buildReleasePackage(
   );
   try {
     const { rootMetadata, version } = await validateWorkspaceVersions(root);
+    const nodeTarget = await releaseNodeTarget(root, rootMetadata);
     for (const file of REQUIRED_PROJECT_FILES) {
       await lstat(join(root, file));
     }
@@ -364,7 +392,7 @@ export async function buildReleasePackage(
       platform: 'node',
       sourcemap: 'external',
       sourcesContent: false,
-      target: 'node20.19',
+      target: nodeTarget,
     });
     await chmod(cliFile, 0o755);
 
@@ -411,7 +439,7 @@ export async function buildReleasePackage(
       'utf8',
     );
     const checksums = await writeChecksums(stagingDirectory);
-    await rename(stagingDirectory, outputDirectory);
+    await commitStagingDirectory(stagingDirectory, outputDirectory);
     return {
       outputDirectory,
       version,

@@ -9,6 +9,8 @@
 
 ## 最新整合狀態
 
+**2026-10-16 SR-007 後續（本段優先）：** PR #33（`7531edd`）仍為 Draft，CI／CodeQL 通過；main 仍為 `d8834de`。本分支保留 #30～33 相依內容，將新開發／新封裝的執行需求統一為 Node >=24.22.0 <25，固定 Node24.22.0 與 pnpm10.34.5；依 `.node-version` 推導封裝目標並拒絕 engines 不一致。CI 在 Ubuntu24.04／Windows2025／macOS15 執行完整品質檢查及五組離線封裝 smoke，保留原受保護的 Quality checks 彙整門檻。實測發現 Windows staging rename 可能暫時 EPERM，先建 regression 再加三次有界重試；永久占用及其他錯誤仍失敗。詳見 ADR-028。Node20 設定與先前測試數為歷史資料；正式 v0.1.0 下載檔及所有資料格式未更動，未合併／未發版。三平台實際結果以新 PR exact-head CI 為準。下一個獨立範圍為 SR-008 引導式操作；不在本階段加入 GUI、ZIP 或 Live Snapshot。
+
 **2026-10-16 SR-006 後續（本段優先）：** PR #32（`980178a`）仍為 Draft，CI／CodeQL 通過；main 仍為 `d8834de`。本分支在原樣保留 #30／31／32 的基礎上，完成已擷取 query 頁面的穩定獨立檔名、可回溯 URL mapping、同源 exact-query redirect 與內部連結／fragment 對應。保留參數順序、重複值、空值及裸 `?`；未擷取變體保留原站 URL 並警告。無 query 路徑相容；query redirect handoff 使用 2.0.0，舊 pathname-only manifest 保持 1.0.0。規格見 ADR-027。只支援已觀察的資源；正式主機 query 路由需人工設定，通用資料夾仍以磁碟檔案為準。來源完整性與人工檢查保持 unknown／review-required；不合併、不發版。下一個獨立範圍為 SR-007 runtime／跨平台驗證，ZIP、Live Snapshot、引導 UX 仍待後續。
 
 **2026-10-16 SR-005 後續（本段優先）：** PR #31（`de46313`）仍為 Draft、CI／CodeQL 通過；main 為 `d8834de`。使用者要求繼續下一步，本分支新增 Report 2.0.0，區分來源取得、轉換限制、實際靜態參照檢查與尚未評估的人工部署檢查。新 capture/import/replay 保存綁定 Site 的結構化來源統計；舊 Site 無證據時保持 unknown，不解析訊息猜數字。來源完整性未知時不回報 ready；已記錄的 checksum 不稱為已完成驗證。舊 Report 1.0.0／Bundle 繼續以凍結規則驗證，不自動改寫。規格見 ADR-026；ZIP、Live Snapshot、SR-006～008 與 PR 合併／發版不在本階段範圍。

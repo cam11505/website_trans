@@ -46,12 +46,14 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 ## Requirements
 
-- Node.js 20.19 or newer (the CI baseline is recorded in `.node-version`)
+- Development source/newly generated packages: Node.js **24.22.0 or newer within 24.x** (`>=24.22.0 <25`); the exact CI baseline is recorded in `.node-version`.
 - pnpm 10.34.5 (recorded in `packageManager`)
+
+SR-007 intentionally raises the unreleased development baseline from Node20 to maintained Node24 LTS. CI runs the full checks and five actual bundled offline smokes on Ubuntu24.04, Windows2025 and macOS15. The aggregate `Quality checks` status requires all three to pass. Platform/CPU support is limited to the actual runner environments tested; see [ADR-028](./docs/adr/ADR-028-node24-runtime-and-platform-ci.md). The published v0.1.0 archive below retains its original metadata and requirements.
 
 ## Release package
 
-Download `site-rescue-v0.1.0.zip` and `site-rescue-v0.1.0.zip.sha256` from the [`v0.1.0` GitHub Release](https://github.com/cam11505/website_trans/releases/tag/v0.1.0). The archive contains a bundled CLI and does not require pnpm or a dependency installation, but it still requires Node.js 20.19 or newer.
+Download `site-rescue-v0.1.0.zip` and `site-rescue-v0.1.0.zip.sha256` from the [`v0.1.0` GitHub Release](https://github.com/cam11505/website_trans/releases/tag/v0.1.0). This historical archive declares Node.js 20.19 or newer and does not require pnpm or dependency installation. Node20 is no longer maintained; use maintained Node24. It does not include the newer development features or the new runtime contract.
 
 Verify and extract on PowerShell:
 
@@ -449,7 +451,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 - All workspace packages must use the root semantic version and remain private before the release policy changes.
 - `release:check` rebuilds `release/package`, verifies every checksum, executes bundled `--version` and `--help`, and produces a real migration report from an offline fixture.
-- The release package bundles runtime dependencies but still requires Node.js 20.19 or newer.
+- Newly generated release packages bundle runtime dependencies but require Node.js >=24.22.0 <25. Release tools reject drift between `.node-version`, engines and the derived bundle target.
 - Package metadata remains `private: true` to prevent accidental npm publication; the planned first distribution channel is GitHub Releases.
 - Root, workspace, and generated package metadata use the `Apache-2.0` SPDX identifier; bundled dependencies remain under their own terms recorded in `THIRD_PARTY_NOTICES.txt`. Exact-version audited license overrides cover published packages that omit their license file.
 - Follow [the release checklist](./docs/RELEASE_CHECKLIST.md) before changing visibility, tagging, or publishing.
@@ -480,7 +482,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for accepted ADR-001 through ADR-019 and proposed ADR-020 through ADR-027.
+See [Architecture Decision Records](./docs/adr/README.md) for accepted ADR-001 through ADR-019 and proposed ADR-020 through ADR-028.
 
 ## License
 

@@ -22,6 +22,7 @@ The initial repository-publication audit and protection results are recorded in 
 
 - [ ] Record the candidate commit SHA and confirm local `main`, `origin/main`, and the candidate SHA match.
 - [ ] Run `pnpm install --frozen-lockfile` on the candidate.
+- [ ] Use the exact Node pin in `.node-version` and pnpm in `packageManager`; root/generated engines and derived bundle target agree (current development baseline: Node24.22.0, >=24.22.0 <25; pnpm10.34.5).
 - [ ] Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
 - [ ] Run `pnpm release:check` and inspect `release/package/SHA256SUMS.txt`.
 - [ ] Confirm `node release/package/bin/site-rescue.js --version` prints the release version.
@@ -29,6 +30,7 @@ The initial repository-publication audit and protection results are recorded in 
 - [ ] Review `THIRD_PARTY_NOTICES.txt` and confirm every bundled runtime package has license text and any supplied NOTICE attribution.
 - [ ] Review every `third_party/licenses` override against its documented authoritative source and exact package version.
 - [ ] Confirm GitHub Actions succeeded for the exact candidate SHA.
+- [ ] Confirm the full Linux/Windows/macOS matrix and aggregate `Quality checks` passed on that SHA; inspect actual runner architecture and documented platform-specific skips. All five packaged offline smokes must run on each platform. Confirm CodeQL independently.
 
 ## Package and release
 
