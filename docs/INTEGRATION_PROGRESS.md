@@ -1,4 +1,11 @@
-# Site Rescue development integration — updated 2026-10-16
+# Site Rescue — historical integration evidence
+
+> **Current status, updated 2026-10-22:** use [PROJECT_STATUS.md](./PROJECT_STATUS.md), [CODEX_HANDOFF.md](./CODEX_HANDOFF.md) and [NEXT_STEPS.md](./NEXT_STEPS.md). The stage notes below are chronological historical snapshots, not current instructions. PR #29 is merged. The complete candidate is Draft #34 at de0b991, including #30–#33; its repaired three-platform CI/CodeQL passed. Published v0.1.0 is unchanged. Statements below such as “next,” “not started,” “pending,” or “main unchanged” apply only to their original stage.
+
+## Superseding verification record
+
+The repaired SR-007 head de0b991d3bc6b332561d2cbcf17ae44a7c377c70 passed [CI 38920677453](https://github.com/cam11505/website_trans/actions/runs/38920677453) and [CodeQL 38920672288](https://github.com/cam11505/website_trans/actions/runs/38920672288). Ubuntu: 244 passed/0 skipped; Windows: 238/6; macOS: 242/2, all 37 files and all five bundled smokes. These results resolve the initial matrix failure described below. They do not certify later documentation or feature commits.
+
 
 ## Current SR-007 runtime/platform follow-up
 

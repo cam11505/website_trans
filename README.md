@@ -6,7 +6,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 > Site Rescue `v0.1.0` is the first public release and is licensed under Apache-2.0.
 
-> The development integration tracked in [PR #29](https://github.com/cam11505/website_trans/pull/29) includes SR-001, SR-002, the SR-003 generic HTML directory Inventory phase and dependency security fixes. These additions are unreleased; see [integration progress and remaining limits](./docs/INTEGRATION_PROGRESS.md). The published v0.1.0 bundle remains unchanged.
+> **Development status (2026-10-22):** PR #29 is merged into main. The complete unreleased candidate in [Draft PR #34](https://github.com/cam11505/website_trans/pull/34) also includes #30–#33: generic offline folder import, Snapshot/replay, Report2, query mapping and Node24/platform CI. This documentation continuation is based on that candidate. The published v0.1.0 download is unchanged. See [current status](./docs/PROJECT_STATUS.md), [Codex handoff](./docs/CODEX_HANDOFF.md) and [next steps](./docs/NEXT_STEPS.md).
 
 ## Current capabilities
 
@@ -26,7 +26,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - `site-rescue report <site.json>` migration readiness and manual-review report command
 - Report 2.0.0 separates observed acquisition, conversion limitations, actual static checks and unassessed deployment review; reads legacy Report 1.0.0 bundles
 - `site-rescue verify <site-directory>` offline static link and asset verification command
-- `site-rescue inspect-source <html-directory>` bounded, read-only offline file inventory (no import or ZIP support)
+- `site-rescue inspect-source <html-directory>` bounded offline file inventory; writes separate inventory reports, while import uses import-source (no ZIP support)
 - `site-rescue import-source <html-directory>` offline generic HTML folder acquisition, static export, report, verification and evidence bundle (development feature)
 - `site-rescue replay-source <snapshot-directory>` verify raw source files and reparse offline with the current generic adapter (development feature)
 - `site-rescue manifest <rescue-directory>` deterministic whole-bundle SHA-256 manifest command
@@ -170,7 +170,7 @@ The synthetic `https://site-rescue.invalid/` namespace resolves adapter URLs loc
 
 No network or source scripts run during import. Missing/external references, unsupported markup and dynamic behavior produce warnings; browsing generated output may still request unresolved external resources. Every import remains `review-required`. Exit 0 means the supported static checks passed, exit 2 retains output with static verification problems and no bundle manifest, and exit 1 means a fatal format/safety/resource error. Existing output and original inputs are preserved.
 
-Limits and override flags match `inspect-source` below. Symlinks/junctions, unsafe names, source/output overlap and detected concurrent changes are rejected. Uninspectable HTML/CSS and `<base href>` stop import with a repair message. ZIP extraction, official Weebly backup-format certification, arbitrary DOM/layout parity and source-parser replay are not included. These limits no longer block generic folder development. See [ADR-024](./docs/adr/ADR-024-generic-offline-html-import.md).
+Limits and override flags match `inspect-source` below. Symlinks/junctions, unsafe names, source/output overlap and detected concurrent changes are rejected. Uninspectable HTML/CSS and `<base href>` stop import with a repair message. ZIP extraction, official Weebly backup-format certification and arbitrary DOM/layout parity are not included. The generic offline Snapshot/replay follow-up is available in this development candidate; see the next section. These limits no longer block generic folder development. See [ADR-024](./docs/adr/ADR-024-generic-offline-html-import.md).
 
 ### Source Snapshot and offline replay (development feature)
 
@@ -220,7 +220,7 @@ Overrides require positive safe integers. Hard limits abort before writing an in
 
 Local references are checked against inventoried files only: leading `/` maps to the folder root, other paths to the referring file's directory, with exact files and directory `index.html`/`index.htm` fallback. Traversal above root, unsafe schemes, malformed encoding and encoded separators require review. No original public URL or extensionless server route is inferred. External references are recorded without fetching. `<base>`, `srcset`, foreign/template markup, invalid UTF-8, CSS parse failures, query behavior, fragments, JavaScript dependencies and dynamic services require separate review. Other asset formats are hashed without semantic parsing.
 
-Stop source writers before inspection. Metadata/path comparisons detect common concurrent changes but do not provide an atomic snapshot against a hostile writer. SHA-256 records inspected bytes, not source completeness or visual/functional parity. Full SR-003 offline import and SR-004 snapshot/replay remain pending. See [ADR-023](./docs/adr/ADR-023-read-only-html-directory-inventory.md).
+Stop source writers before inspection. Metadata/path comparisons detect common concurrent changes but do not provide an atomic snapshot against a hostile writer. SHA-256 records inspected bytes, not source completeness or visual/functional parity. This command only inventories files. Generic offline import and Snapshot/replay are separate commands implemented in the development candidate; ZIP, verified official Weebly formats and Live URL snapshots remain pending. See [ADR-023](./docs/adr/ADR-023-read-only-html-directory-inventory.md).
 
 After building, the CLI entry point can also be run directly:
 
