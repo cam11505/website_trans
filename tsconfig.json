@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/url-mapping" },
     { "path": "./packages/content-schema" },
     { "path": "./packages/core" },
     { "path": "./packages/html-inline" },
@@ -15,6 +16,8 @@
     { "path": "./packages/rescue-manifest" },
     { "path": "./packages/static-verifier" },
     { "path": "./packages/source-inventory" },
+    { "path": "./packages/html-directory" },
+    { "path": "./packages/source-snapshot" },
     { "path": "./packages/preview-server" },
     { "path": "./packages/release-tools" },
     { "path": "./packages/adapters/generic-html" },

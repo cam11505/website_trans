@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "dist", "tsBuildInfoFile": "dist/.tsbuildinfo" },
+  "references": [
+    { "path": "../css-references" }, { "path": "../http-policy" },
+    { "path": "../output-safety" }, { "path": "../source-inventory" }
+  ],
+  "include": ["src/**/*.ts"]
+}

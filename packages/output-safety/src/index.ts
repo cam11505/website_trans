@@ -1,5 +1,30 @@
-import { mkdir, rm } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { mkdir, realpath, rm } from 'node:fs/promises';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+
+/** Reject overlapping source/output paths, including aliases in existing parents. */
+export async function assertSeparateSourceOutput(sourceDirectory: string, outputDirectory: string): Promise<void> {
+  const source = await realpath(resolve(sourceDirectory));
+  const output = resolve(outputDirectory);
+  const inside = (parent: string, child: string): boolean => {
+    const path = relative(parent, child);
+    return path === '' || (path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path));
+  };
+  const suffix: string[] = [];
+  let parent = output;
+  let canonicalOutput: string;
+  while (true) {
+    try { canonicalOutput = join(await realpath(parent), ...suffix); break; } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      const next = dirname(parent);
+      if (next === parent) throw error;
+      suffix.unshift(basename(parent));
+      parent = next;
+    }
+  }
+  if ([output, canonicalOutput].some((candidate) => inside(source, candidate) || inside(candidate, source))) {
+    throw new Error('Output must be separate from the source directory, including aliases and ancestors.');
+  }
+}
 
 export async function withFreshOutputDirectory<T>(
   directory: string,

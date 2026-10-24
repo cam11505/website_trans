@@ -4,34 +4,43 @@ import { runCapture } from './capture.js';
 import { runDiagnose } from './diagnose.js';
 import { runExport } from './export.js';
 import { runInspectSource } from './inspect-source.js';
+import { runImportSource } from './import-source.js';
+import { runReplaySource } from './replay-source.js';
 import { runManifest } from './manifest.js';
 import { runPreview } from './preview.js';
 import { runReport } from './report.js';
 import { runRescue } from './rescue.js';
 import { runVerify } from './verify.js';
 import { runVerifyBundle } from './verify-bundle.js';
+import { runWizard } from './wizard.js';
 import { SITE_RESCUE_VERSION } from './version.js';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 
 const USAGE = `Usage:
+  site-rescue wizard
   site-rescue diagnose <url> [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>]
   site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>] [--skip-assets]
   site-rescue export <site.json> [--output <directory>] [--style-mode <baseline|source>]
-  site-rescue report <site.json> [--output <directory>]
+  site-rescue report <site.json> [--output <directory>] [--site-directory <generated-directory>]
   site-rescue verify <site-directory>
   site-rescue inspect-source <html-directory> [--output <directory>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
+  site-rescue import-source <html-directory> [--output <directory>] [--style-mode <baseline|source>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
+  site-rescue replay-source <snapshot-directory> [--output <directory>] [--style-mode <baseline|source>] [--max-entries <number>] [--max-depth <number>] [--max-file-bytes <number>] [--max-total-bytes <number>] [--max-text-bytes <number>] [--max-references <number>]
   site-rescue manifest <rescue-directory>
   site-rescue verify-bundle <rescue-directory>
   site-rescue preview <site-directory> [--port <number>]
   site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>] [--skip-assets] [--style-mode <baseline|source>]
 
 Commands:
+  wizard    Analyze a generic HTML folder and confirm an offline import interactively
   diagnose  Detect the source platform and discover same-origin HTML pages
   capture   Normalize a detected supported site and write a validated local capture
   export    Render a validated site.json capture as a static HTML website
   report    Create JSON and Markdown migration reports from a validated capture
   verify    Check generated HTML links and local assets without network access
   inspect-source  Inventory a local HTML directory offline (review required; no import or ZIP support)
+  import-source   Import a generic HTML folder, export, report and verify offline (no ZIP support)
+  replay-source   Verify saved source bytes and reparse with the current generic HTML adapter offline
   manifest  Write a deterministic SHA-256 manifest for a complete rescue bundle
   verify-bundle  Verify a rescue bundle manifest and all recorded files offline
   preview   Verify and serve a generated site on 127.0.0.1 for local review
@@ -132,6 +141,13 @@ export async function main(args: string[]): Promise<number> {
   }
 
   const [command, input] = args;
+  if (command === 'wizard') {
+    if (args.length !== 1) {
+      console.error('Wizard accepts no options; use site-rescue import-source for scripts and advanced limits.');
+      return 1;
+    }
+    return runWizard();
+  }
   if (
     (command !== 'diagnose' &&
       command !== 'capture' &&
@@ -139,6 +155,8 @@ export async function main(args: string[]): Promise<number> {
       command !== 'report' &&
       command !== 'verify' &&
       command !== 'inspect-source' &&
+      command !== 'import-source' &&
+      command !== 'replay-source' &&
       command !== 'manifest' &&
       command !== 'verify-bundle' &&
       command !== 'preview' &&
@@ -167,9 +185,11 @@ export async function main(args: string[]): Promise<number> {
     } else if (command === 'report') {
       await runReport(input, {
         outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-report',
+        siteDirectory: parseStringOption(args, '--site-directory'),
       });
-    } else if (command === 'inspect-source') {
+    } else if (command === 'inspect-source' || command === 'import-source' || command === 'replay-source') {
       const optionNames = ['--output', '--max-entries', '--max-depth', '--max-file-bytes', '--max-total-bytes', '--max-text-bytes', '--max-references'];
+      if (command !== 'inspect-source') optionNames.push('--style-mode');
       for (let index = 2; index < args.length; index += 2) {
         const option = args[index]!;
         if (!optionNames.includes(option) || args.indexOf(option) !== index) throw new Error(`Unknown or duplicate inventory option: ${option}.`);
@@ -183,6 +203,11 @@ export async function main(args: string[]): Promise<number> {
         ['maxTextBytes', parsePositiveIntegerOption(args, '--max-text-bytes')],
         ['maxReferences', parsePositiveIntegerOption(args, '--max-references')],
       ].filter((entry) => entry[1] !== undefined));
+      if (command !== 'inspect-source') {
+        const run = command === 'replay-source' ? runReplaySource : runImportSource;
+        const result = await run(input, { outputDirectory: parseStringOption(args, '--output') ?? (command === 'replay-source' ? 'site-rescue-replay' : 'site-rescue-import'), limits, styleMode: parseStyleMode(args) });
+        return result.verification.valid ? 0 : 2;
+      }
       await runInspectSource(input, { outputDirectory: parseStringOption(args, '--output') ?? 'site-rescue-inventory', limits });
     } else if (command === 'verify') {
       const result = await runVerify(input);
@@ -221,10 +246,13 @@ export { runDiagnose } from './diagnose.js';
 export { runCapture } from './capture.js';
 export { runExport } from './export.js';
 export { runInspectSource } from './inspect-source.js';
+export { runImportSource } from './import-source.js';
+export { runReplaySource } from './replay-source.js';
 export { runManifest } from './manifest.js';
 export { runPreview } from './preview.js';
 export { runReport } from './report.js';
 export { runRescue } from './rescue.js';
 export { runVerify } from './verify.js';
 export { runVerifyBundle } from './verify-bundle.js';
+export { runWizard } from './wizard.js';
 
