@@ -9,5 +9,5 @@
   "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
   "files": ["dist"],
   "scripts": { "build": "tsc -b", "typecheck": "tsc -b --pretty false" },
-  "dependencies": { "@site-rescue/source-inventory": "workspace:*", "zod": "^3.25.76" }
+  "dependencies": { "@site-rescue/source-inventory": "workspace:*", "zod": "^4.6.6" }
 }
