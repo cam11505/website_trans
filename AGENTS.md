@@ -81,3 +81,9 @@ Follow NEXT_STEPS.md: finish the remaining Stage A integration review, then impl
 Generic folder import and offline Snapshot/replay do not require a real Weebly sample. Official format validation, ZIP and Live URL Snapshot are separate scopes. Retain Report2 review-required semantics, frozen legacy Report1 validation, query mapping compatibility, Node24.22.0/engines >=24.22.0 <25 and the existing aggregate Quality checks gate.
 
 All merge/tag/release boundaries above remain in force. Closing existing PRs is not part of this handoff. Do not force-push or discard local work. Historical stage narrative is retained in INTEGRATION_PROGRESS.md and Git history; current status and NEXT_STEPS.md take precedence over old starter prompts.
+
+## Current implementation follow-up (2026-10-24)
+
+Stage A review is complete in docs/reviews/2026-10-24-integration-review.md. The new branch is based on unchanged #35 (eb8c22e), preserving #30–#34. Necessary dependency patches clear newly blocking advisories, including a deliberate Zod4 upgrade; retain saved Site/Snapshot/evidence/Report1/Report2/bundle compatibility and rebuild stale TypeScript declarations after dependency changes.
+
+Stage B adds only the generic-folder terminal wizard per ADR-029: in-memory read-only analysis, explicit IMPORT before writes, source/destination rechecks, existing import-source orchestration, actual bundle verification, truthful review status and opt-in loopback preview. Do not bypass confirmation for pipes or add unattended flags. Keep all direct commands, existing safety checks and Node24/pnpm contracts. Run six actual packaged smokes on all three CI platforms, including the test-only TTY transport for the terminal adapter. No GUI/ZIP/live acquisition, schema/version bump, PR closure, merge/tag/release or Stage C work in this follow-up.

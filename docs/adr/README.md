@@ -32,6 +32,7 @@ ADRs record decisions that shape Site Rescue. Accepted decisions are changed by 
 | [ADR-026](./ADR-026-evidence-based-migration-report.md) | Versioned acquisition/conversion/static/manual-review evidence | Proposed (SR-005 implementation) |
 | [ADR-027](./ADR-027-exact-query-url-mapping.md) | Stable exact-query static paths and redirect handoff | Proposed (SR-006 implementation) |
 | [ADR-028](./ADR-028-node24-runtime-and-platform-ci.md) | Node24 LTS baseline, release consistency and three-platform CI | Proposed (SR-007 implementation; supersedes runtime portions of ADR-002/017) |
+| [ADR-029](./ADR-029-guided-offline-terminal-wizard.md) | Guided read-only analysis, explicit import and optional loopback preview | Proposed (SR-008 Stage B implementation) |
 
 For current delivery status and the next task, use [PROJECT_STATUS.md](../PROJECT_STATUS.md) and [NEXT_STEPS.md](../NEXT_STEPS.md). The Proposed labels above are decision status, not an indication that every corresponding implementation is absent. SR-001/002/Inventory are in main through #29; scoped #30–#34 implementations remain in the complete candidate. This handoff does not accept broader proposals automatically.
 

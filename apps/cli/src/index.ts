@@ -12,10 +12,12 @@ import { runReport } from './report.js';
 import { runRescue } from './rescue.js';
 import { runVerify } from './verify.js';
 import { runVerifyBundle } from './verify-bundle.js';
+import { runWizard } from './wizard.js';
 import { SITE_RESCUE_VERSION } from './version.js';
 import type { StaticHtmlStyleMode } from '@site-rescue/exporter-static-html';
 
 const USAGE = `Usage:
+  site-rescue wizard
   site-rescue diagnose <url> [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>]
   site-rescue capture <url> [--output <directory>] [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>] [--skip-assets]
   site-rescue export <site.json> [--output <directory>] [--style-mode <baseline|source>]
@@ -30,6 +32,7 @@ const USAGE = `Usage:
   site-rescue rescue <url> [--output <directory>] [--max-pages <number>] [--max-retries <0-5>] [--request-timeout-ms <number>] [--max-html-bytes <number>] [--skip-assets] [--style-mode <baseline|source>]
 
 Commands:
+  wizard    Analyze a generic HTML folder and confirm an offline import interactively
   diagnose  Detect the source platform and discover same-origin HTML pages
   capture   Normalize a detected supported site and write a validated local capture
   export    Render a validated site.json capture as a static HTML website
@@ -138,6 +141,13 @@ export async function main(args: string[]): Promise<number> {
   }
 
   const [command, input] = args;
+  if (command === 'wizard') {
+    if (args.length !== 1) {
+      console.error('Wizard accepts no options; use site-rescue import-source for scripts and advanced limits.');
+      return 1;
+    }
+    return runWizard();
+  }
   if (
     (command !== 'diagnose' &&
       command !== 'capture' &&
@@ -244,4 +254,5 @@ export { runReport } from './report.js';
 export { runRescue } from './rescue.js';
 export { runVerify } from './verify.js';
 export { runVerifyBundle } from './verify-bundle.js';
+export { runWizard } from './wizard.js';
 

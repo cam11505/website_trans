@@ -1,6 +1,8 @@
 # Site Rescue — next execution steps
 
-Updated: 2026-10-22. Read [PROJECT_STATUS.md](./PROJECT_STATUS.md) first. The full original plan is preserved in [the review](./reviews/2026-10-22-project-review.md).
+Updated: 2026-10-24. Read [PROJECT_STATUS.md](./PROJECT_STATUS.md) first. The full original plan is preserved in [the review](./reviews/2026-10-22-project-review.md).
+
+Current execution: Stage A review is recorded in [2026-10-24 integration review](./reviews/2026-10-24-integration-review.md); no PR closure/merge performed. Stage B is implemented in the wizard follow-up, with actual validation in its Draft PR and scope in ADR-029. The acceptance lists below remain the review checklist. Stage C has not started and is not release authorization.
 
 ## Stage A — consolidate the existing candidate
 
@@ -24,7 +26,7 @@ This documentation PR is stacked onto #34's branch to keep its review diff limit
 
 ## Stage B — implement the smallest SR-008 terminal wizard
 
-Proposed command: site-rescue wizard (not implemented by the documentation handoff).
+Command: `site-rescue wizard` (implemented by the follow-up, not by the original documentation handoff).
 
 Scope: generic HTML folder only. Reuse the existing core:
 1. Choose a source folder and a new separate output path.

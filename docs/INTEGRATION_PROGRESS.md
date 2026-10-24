@@ -1,5 +1,11 @@
 # Site Rescue — historical integration evidence
 
+## SR-008 Stage A/B follow-up — 2026-10-24
+
+The wizard candidate starts on unchanged #35 eb8c22e and retains #30–#34. Stage A evidence/recommendation is recorded in the 2026-10-24 integration review; no old PR was closed or merged. Newly blocking npm advisories required minimal Vite/Vitest/Undici updates and a deliberate Zod4 upgrade across three direct users. Initial fresh audit:11; after updates:0. The unchanged baseline passed 238 local tests with6 platform skips; clean TypeScript declarations and legacy bundle checks remain required.
+
+Stage B adds the thin generic-folder terminal wizard per ADR-029. Two CLI regressions failed before implementation. Unit/flow coverage includes explicit consent/cancellation, no-write analysis, stale source and destination races, overlap/aliases, Chinese/spaced paths, static failure, real bundle tampering and separate preview choice. The sixth packaged smoke exercises the real terminal adapter through a test-only TTY shim, cancellation/EOF, actual import/report/bundle checks, non-TTY rejection and real loopback preview/stop with outbound network guards. New exact-head validation belongs to its Draft PR. Stage C, GUI, ZIP, Live Snapshot and publication remain separate.
+
 > **Current status, updated 2026-10-22:** use [PROJECT_STATUS.md](./PROJECT_STATUS.md), [CODEX_HANDOFF.md](./CODEX_HANDOFF.md) and [NEXT_STEPS.md](./NEXT_STEPS.md). The stage notes below are chronological historical snapshots, not current instructions. PR #29 is merged. The complete candidate is Draft #34 at de0b991, including #30–#33; its repaired three-platform CI/CodeQL passed. Published v0.1.0 is unchanged. Statements below such as “next,” “not started,” “pending,” or “main unchanged” apply only to their original stage.
 
 ## Superseding verification record

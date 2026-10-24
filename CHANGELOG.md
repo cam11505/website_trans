@@ -11,6 +11,8 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ### Added
 
+- SR-008: `wizard` terminal command for generic HTML folders: read-only in-memory analysis, explicit IMPORT consent, unchanged-source/fresh-destination rechecks, existing offline import, real bundle verification, readable review evidence and independently chosen loopback preview. Cancellation creates no rescue output; non-TTY use points to existing scripting commands. ADR-029 and an actual packaged terminal/preview smoke cover the focused scope.
+
 - SR-006: stable exact-query page output paths, output-only URL mapping 1.0.0, query redirect handoff 2.0.0, local link/fragment aliases and query-only static entry pages. Uncaptured query references retain source URLs with CLI warnings; non-query paths and redirect manifest 1.0.0 remain compatible. Proposed ADR-027 and a network-guarded bundled CLI smoke cover this unreleased scope.
 
 - SR-005: Report 2.0.0 separates observed acquisition, conversion limitations, actual static reference checks and unassessed manual deployment review. Structured acquisition evidence is checksum-bound to its Site; stale evidence fails explicitly. No source coverage/accuracy percentage is inferred.
@@ -27,6 +29,8 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 - `pnpm audit:dependencies` and a CI dependency audit that fails on known low-or-higher advisories or registry errors.
 
 ### Changed
+
+- Required 2026-10-24 security prerequisite: Vitest/mocker4.1.12, Vite7.3.7, Undici7.30.1 and Zod4.6.7 across its three direct users clear 11 newly reported npm advisories. Zod major upgrade retains schema expressions and requires clean legacy/data-contract validation; saved data versions and release/package version are unchanged. See the 2026-10-24 integration review.
 
 - SR-007: unreleased development/new package requirements are now Node >=24.22.0 <25, with pinned Node24.22.0 and unchanged pnpm10.34.5. Bundle target derives from the runtime pin; mismatching metadata rejects. Full Ubuntu24.04/Windows2025/macOS15 CI and a stable aggregate Quality checks gate replace Ubuntu-only Node20 CI. Actions use verified Node24 commit pins. The published v0.1.0 archive is unchanged; see Proposed ADR-028.
 - Release staging rename retries only temporary EPERM/EBUSY failures three times before failing; other errors remain immediate failures. Regression tests cover recovery, bounded failure and staging cleanup.

@@ -6,7 +6,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 > Site Rescue `v0.1.0` is the first public release and is licensed under Apache-2.0.
 
-> **Development status (2026-10-22):** PR #29 is merged into main. The complete unreleased candidate in [Draft PR #34](https://github.com/cam11505/website_trans/pull/34) also includes #30–#33: generic offline folder import, Snapshot/replay, Report2, query mapping and Node24/platform CI. This documentation continuation is based on that candidate. The published v0.1.0 download is unchanged. See [current status](./docs/PROJECT_STATUS.md), [Codex handoff](./docs/CODEX_HANDOFF.md) and [next steps](./docs/NEXT_STEPS.md).
+> **Development status (2026-10-24):** PR #29 is merged into main. This unreleased wizard candidate includes unchanged #30–#35 (offline import, replay, Report2, query mapping, Node24/platform CI and current handoff), plus necessary dependency security updates and SR-008. The published v0.1.0 download is unchanged. See [current status](./docs/PROJECT_STATUS.md), [Codex handoff](./docs/CODEX_HANDOFF.md) and [next steps](./docs/NEXT_STEPS.md).
 
 ## Current capabilities
 
@@ -18,6 +18,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Self-contained Node.js CLI release package with SHA-256 inventory and smoke verification
 - Apache-2.0 project licensing with bundled third-party license and NOTICE preservation
 - `site-rescue --version` release-version command
+- `site-rescue wizard` guided generic offline folder analysis/import with explicit write confirmation and optional loopback preview (development feature)
 - Weebly detection with confidence and human-readable evidence
 - Generic HTML fallback detection and standards-based content normalization
 - `site-rescue diagnose <url>` CLI command
@@ -49,7 +50,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Development source/newly generated packages: Node.js **24.22.0 or newer within 24.x** (`>=24.22.0 <25`); the exact CI baseline is recorded in `.node-version`.
 - pnpm 10.34.5 (recorded in `packageManager`)
 
-SR-007 intentionally raises the unreleased development baseline from Node20 to maintained Node24 LTS. CI runs the full checks and five actual bundled offline smokes on Ubuntu24.04, Windows2025 and macOS15. The aggregate `Quality checks` status requires all three to pass. Platform/CPU support is limited to the actual runner environments tested; see [ADR-028](./docs/adr/ADR-028-node24-runtime-and-platform-ci.md). The published v0.1.0 archive below retains its original metadata and requirements.
+SR-007 intentionally raises the unreleased development baseline from Node20 to maintained Node24 LTS. CI runs the full checks and six actual bundled offline smokes on Ubuntu24.04, Windows2025 and macOS15. The aggregate `Quality checks` status requires all three to pass. Platform/CPU support is limited to the actual runner environments tested; see [ADR-028](./docs/adr/ADR-028-node24-runtime-and-platform-ci.md). The published v0.1.0 archive below retains its original metadata and requirements.
 
 ## Release package
 
@@ -77,6 +78,21 @@ node site-rescue-v0.1.0/bin/site-rescue.js --help
 The source archive generated automatically by GitHub is not the bundled CLI release package.
 
 ## Quick start
+
+For an interactive terminal, start the guided offline folder workflow:
+
+```bash
+pnpm site-rescue wizard
+# Bundled development package: node release/package/bin/site-rescue.js wizard
+```
+
+Enter a generic UTF-8 HTML folder and a new separate output folder. Analysis is read-only and shows file/page counts, missing/unsafe references and unsupported content. Review the destination/planned writes, then type `IMPORT` to execute. Empty paths, EOF, Ctrl+C or any other execution choice cancel before rescue output is created. The importer rechecks the source; changed analysis or unsafe/existing destinations reject. No advanced flags or unattended confirmation bypass are added; scripts should keep using `import-source`.
+
+Results separate normalized pages, conversion warnings, actual static reference checks, actual bundle verification and required manual review. Broken static output returns2 and retains evidence without claiming a verified bundle. Successful static/bundle checks still do not prove original-site completeness or visual/functional parity. Preview starts only for a separate yes choice and remains127.0.0.1-only; a quoted preview command is also shown. Ordinary redirected/piped terminals fail immediately with scripting guidance. ZIP/live URLs/official Weebly formats and GUI are outside this wizard. See [ADR-029](./docs/adr/ADR-029-guided-offline-terminal-wizard.md).
+
+繁體中文操作：執行 `site-rescue wizard` → 輸入 HTML 資料夾與新的輸出路徑（可含空白／中文）→ 查看缺漏與警告 → 輸入 `IMPORT` 才寫入 → 查看報告與驗證結果 → 自行選擇是否預覽。取消不建立救援輸出；檢查通過仍須人工確認。
+
+Direct commands remain available:
 
 ```bash
 pnpm install
@@ -482,7 +498,7 @@ Only crawl and migrate websites you own or are authorized to process. Review the
 
 ## Decisions
 
-See [Architecture Decision Records](./docs/adr/README.md) for accepted ADR-001 through ADR-019 and proposed ADR-020 through ADR-028.
+See [Architecture Decision Records](./docs/adr/README.md) for accepted ADR-001 through ADR-019 and proposed ADR-020 through ADR-029.
 
 ## License
 

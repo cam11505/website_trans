@@ -85,6 +85,9 @@ jobs:
       - name: Bundled exact-query mapping and redirect smoke test
         run: node apps/cli/test/packaged-query-smoke.mjs
 
+      - name: Bundled guided offline wizard smoke test
+        run: node apps/cli/test/packaged-wizard-smoke.mjs
+
   quality:
     name: Quality checks
     if: always()
