@@ -46,20 +46,20 @@ describe('report command', () => {
       });
 
       expect(result).toMatchObject({
-        readiness: 'ready',
+        readiness: 'review-required',
         warningCount: 0,
         redirectCount: 0,
         reviewItemCount: 0,
       });
       expect(JSON.parse(await readFile(result.jsonFile, 'utf8'))).toMatchObject({
-        reportVersion: '1.0.0',
-        readiness: 'ready',
+        reportVersion: '2.0.0',
+        readiness: 'review-required',
       });
       expect(await readFile(result.markdownFile, 'utf8')).toContain(
-        'Readiness: **ready**',
+        'Readiness: **review-required**',
       );
       expect(lines).toContain('Site Rescue migration report complete');
-      expect(lines).toContain('Readiness: ready');
+      expect(lines).toContain('Readiness: review-required');
       expect(lines).toContain('Redirects: 0');
     } finally {
       await rm(workspace, { force: true, recursive: true });

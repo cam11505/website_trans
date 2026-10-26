@@ -1,6 +1,6 @@
 # Codex / Agent Instructions — Site Rescue
 
-This file defines repository-local expectations for coding agents. Read **docs/CODEX_HANDOFF.md** before proposing or implementing a change. The handoff describes confirmed behavior, hypotheses requiring reproduction, priority, acceptance criteria, and the next task.
+This file defines repository-local expectations for coding agents. Read **docs/PROJECT_STATUS.md**, **docs/CODEX_HANDOFF.md** and **docs/NEXT_STEPS.md** before proposing or implementing a change. The handoff describes confirmed behavior, hypotheses requiring reproduction, priority, acceptance criteria, and the next task.
 
 ## Mission and scope
 
@@ -26,15 +26,19 @@ Site Rescue is an **Apache-2.0, local-first, CLI-first, platform-neutral website
 - packages/core: source-adapter interface and deterministic registry.
 - packages/html-inline: shared standard inline DOM interpretation; no fetching or exporting.
 - packages/source-inventory: bounded read-only generic folder inspection; no ZIP extraction, normalization or snapshot replay.
+- packages/html-directory: generic offline directory acquisition, evidence copies and file/URL mappings; no network, platform normalization or ZIP extraction.
+- packages/source-snapshot: strict versioned generic source index validation and bounded metadata reads; no source fetching or normalization.
+- packages/url-mapping: shared safe target-path/query file mapping and serialized query identity; no fetching, query equivalence assumptions or deployment routing.
 - packages/crawler, packages/http-policy: bounded authorized live HTTP discovery.
 - packages/adapters/weebly and generic-html: source-specific detection and interpretation.
 - packages/content-schema: versioned, runtime-validated platform-neutral intermediate representation.
 - packages/asset-pipeline, css-references: acquisition and asset dependency rewriting.
 - packages/exporters/static-html: transformation from normalized site, **not** source fetches.
 - packages/report: precise migration warnings, coverage and manual-review evidence.
+- New reports use Report 2.0.0 with separate acquisition/conversion/static/manual dimensions; keep the frozen Report 1.0.0 reader/renderer behavior for saved bundles. A stored checksum is metadata, not a completed verification. Never infer acquisition counts from free-form messages or clear unknown completeness/manual review because static checks pass.
 - packages/static-verifier, rescue-manifest: file/link integrity and portable-bundle checks.
 - packages/output-safety: existing-path protections.
-- New source-input / offline importer / source-snapshot packages are **proposals**, not existing code. Avoid changing the source adapter contract or saved schema without an ADR and backwards-compatibility plan.
+- Other source-input, archive importer and live snapshot contracts remain proposals. Avoid changing the source adapter contract or saved schema without an ADR and backwards-compatibility plan.
 
 ## Verification (from repository root)
 
@@ -67,4 +71,23 @@ When relevant, also smoke-test the bundled CLI with --help, --version and an **o
 - docs/adr/ADR-022-versioned-inline-content.md — **Proposed**, focused SR-002 implementation.
 - docs/adr/ADR-023-read-only-html-directory-inventory.md — **Proposed**, user-approved generic Inventory phase only.
 
-In the development integration branch, SR-001 and SR-002 are implemented and SR-003 has only a generic HTML directory Inventory. Read the current progress before selecting new work; the original SR-001 starter prompt in the historical handoff is not a new task. Full SR-003 import still requires an authorized sanitized format sample. The user approved generic Inventory without that sample, not official Weebly support. Do not start another roadmap item or merge/publish merely because this integration is ready for review.
+
+## Current continuation (2026-10-22)
+
+The user requested transferring the current plan into the repository for Codex to continue. This branch is based on complete candidate PR #34 (de0b991), which includes unmerged #30–#33. Main already includes #29. Published v0.1.0 remains unchanged. See PROJECT_STATUS.md for exact scope and historical CI evidence; this documentation update does not implement SR-008 or start another Codex session.
+
+Follow NEXT_STEPS.md: finish the remaining Stage A integration review, then implement the focused Stage B terminal wizard on a feature branch using existing core orchestration. Do not repeat completed SR-001–007 scoped implementations or apply obsolete handoff starters.
+
+Generic folder import and offline Snapshot/replay do not require a real Weebly sample. Official format validation, ZIP and Live URL Snapshot are separate scopes. Retain Report2 review-required semantics, frozen legacy Report1 validation, query mapping compatibility, Node24.22.0/engines >=24.22.0 <25 and the existing aggregate Quality checks gate.
+
+All merge/tag/release boundaries above remain in force. Closing existing PRs is not part of this handoff. Do not force-push or discard local work. Historical stage narrative is retained in INTEGRATION_PROGRESS.md and Git history; current status and NEXT_STEPS.md take precedence over old starter prompts.
+
+## Current implementation follow-up (2026-10-24)
+
+Stage A review is complete in docs/reviews/2026-10-24-integration-review.md. The new branch is based on unchanged #35 (eb8c22e), preserving #30–#34. Necessary dependency patches clear newly blocking advisories, including a deliberate Zod4 upgrade; retain saved Site/Snapshot/evidence/Report1/Report2/bundle compatibility and rebuild stale TypeScript declarations after dependency changes.
+
+Stage B adds only the generic-folder terminal wizard per ADR-029: in-memory read-only analysis, explicit IMPORT before writes, source/destination rechecks, existing import-source orchestration, actual bundle verification, truthful review status and opt-in loopback preview. Do not bypass confirmation for pipes or add unattended flags. Keep all direct commands, existing safety checks and Node24/pnpm contracts. Run six actual packaged smokes on all three CI platforms, including the test-only TTY transport for the terminal adapter. No GUI/ZIP/live acquisition, schema/version bump, PR closure, merge/tag/release or Stage C work in this follow-up.
+
+## Current candidate preparation (2026-10-26)
+
+The subsequent user continuation advances Stage C on a new branch based on unchanged #36 head0a58e64. The preceding paragraph describes the earlier Stage B scope. Stage C deliberately prepares unreleased package/CLI/workspace version0.2.0-rc.1, public example/walkthrough, seven actual bundled smokes and a local candidate archive; saved-data versions remain unchanged. See ADR-030 and CANDIDATE_0.2.0-rc.1.md. Record this branch's own exact-head CI/CodeQL; do not inherit #36 passes. No new source input capability, PR closure, merge, tag or publication is authorized. After candidate preparation, present its concrete review/merge recommendation before any merge action.

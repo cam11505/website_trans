@@ -1,6 +1,6 @@
 {
   "name": "@site-rescue/cli",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.1",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
@@ -22,12 +22,14 @@
     "@site-rescue/core": "workspace:*",
     "@site-rescue/crawler": "workspace:*",
     "@site-rescue/exporter-static-html": "workspace:*",
+    "@site-rescue/html-directory": "workspace:*",
     "@site-rescue/output-safety": "workspace:*",
     "@site-rescue/preview-server": "workspace:*",
     "@site-rescue/redirects": "workspace:*",
     "@site-rescue/report": "workspace:*",
     "@site-rescue/rescue-manifest": "workspace:*",
     "@site-rescue/source-inventory": "workspace:*",
+    "@site-rescue/source-snapshot": "workspace:*",
     "@site-rescue/static-verifier": "workspace:*"
   }
 }

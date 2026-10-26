@@ -1,0 +1,35 @@
+{
+  "reportVersion": "1.0.0",
+  "source": {
+    "adapter": "legacy-fixture",
+    "baseUrl": "https://legacy.example/",
+    "capturedAt": "2026-10-16T00:00:00.000Z"
+  },
+  "siteTitle": "Legacy report fixture",
+  "readiness": "ready",
+  "summary": {
+    "pageCount": 1,
+    "blockCount": 1,
+    "assetCount": 0,
+    "localAssetCount": 0,
+    "verifiedLocalAssetCount": 0,
+    "unverifiedLocalAssetCount": 0,
+    "remoteAssetCount": 0,
+    "redirectCount": 0,
+    "warningCount": 0,
+    "reviewItemCount": 0
+  },
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "sourceUrl": "https://legacy.example/",
+      "targetPath": "/",
+      "blockCount": 1,
+      "reviewItemCount": 0
+    }
+  ],
+  "warningCounts": {},
+  "warnings": [],
+  "reviewItems": []
+}

@@ -1,13 +1,13 @@
 {
   "name": "site-rescue",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.1",
   "private": true,
   "license": "Apache-2.0",
   "description": "Platform-neutral, local-first website migration toolkit",
   "type": "module",
   "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=24.22.0 <25"
   },
   "scripts": {
     "build": "tsc -b",
@@ -28,6 +28,6 @@
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.39.1",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   }
 }

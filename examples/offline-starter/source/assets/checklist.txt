@@ -1,0 +1,8 @@
+Site Rescue synthetic offline example
+
+1. Keep input files separate from every generated output.
+2. Read migration-report.md even when static checks pass.
+3. Verify the complete rescue bundle.
+4. Preview only on 127.0.0.1.
+5. Replay the saved source Snapshot without the original folder.
+6. Review source completeness and visual/functional behavior manually.

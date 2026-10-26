@@ -1,4 +1,5 @@
 import { load } from 'cheerio';
+import { urlToSitePath } from '@site-rescue/url-mapping';
 import type { CheerioAPI } from 'cheerio';
 import type { AnyNode, Element } from 'domhandler';
 import { parseListContent, parseTextContent, sourceId } from '@site-rescue/html-inline';
@@ -261,8 +262,8 @@ function parsePage(input: CapturedPageInput, index: number, warnings: MigrationW
   return {
     id: `page-${String(index + 1).padStart(4, '0')}`,
     sourceUrl: input.url,
-    sourcePath: `${url.pathname}${url.search}`,
-    targetPath: `${url.pathname}${url.search}`,
+    sourcePath: urlToSitePath(url),
+    targetPath: urlToSitePath(url),
     title,
     seo: {
       title: $('meta[property="og:title"]').attr('content') ?? title,

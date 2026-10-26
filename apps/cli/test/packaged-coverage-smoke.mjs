@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { basename, dirname, join, resolve } from 'node:path';
+import { execPath, stdout } from 'node:process';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+
+const repository = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const prefix = 'site-rescue-packaged-coverage-';
+const workspace = await mkdtemp(join(tmpdir(), prefix));
+const fixture = join(repository, 'fixtures/shared/legacy-report');
+const output = join(workspace, 'import');
+const guard = 'data:text/javascript,' + encodeURIComponent("import net from 'node:net'; const deny = () => { throw new Error('Coverage report attempted network access'); }; globalThis.fetch = deny; net.Socket.prototype.connect = deny;");
+const cli = (...args) => promisify(execFile)(execPath, ['--import', guard, join(repository, 'release/package/bin/site-rescue.js'), ...args], { timeout: 20000 });
+const json = async (path) => JSON.parse(await readFile(path, 'utf8'));
+try {
+  await cli('import-source', join(repository, 'fixtures/shared/offline-import'), '--output', output);
+  const report = await json(join(output, 'report/migration-report.json'));
+  assert.equal(report.reportVersion, '2.0.0');
+  assert.equal(report.readiness, 'review-required');
+  assert.equal(report.coverage.sourceAcquisition.status, 'observed-scope-complete');
+  assert.equal(report.coverage.sourceAcquisition.sourceCompleteness, 'unknown');
+  assert.equal(report.coverage.sourceAcquisition.evidence.inventoriedHtmlCount, 2);
+  assert.equal(report.coverage.staticIntegrity.status, 'valid');
+  assert.equal(report.coverage.manualReview.status, 'not-assessed');
+  assert.equal(report.summary.checksumRecordedLocalAssetCount, 4);
+  assert.equal('verifiedLocalAssetCount' in report.summary, false);
+  await cli('verify-bundle', output);
+  const standalone = join(workspace, 'standalone');
+  await cli('report', join(fixture, 'site.json'), '--output', standalone);
+  const unknown = await json(join(standalone, 'migration-report.json'));
+  assert.equal(unknown.readiness, 'review-required');
+  assert.equal(unknown.coverage.sourceAcquisition.evidence, null);
+  assert.equal(unknown.coverage.staticIntegrity.status, 'not-checked');
+  const legacy = join(workspace, 'legacy');
+  await mkdir(join(legacy, 'capture'), { recursive: true });
+  await mkdir(join(legacy, 'site'));
+  await mkdir(join(legacy, 'report'));
+  await cp(join(fixture, 'site.json'), join(legacy, 'capture/site.json'));
+  for (const name of ['migration-report.json', 'migration-report.md']) await cp(join(fixture, name), join(legacy, 'report', name));
+  await writeFile(join(legacy, 'site/index.html'), '<h1>Legacy</h1>');
+  await cli('manifest', legacy);
+  await cli('verify-bundle', legacy);
+  assert.equal((await json(join(legacy, 'report/migration-report.json'))).reportVersion, '1.0.0');
+  const site = await json(join(output, 'capture/site.json'));
+  site.metadata.title = 'Changed after acquisition';
+  await writeFile(join(output, 'capture/site.json'), JSON.stringify(site));
+  await assert.rejects(cli('report', join(output, 'capture/site.json'), '--output', join(workspace, 'stale')), (error) => error.code === 1 && /evidence.*checksum/iu.test(error.stderr));
+  stdout.write('Bundled coverage smoke passed: Report2 four evidence dimensions, unknown completeness/manual review, real static checks, checksum metadata wording, stale-evidence rejection and byte-exact Report1 bundle compatibility; network guarded.\n');
+} finally {
+  assert.equal(dirname(workspace), resolve(tmpdir()));
+  assert.equal(basename(workspace).startsWith(prefix), true);
+  await rm(workspace, { recursive: true, force: true });
+}

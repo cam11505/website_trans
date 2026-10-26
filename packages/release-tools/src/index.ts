@@ -13,6 +13,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { build, type BuildOptions } from 'esbuild';
 
 const IGNORED_DIRECTORIES = new Set([
@@ -27,7 +28,12 @@ const REQUIRED_PROJECT_FILES = [
   'CHANGELOG.md',
   'SECURITY.md',
   'LICENSE',
+  'docs/OFFLINE_WALKTHROUGH.md',
+  'docs/INPUT_SUPPORT.md',
+  'examples/offline-starter/README.md',
+  'examples/offline-starter/EXPECTED.md',
 ] as const;
+const EXAMPLE_SOURCE_DIRECTORY = 'examples/offline-starter/source';
 
 interface PackageMetadata {
   name?: unknown;
@@ -64,6 +70,18 @@ async function readJson(path: string): Promise<PackageMetadata> {
   return JSON.parse(await readFile(path, 'utf8')) as PackageMetadata;
 }
 
+async function releaseNodeTarget(root: string, metadata: PackageMetadata): Promise<string> {
+  const version = (await readFile(join(root, '.node-version'), 'utf8')).trim();
+  if (!/^24\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/u.test(version)) {
+    throw new Error('.node-version must pin a stable Node 24 runtime (major.minor.patch).');
+  }
+  const engines = metadata.engines;
+  if (typeof engines !== 'object' || engines === null || !('node' in engines) || engines.node !== `>=${version} <25`) {
+    throw new Error('Root engines.node must match .node-version: >=<pinned runtime> <25.');
+  }
+  return `node${version}`;
+}
+
 function requireString(value: unknown, name: string): string {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new Error(`${name} must be a non-empty string.`);
@@ -77,6 +95,20 @@ function portablePath(path: string): string {
 
 function sha256(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex');
+}
+
+async function commitStagingDirectory(staging: string, output: string): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await rename(staging, output);
+      return;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      // Windows file scanners can briefly hold a completed directory after its handles close.
+      if (attempt >= 3 || (code !== 'EPERM' && code !== 'EBUSY')) throw error;
+      await delay(100 * 2 ** attempt);
+    }
+  }
 }
 
 function assertSafeOutputDirectory(repositoryRoot: string, outputDirectory: string): void {
@@ -343,9 +375,15 @@ export async function buildReleasePackage(
   );
   try {
     const { rootMetadata, version } = await validateWorkspaceVersions(root);
+    const nodeTarget = await releaseNodeTarget(root, rootMetadata);
     for (const file of REQUIRED_PROJECT_FILES) {
-      await lstat(join(root, file));
+      const stat = await lstat(join(root, file));
+      if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`Release document must be a regular file: ${file}`);
     }
+    const exampleRoot = join(root, EXAMPLE_SOURCE_DIRECTORY);
+    const exampleStat = await lstat(exampleRoot);
+    if (!exampleStat.isDirectory() || exampleStat.isSymbolicLink()) throw new Error('Release example root must be a directory, not a symbolic link.');
+    const exampleFiles = await listRegularFiles(exampleRoot);
     const binDirectory = join(stagingDirectory, 'bin');
     await mkdir(binDirectory, { recursive: true });
     const cliFile = join(binDirectory, 'site-rescue.js');
@@ -364,12 +402,19 @@ export async function buildReleasePackage(
       platform: 'node',
       sourcemap: 'external',
       sourcesContent: false,
-      target: 'node20.19',
+      target: nodeTarget,
     });
     await chmod(cliFile, 0o755);
 
     for (const file of REQUIRED_PROJECT_FILES) {
-      await copyFile(join(root, file), join(stagingDirectory, file));
+      const target = join(stagingDirectory, file);
+      await mkdir(dirname(target), { recursive: true });
+      await copyFile(join(root, file), target);
+    }
+    for (const file of exampleFiles) {
+      const target = join(stagingDirectory, EXAMPLE_SOURCE_DIRECTORY, relative(exampleRoot, file));
+      await mkdir(dirname(target), { recursive: true });
+      await copyFile(file, target);
     }
     if (
       typeof bundleResult !== 'object' ||
@@ -411,7 +456,7 @@ export async function buildReleasePackage(
       'utf8',
     );
     const checksums = await writeChecksums(stagingDirectory);
-    await rename(stagingDirectory, outputDirectory);
+    await commitStagingDirectory(stagingDirectory, outputDirectory);
     return {
       outputDirectory,
       version,
@@ -553,8 +598,9 @@ export async function verifyReleasePackage(
     }
     const report = JSON.parse(
       await readFile(join(reportDirectory, 'migration-report.json'), 'utf8'),
-    ) as { reportVersion?: unknown; summary?: { pageCount?: unknown } };
-    if (report.reportVersion !== '1.0.0' || report.summary?.pageCount !== 1) {
+    ) as { reportVersion?: unknown; readiness?: unknown; summary?: { pageCount?: unknown }; coverage?: { staticIntegrity?: { status?: unknown }; manualReview?: { status?: unknown } } };
+    if (report.reportVersion !== '2.0.0' || report.summary?.pageCount !== 1 || report.readiness !== 'review-required' ||
+      report.coverage?.staticIntegrity?.status !== 'not-checked' || report.coverage?.manualReview?.status !== 'not-assessed') {
       throw new Error('Release CLI report fixture output is invalid.');
     }
   } finally {

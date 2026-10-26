@@ -1,8 +1,19 @@
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import type * as FsPromises from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { BuildOptions } from 'esbuild';
 import { buildReleasePackage, verifyReleasePackage } from '../src/index.js';
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof FsPromises>();
+  return { ...actual, rename: vi.fn(actual.rename) };
+});
+
+afterEach(async () => {
+  const actual = await vi.importActual<typeof FsPromises>('node:fs/promises');
+  vi.mocked(rename).mockReset().mockImplementation(actual.rename);
+});
 
 function fixtureBundler(
   root: string,
@@ -37,10 +48,11 @@ async function createRepository(version = '0.1.0'): Promise<string> {
       private: true,
       license: 'Apache-2.0',
       description: 'Release fixture',
-      engines: { node: '>=20.19.0' },
+      engines: { node: '>=24.22.0 <25' },
     })}\n`,
     'utf8',
   );
+  await writeFile(join(root, '.node-version'), '24.22.0\n');
   await writeFile(
     join(root, 'apps', 'cli', 'package.json'),
     `${JSON.stringify({
@@ -76,7 +88,7 @@ if (args.includes('--version')) {
   await mkdir(output, { recursive: true });
   await writeFile(
     join(output, 'migration-report.json'),
-    JSON.stringify({ reportVersion: '1.0.0', summary: { pageCount: 1 } }),
+    JSON.stringify({ reportVersion: '2.0.0', readiness: 'review-required', summary: { pageCount: 1 }, coverage: { staticIntegrity: { status: 'not-checked' }, manualReview: { status: 'not-assessed' } } }),
     'utf8',
   );
   console.log('Site Rescue migration report complete');
@@ -89,6 +101,12 @@ if (args.includes('--version')) {
   for (const document of ['README.md', 'CHANGELOG.md', 'SECURITY.md']) {
     await writeFile(join(root, document), `# ${document}\n`, 'utf8');
   }
+  for (const document of ['docs/OFFLINE_WALKTHROUGH.md', 'docs/INPUT_SUPPORT.md', 'examples/offline-starter/README.md', 'examples/offline-starter/EXPECTED.md']) {
+    await mkdir(dirname(join(root, document)), { recursive: true });
+    await writeFile(join(root, document), `# ${document}\n`, 'utf8');
+  }
+  await mkdir(join(root, 'examples/offline-starter/source'), { recursive: true });
+  await writeFile(join(root, 'examples/offline-starter/source/index.html'), '<h1>Portable example</h1>');
   await writeFile(
     join(root, 'LICENSE'),
     'Apache License\nVersion 2.0, January 2004\nEND OF TERMS AND CONDITIONS\n',
@@ -108,6 +126,106 @@ if (args.includes('--version')) {
 }
 
 describe('release tools', () => {
+  it('includes the offline example, expected results and walkthrough in the checksummed portable package', async () => {
+    const root = await createRepository('0.2.0-rc.1');
+    try {
+      const built = await buildReleasePackage(root, { bundler: fixtureBundler(root) });
+      for (const path of ['docs/OFFLINE_WALKTHROUGH.md', 'docs/INPUT_SUPPORT.md', 'examples/offline-starter/README.md', 'examples/offline-starter/EXPECTED.md', 'examples/offline-starter/source/index.html']) {
+        expect(await readFile(join(built.outputDirectory, path))).toEqual(await readFile(join(root, path)));
+        expect(await readFile(built.checksumFile, 'utf8')).toContain(`  ${path}\n`);
+      }
+      expect(await verifyReleasePackage(root)).toMatchObject({ version: '0.2.0-rc.1', versionSmokePassed: true });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects linked example content instead of distributing files outside the example tree', async () => {
+    const root = await createRepository();
+    try {
+      const outside = join(root, 'private-fixture');
+      await mkdir(outside);
+      await writeFile(join(outside, 'private.txt'), 'Do not distribute');
+      await symlink(outside, join(root, 'examples/offline-starter/source/alias'), process.platform === 'win32' ? 'junction' : 'dir');
+      await expect(buildReleasePackage(root, { bundler: fixtureBundler(root) })).rejects.toThrow(/non-regular|symbolic|link/iu);
+      expect(await readFile(join(outside, 'private.txt'), 'utf8')).toBe('Do not distribute');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it.each(['EPERM', 'EBUSY'])('recovers from a transient %s staging rename without rebuilding the package', async (code) => {
+    const root = await createRepository();
+    try {
+      vi.mocked(rename).mockRejectedValueOnce(Object.assign(new Error('Temporary staging lock'), { code }));
+      const bundler = vi.fn(fixtureBundler(root));
+      await buildReleasePackage(root, { bundler });
+      expect(bundler).toHaveBeenCalledTimes(1);
+      expect(rename).toHaveBeenCalledTimes(2);
+      await verifyReleasePackage(root);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it.each([['EPERM', 4], ['EACCES', 1]])('fails with bounded attempts for persistent %s and removes only staging output', async (code, attempts) => {
+    const root = await createRepository();
+    try {
+      const error = Object.assign(new Error('Persistent staging error'), { code });
+      vi.mocked(rename).mockRejectedValue(error);
+      await expect(buildReleasePackage(root, { bundler: fixtureBundler(root) })).rejects.toBe(error);
+      expect(rename).toHaveBeenCalledTimes(attempts);
+      expect(await readdir(join(root, 'release'))).toEqual([]);
+      expect(await readFile(join(root, 'README.md'), 'utf8')).toContain('README.md');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('bundles for the pinned runtime and carries the same support range into release metadata', async () => {
+    const root = await createRepository();
+    let target: BuildOptions['target'];
+    try {
+      const bundler = fixtureBundler(root);
+      const result = await buildReleasePackage(root, { bundler: async (options) => {
+        target = options.target;
+        return bundler(options);
+      } });
+      const metadata = JSON.parse(await readFile(join(result.outputDirectory, 'package.json'), 'utf8'));
+      expect(target).toBe('node24.22.0');
+      expect(metadata.engines).toEqual({ node: '>=24.22.0 <25' });
+      await verifyReleasePackage(root);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it.each(['20.19.0', '24', '24.22.0-pre', '24.22.0\n26.0.0'])('rejects an unsupported or unpinned runtime %s before bundling', async (pin) => {
+    const root = await createRepository();
+    let bundled = false;
+    try {
+      await writeFile(join(root, '.node-version'), pin);
+      await expect(buildReleasePackage(root, { bundler: async (options) => {
+        bundled = true;
+        return fixtureBundler(root)(options);
+      } })).rejects.toThrow(/runtime|node-version/iu);
+      expect(bundled).toBe(false);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects engine/runtime drift before producing a misleading release package', async () => {
+    const root = await createRepository();
+    try {
+      const metadata = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+      await writeFile(join(root, 'package.json'), JSON.stringify({ ...metadata, engines: { node: '>=20.19.0' } }));
+      await expect(buildReleasePackage(root, { bundler: fixtureBundler(root) })).rejects.toThrow(/engines.*node-version|runtime/iu);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it('builds and verifies a self-contained CLI package', async () => {
     const root = await createRepository();
     try {
