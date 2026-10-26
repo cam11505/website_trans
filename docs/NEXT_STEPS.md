@@ -1,8 +1,8 @@
 # Site Rescue — next execution steps
 
-Updated: 2026-10-24. Read [PROJECT_STATUS.md](./PROJECT_STATUS.md) first. The full original plan is preserved in [the review](./reviews/2026-10-22-project-review.md).
+Updated: 2026-10-26. Read [PROJECT_STATUS.md](./PROJECT_STATUS.md) first. The full original plan is preserved in [the review](./reviews/2026-10-22-project-review.md).
 
-Current execution: Stage A review is recorded in [2026-10-24 integration review](./reviews/2026-10-24-integration-review.md); no PR closure/merge performed. Stage B is implemented in the wizard follow-up, with actual validation in its Draft PR and scope in ADR-029. The acceptance lists below remain the review checklist. Stage C has not started and is not release authorization.
+Current execution: Stage A review is recorded in [2026-10-24 integration review](./reviews/2026-10-24-integration-review.md); no PR closure/merge performed. Stage B is implemented in the wizard follow-up, with actual validation in its Draft PR and scope in ADR-029. The acceptance lists below remain the review checklist. Stage C is prepared on codex/stage-c-0.2.0-candidate from unchanged #36 (0a58e64), with scope in ADR-030 and the candidate acceptance record. Its Draft PR must carry its own exact-head results. This is not release authorization.
 
 ## Stage A — consolidate the existing candidate
 
@@ -14,7 +14,7 @@ Already prepared in this handoff:
 - README contradictions and agent routing corrected.
 - Historical integration record clearly separated from current delivery status.
 
-Remaining acceptance:
+Historical Stage A acceptance (completed in the integration review):
 - Recheck current main and all relevant PR heads.
 - Confirm #34 includes #30–#33; inspect individual stage commits for focused review.
 - Compare old #23/#25–#28 and Dependabot #22 before proposing superseded closures.
@@ -44,7 +44,7 @@ Acceptance:
 - Preserve exit semantics: 0 supported static workflow success; 1 fatal error; 2 generated static verification failure. review-required remains a separate review state.
 - Separate page counts, static reference checks, actual bundle verification and manual review. Only claim a check passed if it actually ran.
 - Test success, cancellation, invalid input, output safety, static failure and noninteractive behavior with offline fixtures.
-- All existing five packaged smokes and three-platform quality checks pass for the new head. Exercise the actual bundled wizard, not only source-level imports.
+- All existing packaged smokes and three-platform quality checks pass for the new head. Exercise the actual bundled wizard, not only source-level imports.
 - Keep changes focused; no ZIP, Live Snapshot, new report schema or GUI in this PR.
 
 Suggested implementation: apps/cli/src/wizard.ts with injectable input/output; a small shared orchestration extraction only if needed. Do not introduce a framework or duplicate business logic for one command.
@@ -64,6 +64,10 @@ Acceptance:
 - Validate the actual release package, notices/licenses, checksums and three-platform end-to-end workflow.
 - Manually walk source -> import -> report -> preview -> move original source -> replay Snapshot -> verify bundle.
 - Merge and release require separate explicit decisions; do not reuse #29 approval.
+
+## Candidate review is the next gate
+
+Use [the candidate record](./CANDIDATE_0.2.0-rc.1.md), its Draft PR exact-head CI/CodeQL and the local SHA-bound ZIP/checksum. Review the combined dependency chain #30–#36 before deciding on consolidation. Do not reimplement Stage A/B/C or silently move on to a new source contract. Request a concrete merge decision only after evidence is reviewable; closing superseded PRs and tag/release remain separate decisions. A later main commit needs its own verification.
 
 ## Later isolated tasks
 

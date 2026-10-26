@@ -6,7 +6,9 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 
 > Site Rescue `v0.1.0` is the first public release and is licensed under Apache-2.0.
 
-> **Development status (2026-10-24):** PR #29 is merged into main. This unreleased wizard candidate includes unchanged #30–#35 (offline import, replay, Report2, query mapping, Node24/platform CI and current handoff), plus necessary dependency security updates and SR-008. The published v0.1.0 download is unchanged. See [current status](./docs/PROJECT_STATUS.md), [Codex handoff](./docs/CODEX_HANDOFF.md) and [next steps](./docs/NEXT_STEPS.md).
+> **Development status (2026-10-26):** `0.2.0-rc.1` is an unreleased candidate based on Draft PR #36 (`0a58e64`), retaining #30–#35, the security updates and SR-008 wizard. PR #29 is the latest merged work; the published v0.1.0 download is unchanged. See [current status](./docs/PROJECT_STATUS.md), [Codex handoff](./docs/CODEX_HANDOFF.md) and [next steps](./docs/NEXT_STEPS.md).
+
+Try the candidate with the included [public synthetic example](./examples/offline-starter/README.md), [expected results](./examples/offline-starter/EXPECTED.md) and [offline walkthrough](./docs/OFFLINE_WALKTHROUGH.md). Check the [input support matrix](./docs/INPUT_SUPPORT.md) before importing your own files. Preparing this candidate does not publish it or authorize a merge.
 
 ## Current capabilities
 
@@ -50,7 +52,7 @@ Site Rescue is a platform-neutral, CLI-first, local-first toolkit for rescuing w
 - Development source/newly generated packages: Node.js **24.22.0 or newer within 24.x** (`>=24.22.0 <25`); the exact CI baseline is recorded in `.node-version`.
 - pnpm 10.34.5 (recorded in `packageManager`)
 
-SR-007 intentionally raises the unreleased development baseline from Node20 to maintained Node24 LTS. CI runs the full checks and six actual bundled offline smokes on Ubuntu24.04, Windows2025 and macOS15. The aggregate `Quality checks` status requires all three to pass. Platform/CPU support is limited to the actual runner environments tested; see [ADR-028](./docs/adr/ADR-028-node24-runtime-and-platform-ci.md). The published v0.1.0 archive below retains its original metadata and requirements.
+SR-007 intentionally raises the unreleased development baseline from Node20 to maintained Node24 LTS. CI runs the full checks and seven actual bundled offline smokes on Ubuntu24.04, Windows2025 and macOS15. The seventh relocates the package and exercises the included example through import, report, loopback preview, moved-source replay and bundle checks. The aggregate `Quality checks` status requires all three platforms to pass. Platform/CPU support is limited to the actual runner environments tested; see [ADR-028](./docs/adr/ADR-028-node24-runtime-and-platform-ci.md). The published v0.1.0 archive below retains its original metadata and requirements.
 
 ## Release package
 

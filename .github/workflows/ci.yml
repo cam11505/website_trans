@@ -24,6 +24,7 @@ jobs:
     timeout-minutes: 15
     env:
       CI: 'true'
+      SITE_RESCUE_CANDIDATE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
 
     steps:
       - name: Check out repository
@@ -87,6 +88,9 @@ jobs:
 
       - name: Bundled guided offline wizard smoke test
         run: node apps/cli/test/packaged-wizard-smoke.mjs
+
+      - name: Relocated candidate package end-to-end smoke test
+        run: node apps/cli/test/packaged-candidate-smoke.mjs
 
   quality:
     name: Quality checks

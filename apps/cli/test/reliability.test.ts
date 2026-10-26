@@ -24,7 +24,8 @@ describe('CLI reliability and safe output', () => {
     });
     try {
       await expect(main(['--version'])).resolves.toBe(0);
-      expect(lines).toEqual(['0.1.0']);
+      const metadata = JSON.parse(await readFile(join(process.cwd(), 'package.json'), 'utf8'));
+      expect(lines).toEqual([metadata.version]);
     } finally {
       log.mockRestore();
     }

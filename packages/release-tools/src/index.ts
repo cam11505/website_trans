@@ -28,7 +28,12 @@ const REQUIRED_PROJECT_FILES = [
   'CHANGELOG.md',
   'SECURITY.md',
   'LICENSE',
+  'docs/OFFLINE_WALKTHROUGH.md',
+  'docs/INPUT_SUPPORT.md',
+  'examples/offline-starter/README.md',
+  'examples/offline-starter/EXPECTED.md',
 ] as const;
+const EXAMPLE_SOURCE_DIRECTORY = 'examples/offline-starter/source';
 
 interface PackageMetadata {
   name?: unknown;
@@ -372,8 +377,13 @@ export async function buildReleasePackage(
     const { rootMetadata, version } = await validateWorkspaceVersions(root);
     const nodeTarget = await releaseNodeTarget(root, rootMetadata);
     for (const file of REQUIRED_PROJECT_FILES) {
-      await lstat(join(root, file));
+      const stat = await lstat(join(root, file));
+      if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`Release document must be a regular file: ${file}`);
     }
+    const exampleRoot = join(root, EXAMPLE_SOURCE_DIRECTORY);
+    const exampleStat = await lstat(exampleRoot);
+    if (!exampleStat.isDirectory() || exampleStat.isSymbolicLink()) throw new Error('Release example root must be a directory, not a symbolic link.');
+    const exampleFiles = await listRegularFiles(exampleRoot);
     const binDirectory = join(stagingDirectory, 'bin');
     await mkdir(binDirectory, { recursive: true });
     const cliFile = join(binDirectory, 'site-rescue.js');
@@ -397,7 +407,14 @@ export async function buildReleasePackage(
     await chmod(cliFile, 0o755);
 
     for (const file of REQUIRED_PROJECT_FILES) {
-      await copyFile(join(root, file), join(stagingDirectory, file));
+      const target = join(stagingDirectory, file);
+      await mkdir(dirname(target), { recursive: true });
+      await copyFile(join(root, file), target);
+    }
+    for (const file of exampleFiles) {
+      const target = join(stagingDirectory, EXAMPLE_SOURCE_DIRECTORY, relative(exampleRoot, file));
+      await mkdir(dirname(target), { recursive: true });
+      await copyFile(file, target);
     }
     if (
       typeof bundleResult !== 'object' ||

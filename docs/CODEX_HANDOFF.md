@@ -1,8 +1,8 @@
 # Site Rescue — Codex continuation handoff
 
-更新：2026-10-24（Asia/Taipei）。本檔是接手入口；目前進度以 [PROJECT_STATUS.md](./PROJECT_STATUS.md) 為準，執行順序以 [NEXT_STEPS.md](./NEXT_STEPS.md) 為準。
+更新：2026-10-26（Asia/Taipei）。本檔是接手入口；目前進度以 [PROJECT_STATUS.md](./PROJECT_STATUS.md) 為準，執行順序以 [NEXT_STEPS.md](./NEXT_STEPS.md) 為準。
 
-最新候選分支為 `codex/sr-008-offline-wizard`，保留 #35（eb8c22e）及其 #30～34 相依內容。Stage A 整合審查已完成；新安全公告導致的 CI 前置阻礙已用必要依賴更新處理。Stage B 精靈已實作：記憶體分析、不寫入的取消、明確 IMPORT、來源／目的地重查、原匯入核心、實際 Bundle 驗證及獨立選擇本機預覽。參見 ADR-029 與新 Draft PR 的實際驗證；舊 #34 綠燈不代表新 head 通過。不重做 Stage A/B；Stage C 版本候選與發版尚未開始，須另立範圍。
+最新候選分支為 `codex/stage-c-0.2.0-candidate`，基於未變動的 Draft PR #36（0a58e64），保留 #30～#35 與 SR-008。Stage A/B 已完成；#36 的三平台 CI／CodeQL 全通過。Stage C 準備未發布的 0.2.0-rc.1：版本一致、公開合成範例、操作指南、第七項搬移後端到端驗證及本機 ZIP／校驗記錄。資料格式版本保持不變。新候選必須使用自己的 exact-head CI，不能沿用 #36 綠燈。見 ADR-030 與 CANDIDATE_0.2.0-rc.1.md；本階段不合併、不 Tag、不發版。
 
 ## 使用者目標與目前授權
 
@@ -12,12 +12,12 @@
 
 ## 正確起點
 
-儲存庫：cam11505/website_trans  
-交接分支：docs/codex-continuation-20261022  
-分支基底：PR #34 head de0b991d3bc6b332561d2cbcf17ae44a7c377c70  
-main 檢查點：d8834de7dacedb020b4b96e907e23e1f93b1e3b8
+- 儲存庫：cam11505/website_trans
+- 目前分支：codex/stage-c-0.2.0-candidate
+- 分支基底：PR #36 head 0a58e64fa91edd8ac3fb5cb8b5beca6b9969e26a
+- main 檢查點：d8834de7dacedb020b4b96e907e23e1f93b1e3b8
 
-這個基底已包含 #30～#33；從舊 main 開始會缺少它們。開始前先檢查工作目錄、main、交接分支與 open PR 最新 SHA，保留本機未提交修改。不要 reset --hard、覆寫來源或強推。
+這個基底已包含 #30～#35 與 SR-008；從舊 main 開始會缺少它們。開始前先檢查工作目錄、main、候選分支與 open PR 最新 SHA，保留本機未提交修改。不要 reset --hard、覆寫來源或強推。
 
 若交接分支尚未在本機，先 fetch，再選取該分支；若本機分支已有額外工作，建立獨立 worktree 或新分支，不覆蓋它。若 upstream 已前進或合併，重新比對內容及相容性，調整基底；不要盲目重複套用舊 commits。
 
@@ -36,11 +36,11 @@ main 檢查點：d8834de7dacedb020b4b96e907e23e1f93b1e3b8
 
 ## 第一個接手任務
 
-1. 讀 AGENTS.md、README.md、PROJECT_STATUS.md、NEXT_STEPS.md、相關 ADR。
-2. 核對 #35 單獨的交接 commit 僅含文件；新精靈分支另外包含安全依賴修補與程式實作，不得當作純文件變更。確認相依 PR 包含關係、目前 CI 及版本差異。
-3. 閱讀 2026-10-24 整合審查與 ADR-029；Stage A/B 已有聚焦候選，不重複實作，也不自動關閉重複 PR。
-4. 檢查新精靈候選的 exact-head 三平台 CI／CodeQL、實際封裝操作與相容性證據。後續 Stage C 或來源格式工作另立範圍，不先改版號或發版。
-5. 在 PR 中寫明實際驗證、限制、基底及相依；不合併、不 Tag、不發版。
+1. 讀 AGENTS.md、README.md、PROJECT_STATUS.md、NEXT_STEPS.md、ADR-030 與候選驗收記錄。
+2. 核對 main、#36 與 Stage C 候選分支最新 SHA、乾淨狀態、相依 PR 包含關係與 exact-head CI／CodeQL。
+3. 檢視七項實際封裝驗證、公開範例人工操作、SHA 綁定的本機 ZIP／校驗記錄及相容性結果。
+4. Stage A/B/C 不重做；先提出具體候選整合建議。未核准時不得合併、關閉舊 PR、Tag 或 Release。
+5. 新來源功能依後續獨立範圍推進；官方 Weebly 樣本不阻擋泛用工作，但不得據此宣稱官方格式驗證。
 
 ## 架構與資料限制
 
@@ -66,9 +66,10 @@ main 檢查點：d8834de7dacedb020b4b96e907e23e1f93b1e3b8
     node apps/cli/test/packaged-coverage-smoke.mjs
     node apps/cli/test/packaged-query-smoke.mjs
     node apps/cli/test/packaged-wizard-smoke.mjs
+    node apps/cli/test/packaged-candidate-smoke.mjs
 
 共享 lockfile 依 CI 執行 dependency audit；Wizard 新增取消／失敗／非互動行為測試及實際封裝操作驗證。純文件更新核對相對連結、狀態、命令及差異，不新增鏡像文字內容的測試。記錄沒有執行或尚未完成的驗證。
 
 ## 可直接使用的接續指令
 
-請在 cam11505/website_trans 接續 Site Rescue，先取得 codex/sr-008-offline-wizard 與 GitHub 最新狀態，保留本機修改。依 AGENTS.md、docs/PROJECT_STATUS.md、docs/CODEX_HANDOFF.md、docs/NEXT_STEPS.md 檢查 Stage A 審查、Stage B 精靈候選及 exact-head 三平台 CI／CodeQL；不重做 SR-001～008 已實作範圍。下一個獨立階段依使用者指示推進；不自動關閉 PR、合併、Tag 或 Release。
+請在 cam11505/website_trans 接續 Site Rescue，先取得 codex/stage-c-0.2.0-candidate 與 GitHub 最新狀態，保留本機修改。依 AGENTS.md、docs/PROJECT_STATUS.md、docs/CODEX_HANDOFF.md、docs/NEXT_STEPS.md 檢查 Stage C 0.2.0-rc.1 候選、人工操作／本機校驗記錄及 exact-head 三平台 CI／CodeQL；不重做 SR-001～008 與 Stage A/B/C 已實作範圍。先提出具體整合建議；不自動關閉 PR、合併、Tag 或 Release。

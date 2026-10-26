@@ -1,6 +1,6 @@
-import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import type * as FsPromises from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { BuildOptions } from 'esbuild';
 import { buildReleasePackage, verifyReleasePackage } from '../src/index.js';
@@ -101,6 +101,12 @@ if (args.includes('--version')) {
   for (const document of ['README.md', 'CHANGELOG.md', 'SECURITY.md']) {
     await writeFile(join(root, document), `# ${document}\n`, 'utf8');
   }
+  for (const document of ['docs/OFFLINE_WALKTHROUGH.md', 'docs/INPUT_SUPPORT.md', 'examples/offline-starter/README.md', 'examples/offline-starter/EXPECTED.md']) {
+    await mkdir(dirname(join(root, document)), { recursive: true });
+    await writeFile(join(root, document), `# ${document}\n`, 'utf8');
+  }
+  await mkdir(join(root, 'examples/offline-starter/source'), { recursive: true });
+  await writeFile(join(root, 'examples/offline-starter/source/index.html'), '<h1>Portable example</h1>');
   await writeFile(
     join(root, 'LICENSE'),
     'Apache License\nVersion 2.0, January 2004\nEND OF TERMS AND CONDITIONS\n',
@@ -120,6 +126,34 @@ if (args.includes('--version')) {
 }
 
 describe('release tools', () => {
+  it('includes the offline example, expected results and walkthrough in the checksummed portable package', async () => {
+    const root = await createRepository('0.2.0-rc.1');
+    try {
+      const built = await buildReleasePackage(root, { bundler: fixtureBundler(root) });
+      for (const path of ['docs/OFFLINE_WALKTHROUGH.md', 'docs/INPUT_SUPPORT.md', 'examples/offline-starter/README.md', 'examples/offline-starter/EXPECTED.md', 'examples/offline-starter/source/index.html']) {
+        expect(await readFile(join(built.outputDirectory, path))).toEqual(await readFile(join(root, path)));
+        expect(await readFile(built.checksumFile, 'utf8')).toContain(`  ${path}\n`);
+      }
+      expect(await verifyReleasePackage(root)).toMatchObject({ version: '0.2.0-rc.1', versionSmokePassed: true });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects linked example content instead of distributing files outside the example tree', async () => {
+    const root = await createRepository();
+    try {
+      const outside = join(root, 'private-fixture');
+      await mkdir(outside);
+      await writeFile(join(outside, 'private.txt'), 'Do not distribute');
+      await symlink(outside, join(root, 'examples/offline-starter/source/alias'), process.platform === 'win32' ? 'junction' : 'dir');
+      await expect(buildReleasePackage(root, { bundler: fixtureBundler(root) })).rejects.toThrow(/non-regular|symbolic|link/iu);
+      expect(await readFile(join(outside, 'private.txt'), 'utf8')).toBe('Do not distribute');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it.each(['EPERM', 'EBUSY'])('recovers from a transient %s staging rename without rebuilding the package', async (code) => {
     const root = await createRepository();
     try {

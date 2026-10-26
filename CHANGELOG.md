@@ -4,6 +4,16 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ## Unreleased
 
+## 0.2.0-rc.1 — candidate, not published
+
+This section describes an unreleased review candidate; no tag or GitHub Release exists for it. Workspace, CLI and generated package versions agree. Site, Snapshot, evidence, Report and bundle format versions remain independent and unchanged by this preparation.
+
+### Candidate preparation
+
+- Include a synthetic UTF-8 HTML example, expected results, input support matrix and offline walkthrough in the checksummed standalone package. Reject linked example entries during packaging.
+- Add actual relocated-package end-to-end CI: import the included example, inspect Report2, serve home/anchor/attachment over loopback, stop preview, move the working source, replay offline and verify original-file hashes and both bundles.
+- Preserve Apache-2.0 and bundled dependency notices. This candidate needs Node >=24.22.0 <25 and does not add ZIP source input, official Weebly format certification, Live Snapshot or a GUI.
+
 ### Fixed
 
 - SR-001: a truncated crawl now records an actionable warning and forces migration review; capture/rescue explicitly report incomplete acquisition.
@@ -30,7 +40,7 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 ### Changed
 
-- Required 2026-10-24 security prerequisite: Vitest/mocker4.1.12, Vite7.3.7, Undici7.30.1 and Zod4.6.7 across its three direct users clear 11 newly reported npm advisories. Zod major upgrade retains schema expressions and requires clean legacy/data-contract validation; saved data versions and release/package version are unchanged. See the 2026-10-24 integration review.
+- Required 2026-10-24 security prerequisite: Vitest/mocker4.1.12, Vite7.3.7, Undici7.30.1 and Zod4.6.7 across its three direct users clear 11 newly reported npm advisories. Zod major upgrade retains schema expressions and requires clean legacy/data-contract validation; that prerequisite did not change saved data or package versions. See the 2026-10-24 integration review.
 
 - SR-007: unreleased development/new package requirements are now Node >=24.22.0 <25, with pinned Node24.22.0 and unchanged pnpm10.34.5. Bundle target derives from the runtime pin; mismatching metadata rejects. Full Ubuntu24.04/Windows2025/macOS15 CI and a stable aggregate Quality checks gate replace Ubuntu-only Node20 CI. Actions use verified Node24 commit pins. The published v0.1.0 archive is unchanged; see Proposed ADR-028.
 - Release staging rename retries only temporary EPERM/EBUSY failures three times before failing; other errors remain immediate failures. Regression tests cover recovery, bounded failure and staging cleanup.
@@ -38,7 +48,7 @@ All notable changes to Site Rescue are recorded here. The project follows Semant
 
 - New Report 2.0.0 always remains review-required while original site completeness and manual review are unproven; `checksumRecordedLocalAssetCount` replaces the old misleading verified count. This changes the report contract, not Site/Snapshot/bundle versions or the published package.
 
-- New captures use Site schema 1.1.0; updated readers retain compatibility with saved 1.0.0 captures and matching bundle manifests. Older readers reject 1.1.0. Package/release versions remain unchanged for this unpublished integration.
+- New captures use Site schema 1.1.0; updated readers retain compatibility with saved 1.0.0 captures and matching bundle manifests. Older readers reject 1.1.0. Candidate package version 0.2.0-rc.1 does not change those saved-data contracts.
 
 ## 0.1.0 - 2026-08-22
 
