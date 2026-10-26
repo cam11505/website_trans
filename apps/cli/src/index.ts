@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { pathToFileURL } from 'node:url';
+import { realpath } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { runCapture } from './capture.js';
 import { runDiagnose } from './diagnose.js';
 import { runExport } from './export.js';
@@ -237,7 +238,8 @@ export async function main(args: string[]): Promise<number> {
 }
 
 const isEntryPoint =
-  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+  process.argv[1] !== undefined &&
+  await realpath(fileURLToPath(import.meta.url)) === await realpath(process.argv[1]);
 if (isEntryPoint) {
   process.exitCode = await main(process.argv.slice(2));
 }

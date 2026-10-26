@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cp, mkdtemp, readFile, readdir, rename, rm } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, readdir, rename, rm, symlink } from 'node:fs/promises';
 import { get } from 'node:http';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
-import { env, execPath, stdout } from 'node:process';
+import { env, execPath, platform, stdout } from 'node:process';
 import { clearTimeout, setTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -124,6 +124,11 @@ try {
   assert.equal(packageMetadata.version, rootMetadata.version);
   assert.equal(packageMetadata.private, true);
   assert.equal(packageMetadata.license, 'Apache-2.0');
+  // Reproduce the macOS /var -> /private/var entry-point alias on every platform.
+  const packageAlias = join(workspace, 'package-alias');
+  await symlink(relocated, packageAlias, platform === 'win32' ? 'junction' : 'dir');
+  const aliasedVersion = await promisify(execFile)(execPath, ['--import', guard, join(packageAlias, 'bin/site-rescue.js'), '--version']);
+  assert.equal(aliasedVersion.stdout.trim(), rootMetadata.version, 'CLI must execute through a directory alias');
   assert.equal((await cli('--version')).stdout.trim(), rootMetadata.version);
   await cp(join(relocated, 'examples/offline-starter/source'), source, { recursive: true });
   const originalFiles = await filesIn(source);

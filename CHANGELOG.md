@@ -12,6 +12,7 @@ This section describes an unreleased review candidate; no tag or GitHub Release 
 
 - Include a synthetic UTF-8 HTML example, expected results, input support matrix and offline walkthrough in the checksummed standalone package. Reject linked example entries during packaging.
 - Add actual relocated-package end-to-end CI: import the included example, inspect Report2, serve home/anchor/attachment over loopback, stop preview, move the working source, replay offline and verify original-file hashes and both bundles.
+- Fix actual CLI startup through directory aliases (including macOS temporary paths): compare canonical entry-file paths so invocation runs rather than silently returning. A packaged alias regression reproduces the failure; source symlink protections are unchanged.
 - Preserve Apache-2.0 and bundled dependency notices. This candidate needs Node >=24.22.0 <25 and does not add ZIP source input, official Weebly format certification, Live Snapshot or a GUI.
 
 ### Fixed

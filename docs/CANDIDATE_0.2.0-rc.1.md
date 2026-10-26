@@ -11,6 +11,8 @@ Prepared: 2026-10-26. **Unreleased; no merge/tag/publication authorization.**
 
 Two release-tool regressions failed before implementation: missing packaged example/walkthrough and failure to reject a linked example directory. Both pass after the focused copy/validation change. The suite now has 17 release-tool tests.
 
+The initial head8f7297d passed local checks and Linux, but macOS relocated-package execution returned an empty version because the CLI compared lexical entry-file paths across `/var` and `/private/var`. An added directory-alias smoke reproduced this on Windows before repair. Only CLI dispatch now compares canonical entry-file paths; source-link rejection is unchanged. Initial head/archive results are superseded; the Draft PR and final local artifact record identify the repaired SHA and its actual validation.
+
 The package contains 17 checksummed files plus its checksum inventory, with 29 runtime dependency license/NOTICE records. The seventh packaged smoke relocates the package outside the repository, uses its included example and checks actual import/report/loopback preview/graceful stop/moved-source offline replay/original hashes/both bundles. Existing six smokes and legacy Site/Report compatibility remain required.
 
 Local Windows x64 verification completed on Node24.22.0/pnpm10.34.5: frozen offline install, lint, typecheck, test (38 files, 264 passed/6 platform-specific skipped, 270 total), build, release check and all seven packaged smokes passed. Fresh dependency audit reported zero known advisories. The modified/new documentation passed 85 relative-link checks; all 23 workspace manifests agree on the private candidate version. Remote results must still be verified on the final candidate SHA.
